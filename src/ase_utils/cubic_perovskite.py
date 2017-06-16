@@ -1,0 +1,74 @@
+#!/usr/bin/env python
+from .lattice_factory import PerovskiteCubic
+from .ase_utils import my_write_vasp
+from .ase_utils import normalize
+from ase.io.vasp import read_vasp
+from ase.atoms import string2symbols
+from .ase_utils import vesta_view, set_element_mag
+import numpy as np
+from ase.build import make_supercell
+
+def gen222(A='Sr',
+           B='Mn',
+           O='O',
+           latticeconstant=3.9,
+           mag_order='FM',
+           m=5,
+           sort=True):
+    atoms = PerovskiteCubic([A, B, O], latticeconstant=latticeconstant)
+    atoms = atoms.repeat([2, 2, 2])
+    if sort:
+        my_write_vasp('UCPOSCAR', atoms, vasp5=True, sort=True)
+        atoms = read_vasp('UCPOSCAR')
+
+    spin_dn = {
+        'FM': [],
+        'A': [0, 1, 4, 5],
+        'C': [0, 2, 5, 7],
+        'G': [0, 3, 5, 6]
+    }
+    if mag_order != 'PM':
+        mag = np.ones(8)
+        mag[np.array(spin_dn[mag_order], int)] = -1.0
+        atoms = set_element_mag(atoms, B, mag * m)
+    return atoms
+
+
+def gen_primitive(name=None,A=None,B=None,O=None, latticeconstant=3.9, mag_order='FM', m=5):
+    """
+    generate primitive cell with magnetic order.
+
+    Parameters:
+    ---------------
+    name: string
+        ABO3, eg. BiFeO3, CsPbF3
+    """
+    if name is not None:
+        symbols=string2symbols(name)
+        A, B, O, _, _ = symbols
+    atoms = PerovskiteCubic([A, B, O], latticeconstant=latticeconstant)
+    direction_dict = {
+        'A': ([1, 0, 0], [0, 1, 0], [0, 0, 2]),
+        'C': ([1, -1, 0], [1, 1, 0], [0, 0, 1]),
+        'G': ([0, 1, 1], [1, 0, 1], [1, 1, 0]),
+        'FM': np.eye(3),
+    }
+    size_dict = {'A': (1, 1, 2), 'C': (1, 1, 1), 'G': (1, 1, 1)}
+    A, B, O = atoms.get_chemical_symbols()[0:3]
+    if mag_order == 'PM':
+        atoms = atoms
+    elif mag_order == 'FM':
+        atoms = atoms
+        atoms = set_element_mag(atoms, B, [m])
+    else:
+        atoms.translate([0.045] * 3)
+        atoms = normalize(atoms)
+        atoms = make_supercell(atoms, direction_dict[mag_order])
+        atoms.translate([-0.045] * 3)
+        atoms = set_element_mag(atoms, B, [m, -m])
+    return atoms
+
+
+if __name__ == '__main__':
+    atoms = gen_primitive(name='LaMnO3',mag_order='C')
+    vesta_view(atoms)
