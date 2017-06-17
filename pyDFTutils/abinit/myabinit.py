@@ -1,5 +1,4 @@
 """This module defines an ASE interface to ABINIT.
-
 http://www.abinit.org/
 """
 
