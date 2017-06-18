@@ -3,8 +3,8 @@
 from ase.utils.geometry import rotate
 from ase.io import read
 from ase.geometry.cell import cellpar_to_cell, cell_to_cellpar
-from .symbol import get_symdict,symbol_number,symnum_to_sym
-from .ase_utils import scaled_pos_to_pos,force_near_0,pos_to_scaled_pos
+from pyDFTutils.ase_utils.symbol import get_symdict,symbol_number,symnum_to_sym
+from pyDFTutils.ase_utils.ase_utils import scaled_pos_to_pos,force_near_0,pos_to_scaled_pos
 import numpy as np
 from collections import OrderedDict,Iterable
 from ase.calculators.neighborlist import NeighborList
@@ -91,12 +91,6 @@ def even_or_odd_path(atoms,from_symnum,node_sym_list,to_symnum_list=None,first_n
         else:
             return -1
     return node_list,[even_odd(x) for x in path_mat[i_node]]
-
-
-
-
-
-
 
 def rotation_angle_about_axis(vec0,from_vec,axis_vec):
     """
