@@ -7,7 +7,7 @@ from os.path import join
 import os
 from shutil import copyfile
 from scipy import trapz,integrate
-from .symbol import symnum_to_sym
+from pyDFTutils.ase_utils.symbol import symnum_to_sym
 from .vasp_utils import get_symdict
 from matplotlib.ticker import FormatStrFormatter
 from collections import OrderedDict,Iterable
