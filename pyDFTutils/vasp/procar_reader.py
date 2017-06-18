@@ -3,7 +3,7 @@
 from numpy import zeros,inner
 import numpy as np
 import re
-from .ase_utils import symbol_number
+from pyDFTutils.ase_utils import symbol_number
 import matplotlib.pyplot as plt
 def fix_line(line):
     line=re.sub("(\d)-(\d)", r'\1 -\2',line)

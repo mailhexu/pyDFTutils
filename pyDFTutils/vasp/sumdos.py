@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from mypylib.myDFT.ase_utils.vasp_dos import write_all_sum_dos
+from pyDFTutils.vasp.vasp_dos import write_all_sum_dos
 from argparse import ArgumentParser
 if __name__=='__main__':
     parser=ArgumentParser(description='sum the DOSCAR valence dos')

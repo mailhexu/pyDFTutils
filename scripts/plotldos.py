@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from mypylib.myDFT.ase_utils.vasp_dos import plot_all_ldos
+from pyDFTutils.vasp.vasp_dos import plot_all_ldos
 import argparse
 
 def plot_ldos():

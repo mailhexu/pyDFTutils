@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 from .vasp_utils import get_electrons
-from .chemsymbol import get_symdict
+from pyDFTutils.ase_utils.chemsymbol import get_symdict
 from ase.io import read
 import matplotlib.pyplot as plt
 import os

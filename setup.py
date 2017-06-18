@@ -9,7 +9,7 @@ setup(
     author_email='mailhexu@gmail.com',
     license='GPLv3',
     packages=['pyDFTutils'],
-    install_requires=['ase', 'spglib', 'pythtb', 'phonopy'],
+    install_requires=['numpy','matplotlib','scipy','ase', 'spglib', 'pythtb', 'phonopy'],
     scripts=[],
     classifiers=[
         'Development Status :: 3 - Alpha',

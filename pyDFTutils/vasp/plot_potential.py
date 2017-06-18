@@ -2,7 +2,7 @@
 import os
 import numpy as np
 from numpy import maximum,minimum,NaN,Inf,arange,isscalar,array
-from .peakdetect import peakdetect
+from pyDFTutils.math.peakdetect import peakdetect
 import sys
 from numpy import *
 from functools import reduce

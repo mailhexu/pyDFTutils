@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from .vasp_dos import plot_all_pdos
+from pyDFTutils.vasp.vasp_dos import plot_all_pdos
 import argparse
 
 def plot_pdos():
