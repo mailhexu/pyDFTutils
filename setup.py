@@ -10,7 +10,7 @@ setup(
     license='GPLv3',
     packages=['pyDFTutils'],
     install_requires=['numpy','matplotlib','scipy','ase', 'spglib', 'pythtb', 'phonopy'],
-    scripts=['scipts/plotldos.py','scripts/plotpdos.py'],
+    scripts=['scipts/plotldos.py','scripts/plotpdos.py','scripts/AFM_parameter.py','scripts/view_pos_info.py'],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'License :: OSI Approved :: GPLv3 license',
