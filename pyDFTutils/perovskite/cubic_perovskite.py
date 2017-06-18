@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 from .lattice_factory import PerovskiteCubic
-from .ase_utils import my_write_vasp
-from .ase_utils import normalize
+from pyDFTutils.ase_utils import my_write_vasp,normalize, vesta_view, set_element_mag
 from ase.io.vasp import read_vasp
 from ase.atoms import string2symbols
-from .ase_utils import vesta_view, set_element_mag
 import numpy as np
 from ase.build import make_supercell
 

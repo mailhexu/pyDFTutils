@@ -1,7 +1,6 @@
 #! /usr/bin/env python
-
 from ase import Atoms
-from .ase_utils import to_smallest_positive_pos
+from pyDFTutils.ase_utils import to_smallest_positive_pos,cut_lattice ,scaled_pos_to_pos
 force_in_cell = to_smallest_positive_pos
 from  ase.lattice.cubic import SimpleCubicFactory
 from ase.lattice.tetragonal import SimpleTetragonalFactory
@@ -9,7 +8,6 @@ from ase.lattice.triclinic import TriclinicFactory
 from ase.geometry.cell import cellpar_to_cell
 from numpy import array,sqrt
 import numpy as np
-from .ase_utils import cut_lattice ,scaled_pos_to_pos
 from ase.lattice.spacegroup import crystal
 import re
 

@@ -373,7 +373,7 @@ def determinant(m):
             m[1][0] * m[2][1] - m[0][2] * m[1][1] * m[2][0])
 
 
-def gen_pnma(name,
+def gen_distorted_perovskite(name,
              cell=[3.9, 3.9, 3.9],
              supercell_matrix=[[1, -1, 0], [1, 1, 0], [0, 0, 2]],
              out_of_phase_rotation=0.0,
@@ -381,7 +381,7 @@ def gen_pnma(name,
              breathing=0.0,
              JT_d=0.0,
              JT_a=0.0):
-    atoms = gen_primitive(name='LaMnO3', mag_order='PM', latticeconstant=3.9)
+    atoms = gen_primitive(name=name, mag_order='PM', latticeconstant=3.9)
     spos = atoms.get_scaled_positions()
     #atoms.set_cell([3.5,3.5,3.9,90,90,90])
     atoms.set_cell(cell)
@@ -395,33 +395,37 @@ def gen_pnma(name,
 
     eig_JT_d = np.array(perovskite_mode.M2)
 
-    eig_in_phase_tilting = np.array(perovskite_mode.X5p_1)
+    eig_in_phase_tilting = np.array(perovskite_mode.X5_3)
 
     eig_out_of_phase_rotation_x = np.array(perovskite_mode.R25_1)
     eig_out_of_phase_rotation_y = np.array(perovskite_mode.R25_2)
 
-    eig_disp_br = dcell._get_displacements(
-        eigvec=breathing, q=[0.5, 0.5, 0.5], amplitude=breathing, argument=0)
-    #disp2=dcell._get_displacements(eigvec=out_of_phase_rotation,q=[0.5,0.5,0.5],amplitude=0.55,argument=0)
-    eig_disp_jt = dcell._get_displacements(
-        eigvec=JT_d, q=[0.5, 0.5, 0.0], amplitude=JT_d, argument=0)
 
-    disp_tilting=dcell._get_displacements(eigvec=eig_in_phase_tilting,q=[0.0,0.5,0.0],amplitude=in_phase_tilting,argument=0)
+    disp_br = dcell._get_displacements(
+        eigvec=eig_breathing, q=[0.5, 0.5, 0.5], amplitude=breathing, argument=0)
+    #disp2=dcell._get_displacements(eigvec=out_of_phase_rotation,q=[0.5,0.5,0.5],amplitude=0.55,argument=0)
+    disp_jt = dcell._get_displacements(
+        eigvec=eig_JT_d, q=[0.5, 0.5, 0.0], amplitude=JT_d, argument=0)
+
+    disp_tilting=dcell._get_displacements(eigvec=eig_in_phase_tilting,q=[0.0,0.0,0.5],amplitude=in_phase_tilting,argument=0)
 
     disp_rotx = dcell._get_displacements(
-        eigvec=out_of_phase_rotation_x,
+        eigvec=eig_out_of_phase_rotation_x,
         q=[0.5, 0.5, 0.5],
-        amplitude=rotation,
+        amplitude=out_of_phase_rotation,
         argument=0)
     disp_roty = dcell._get_displacements(
-        eigvec=out_of_phase_rotation_y,
+        eigvec=eig_out_of_phase_rotation_y,
         q=[0.5, 0.5, 0.5],
-        amplitude=rotation,
+        amplitude=out_of_phase_rotation,
         argument=0)
+    #print(out_of_phase_rotation)
+    #print(disp_rotx)
+    #print(disp_jt)
 
     #print disp.shape
     newcell = dcell._get_cell_with_modulation(
-        disp_jt + disp_rotx + disp_roty +disp_br )  #+disp_jt)
+        disp_jt + disp_rotx + disp_roty +disp_br +disp_tilting)
     print(spglib.get_spacegroup(newcell))
     #vesta_view(newcell)
     return newcell
@@ -429,6 +433,9 @@ def gen_pnma(name,
 
 
 def test():
-    atoms=gen_pnma('LaMnO3,rotation=0.3')
+    #atoms=gen_pnma('LaMnO3',out_of_phase_rotation=1.5)
+    #atoms=gen_pnma('LaMnO3',JT_d=0.2)
+    #atoms=gen_pnma('LaMnO3',in_phase_tilting=0.6)
+    atoms=gen_distorted_perovskite('LaMnO3',out_of_phase_rotation=0.0, JT_d=0.0, in_phase_tilting=0.9, breathing=0.0)
     vesta_view(atoms)
 test()
