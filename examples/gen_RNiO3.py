@@ -3,13 +3,14 @@ import sys
 #from phonopy.structure.cells import get_supercell
 from ase import Atoms
 import os
-
 import numpy as np
 import copy
 import perovskite_mode
 import spglib.spglib
 #from phonopy.structure.atoms import PhonopyAtoms as Atoms
 from ase.io import write
+from pyDFTutils.perovskite.cubic_perovskite import gen_primitive
+from pyDFTutils.ase_utils.ase_utils import vesta_view
 
 
 class distorted_cell():
@@ -54,7 +55,7 @@ class distorted_cell():
             u.append(eigvec[eig_index:eig_index + 3] * coef)
 
         #u = np.array(u) / np.sqrt(len(m))
-        u = np.array(u)/np.linalg.norm(u)#/np.sqrt(self._N)
+        u = np.array(u) / np.linalg.norm(u)  #/np.sqrt(self._N)
         phase_factor = self._get_phase_factor(u, argument)
         u *= phase_factor * amplitude
 
@@ -140,8 +141,7 @@ def trim_cell(relative_axes, cell, symprec):
         masses=trimed_masses,
         #magmoms=trimed_magmoms,
         scaled_positions=trimed_positions[:num_atom],
-        cell=trimed_lattice,
-        )
+        cell=trimed_lattice, )
 
     return trimed_cell, extracted_atoms, mapping_table
 
@@ -196,7 +196,6 @@ class Supercell(Atoms):
         self._u2u_map = None
         self._supercell_matrix = np.array(supercell_matrix, dtype='intc')
         self._create_supercell(unitcell, symprec)
-        
 
     def get_supercell_matrix(self):
         return self._supercell_matrix
@@ -241,7 +240,7 @@ class Supercell(Atoms):
                 scaled_positions=supercell.get_scaled_positions(),
                 cell=supercell.get_cell(),
                 #pbc=True)
-                )
+            )
             self._u2s_map = np.arange(unitcell.get_number_of_atoms()) * multi
             self._u2u_map = dict([(j, i) for i, j in enumerate(self._u2s_map)])
             self._s2u_map = np.array(u2sur_map)[sur2s_map] * multi
@@ -375,59 +374,89 @@ def determinant(m):
             m[1][0] * m[2][1] - m[0][2] * m[1][1] * m[2][0])
 
 
-def gen_RNiO3(a=3.709, c=3.709, rot_R=1.0, rot_M=1.0, jt=0.0,br=0.00):
-    from ase_utils.cubic_perovskite import gen_primitive
-    from ase_utils import vesta_view
-    atoms = gen_primitive(name='YNiO3', mag_order='PM',latticeconstant=3.7094)
-    spos=atoms.get_scaled_positions()
-    atoms.set_cell([a,a,c,90,90,90])
+def gen_RNiO3(a=3.709, c=3.709, rot_R=1.0, rot_M=1.0, jt=0.0, br=0.00):
+    atoms = gen_primitive(name='YNiO3', mag_order='PM', latticeconstant=3.7094)
+    spos = atoms.get_scaled_positions()
+    atoms.set_cell([a, a, c, 90, 90, 90])
     atoms.set_scaled_positions(spos)
-    
+
     from ase.io import write
     dcell = distorted_cell(atoms, supercell_matrix=np.eye(3) * 2)
-    dcell = distorted_cell(atoms, supercell_matrix=[[1,-1,0],[1,1,0],[0,0,2]])
-    eigvec=np.zeros(15)
-    eigvec[6]=1
-    eigvec[10]=1
+    dcell = distorted_cell(
+        atoms, supercell_matrix=[[1, -1, 0], [1, 1, 0], [0, 0, 2]])
+    eigvec = np.zeros(15)
+    eigvec[6] = 1
+    eigvec[10] = 1
 
     breathing = np.array(perovskite_mode.R2p)
     JT_d = np.array(perovskite_mode.M2)
 
-    in_phase_tilting_A1=np.array(perovskite_mode.X5p_1)
-    in_phase_tilting_A2=np.array(perovskite_mode.X5p_2)
-    in_phase_tilting_O1=np.array(perovskite_mode.X5p_3)
-    in_phase_tilting_O2=np.array(perovskite_mode.X5p_4)
+    in_phase_tilting_A1 = np.array(perovskite_mode.X5p_1)
+    in_phase_tilting_A2 = np.array(perovskite_mode.X5p_2)
+    in_phase_tilting_O1 = np.array(perovskite_mode.X5p_3)
+    in_phase_tilting_O2 = np.array(perovskite_mode.X5p_4)
 
-    
-    in_phase_rotation=np.array(perovskite_mode.M3)
-    out_of_phase_rotation_x=np.array(perovskite_mode.R25_1)
-    out_of_phase_rotation_y=np.array(perovskite_mode.R25_2)
+    in_phase_rotation = np.array(perovskite_mode.M3)
+    out_of_phase_rotation_x = np.array(perovskite_mode.R25_1)
+    out_of_phase_rotation_y = np.array(perovskite_mode.R25_2)
 
     # R2- breathing 0.1
-    disp_br=dcell._get_displacements(eigvec=breathing,q=[0.5,0.5,0.5],amplitude=br,argument=0)
+    disp_br = dcell._get_displacements(
+        eigvec=breathing, q=[0.5, 0.5, 0.5], amplitude=br, argument=0)
     #disp2=dcell._get_displacements(eigvec=out_of_phase_rotation,q=[0.5,0.5,0.5],amplitude=0.55,argument=0)
 
     # M3+ JT 0.1
-    disp_jt=dcell._get_displacements(eigvec=JT_d,q=[0.5,0.5,0.0],amplitude=jt,argument=0)
+    disp_jt = dcell._get_displacements(
+        eigvec=JT_d, q=[0.5, 0.5, 0.0], amplitude=jt, argument=0)
     #disp4=dcell._get_displacements(eigvec=in_phase_tilting,q=[0.0,0.5,0.0],amplitude=0.5,argument=0)
-    
+
     # R5- rotation out 1.07
-    disp_rotx=dcell._get_displacements(eigvec=out_of_phase_rotation_x,q=[0.5,0.5,0.5],amplitude=1.07*rot_R,argument=0)
-    disp_roty=dcell._get_displacements(eigvec=out_of_phase_rotation_y,q=[0.5,0.5,0.5],amplitude=-1.07*rot_R,argument=0)
-    
+    disp_rotx = dcell._get_displacements(
+        eigvec=out_of_phase_rotation_x,
+        q=[0.5, 0.5, 0.5],
+        amplitude=1.07 * rot_R,
+        argument=0)
+    disp_roty = dcell._get_displacements(
+        eigvec=out_of_phase_rotation_y,
+        q=[0.5, 0.5, 0.5],
+        amplitude=-1.07 * rot_R,
+        argument=0)
+
     # M2+
-    disp_rot_zin=dcell._get_displacements(eigvec=in_phase_rotation,q=[0.5,0.5,0.0],amplitude=0.525*2*rot_M,argument=0)
+    disp_rot_zin = dcell._get_displacements(
+        eigvec=in_phase_rotation,
+        q=[0.5, 0.5, 0.0],
+        amplitude=0.525 * 2 * rot_M,
+        argument=0)
 
     #X5-
-    disp_tilting_A1=dcell._get_displacements(eigvec=in_phase_tilting_A1,q=[0.0,0.0,0.5],amplitude=-0.485*2,argument=0)
+    disp_tilting_A1 = dcell._get_displacements(
+        eigvec=in_phase_tilting_A1,
+        q=[0.0, 0.0, 0.5],
+        amplitude=-0.485 * 2,
+        argument=0)
     #print disp_tilting_A1
-    disp_tilting_A2=dcell._get_displacements(eigvec=in_phase_tilting_A2,q=[0.0,0.0,0.5],amplitude=0.485*2,argument=0)
+    disp_tilting_A2 = dcell._get_displacements(
+        eigvec=in_phase_tilting_A2,
+        q=[0.0, 0.0, 0.5],
+        amplitude=0.485 * 2,
+        argument=0)
     #print disp_tilting_A2
 
-    disp_tilting_O1=dcell._get_displacements(eigvec=in_phase_tilting_O1,q=[0.0,0.5,0.0],amplitude=-0.168*2,argument=0)
-    disp_tilting_O2=dcell._get_displacements(eigvec=in_phase_tilting_O2,q=[0.0,0.5,0.0],amplitude=0.168*2,argument=0)
+    disp_tilting_O1 = dcell._get_displacements(
+        eigvec=in_phase_tilting_O1,
+        q=[0.0, 0.5, 0.0],
+        amplitude=-0.168 * 2,
+        argument=0)
+    disp_tilting_O2 = dcell._get_displacements(
+        eigvec=in_phase_tilting_O2,
+        q=[0.0, 0.5, 0.0],
+        amplitude=0.168 * 2,
+        argument=0)
     #print disp.shape
-    newcell= dcell._get_cell_with_modulation(disp_rotx+disp_roty+ disp_rot_zin+disp_br+disp_jt)# +disp_tilting_A1)#+disp_tilting_A2)#+disp_tilting_O1+disp_tilting_O2)
+    newcell = dcell._get_cell_with_modulation(
+        disp_rotx + disp_roty + disp_rot_zin + disp_br + disp_jt
+    )  # +disp_tilting_A1)#+disp_tilting_A2)#+disp_tilting_O1+disp_tilting_O2)
     print(spglib.get_spacegroup(newcell))
     #vesta_view(newcell)
     return newcell
@@ -435,6 +464,7 @@ def gen_RNiO3(a=3.709, c=3.709, rot_R=1.0, rot_M=1.0, jt=0.0,br=0.00):
 
 #gen_RNiO3()
 #test()
+
 
 def gen_atoms():
     # strain only and JT
@@ -456,30 +486,35 @@ def gen_atoms():
     # rotation & JT
     if not os.path.exists('rot_jt'):
         os.makedirs('rot_jt')
-    for rot in np.arange(0,1.01,0.33):
-        for jt in np.arange(-0.1,0.11,0.025):
-            atoms=gen_RNiO3(rot_R=rot,rot_M=0,jt=jt,br=0)
-            write('./rot_jt/Rot_%s_jt_%s.vasp'%(rot,jt),atoms,vasp5=True)
+    for rot in np.arange(0, 1.01, 0.33):
+        for jt in np.arange(-0.1, 0.11, 0.025):
+            atoms = gen_RNiO3(rot_R=rot, rot_M=0, jt=jt, br=0)
+            write('./rot_jt/Rot_%s_jt_%s.vasp' % (rot, jt), atoms, vasp5=True)
     # rotation & JT & M
     if not os.path.exists('rot_M_jt'):
         os.makedirs('rot_M_jt')
-    for rot in np.arange(0.0,1.01,0.33):
-        for jt in np.arange(-0.3,0.31,0.05):
-            atoms=gen_RNiO3(rot_R=rot,rot_M=1,jt=jt,br=0)
-            write('./rot_M_jt/Rot_%s_jt_%s.vasp'%(rot,jt),atoms,vasp5=True)
+    for rot in np.arange(0.0, 1.01, 0.33):
+        for jt in np.arange(-0.3, 0.31, 0.05):
+            atoms = gen_RNiO3(rot_R=rot, rot_M=1, jt=jt, br=0)
+            write(
+                './rot_M_jt/Rot_%s_jt_%s.vasp' % (rot, jt), atoms, vasp5=True)
     # rotation &Breathing
     if not os.path.exists('rot_br'):
         os.makedirs('rot_br')
-    for rot in np.arange(0,1.01,0.33):
-        for br in np.arange(0.0,0.31,0.05):
-            atoms=gen_RNiO3(rot_R=rot,rot_M=0.0,jt=0,br=br)
-            write('./rot_br/Rot_%s_br_%s.vasp'%(rot,br),atoms,vasp5=True)
+    for rot in np.arange(0, 1.01, 0.33):
+        for br in np.arange(0.0, 0.31, 0.05):
+            atoms = gen_RNiO3(rot_R=rot, rot_M=0.0, jt=0, br=br)
+            write('./rot_br/Rot_%s_br_%s.vasp' % (rot, br), atoms, vasp5=True)
     # rotation & Breathing & M
     if not os.path.exists('rot_M_br_2'):
         os.makedirs('rot_M_br_2')
-    for rot in np.arange(0,1.01,0.99):
-        for br in np.arange(-0.01,0.01,0.002):
-            atoms=gen_RNiO3(rot_R=rot,rot_M=rot,jt=0,br=br)
-            write('./rot_M_br_2/Rot_%s_br_%.3f.vasp'%(rot,br),atoms,vasp5=True)
+    for rot in np.arange(0, 1.01, 0.99):
+        for br in np.arange(-0.01, 0.01, 0.002):
+            atoms = gen_RNiO3(rot_R=rot, rot_M=rot, jt=0, br=br)
+            write(
+                './rot_M_br_2/Rot_%s_br_%.3f.vasp' % (rot, br),
+                atoms,
+                vasp5=True)
+
 
 gen_atoms()
