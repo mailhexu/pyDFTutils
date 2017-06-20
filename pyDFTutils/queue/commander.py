@@ -29,7 +29,7 @@ def nic4script(command='abinit', **kwargs):
 
 
 def zenobescript(command='abinit',
-                 queue_type='pbspro',
+                 #queue_type='pbspro',
                  queue='large',
                  group='spinphon',
                  time="23:00:00",
@@ -71,11 +71,13 @@ def zenobescript(command='abinit',
 
 
 class commander():
-    def __init__(self, job_fname='job.sh'):
+    def __init__(self, job_fname='job.sh',**kwargs):
         self.job_fname = job_fname
+        self.queue_type=None
+        self.set_parameter(**kwargs)
 
     def set_parameter(self,
-                      queue_type='pbs',
+                      queue_type='pbspro',
                       command='abinit',
                       max_time=24 * 60 * 60,
                       **kwargs):
@@ -87,12 +89,13 @@ class commander():
            'abinit'|'vasp'| user defined com.
         **kwargs: jobname, time, ntask, ntask_per_node, mem_per_cpu
         """
-        self.queue_type == queue_type
+        self.queue_type=queue_type
         if queue_type == 'slurm':
             self.jobfile_text = nic4script(command, **kwargs)
         elif queue_type == 'pbspro':
             self.jobfile_text = zenobescript(command, **kwargs)
         self.max_time = max_time
+
 
     def run_zenobe(self):
         # write job script.
@@ -106,18 +109,20 @@ class commander():
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE)
         out, err = p.communicate()
-        job_id = out.strip()
+        job_id = out.decode().strip()
         exitcode = wait_job_success(job_id, maxtime=self.max_time)
         return exitcode
 
     def run(self):
+        if self.queue_type == 'pbspro':
+            return self.run_zenobe()
         if self.queue_type == 'slurm':
             raise NotImplementedError('Slurm is not on zenobe')
-        elif self.queue_type == 'pbs':
-            return self.run_zenobe()
+        else:
+            raise NotImplementedError('%s is not on zenobe'%self.queue_type)
+        
 
-
-def zenobe_abinit_large(queue_type='pbs',
+def zenobe_abinit_large(queue_type='pbspro',
                         command='abinit',
                         queue='large',
                         group='spinphon',
@@ -139,7 +144,7 @@ def zenobe_abinit_large(queue_type='pbs',
     return mycommander
 
 
-def zenobe_abinit_main(queue_type='pbs',
+def zenobe_abinit_main(queue_type='pbspro',
                        command='abinit',
                        queue='main',
                        group='spinphon',
@@ -161,7 +166,7 @@ def zenobe_abinit_main(queue_type='pbs',
     return mycommander
 
 
-def zenobe_vasp_large(queue_type='pbs',
+def zenobe_vasp_large(queue_type='pbspro',
                       command='abinit',
                       queue='large',
                       group='spinphon',
@@ -183,7 +188,7 @@ def zenobe_vasp_large(queue_type='pbs',
     return mycommander
 
 
-def zenobe_vasp_main(queue_type='pbs',
+def zenobe_vasp_main(queue_type='pbspro',
                      command='abinit',
                      queue='large',
                      group='spinphon',
@@ -205,8 +210,8 @@ def zenobe_vasp_main(queue_type='pbs',
     return mycommander
 
 
-def zenobe_wannier90(queue_type='pbs',
-                     command='wannier90 wannier90.up.win',
+def zenobe_wannier90(queue_type='pbspro',
+                     command='wannier90.x wannier90.up.win',
                      queue='large',
                      group='spinphon',
                      time="2:00:00",
@@ -345,12 +350,14 @@ def wait_job_success(job_id, maxtime=20 * 60 * 60):
 
 
 if __name__ == '__main__':
+    zenobe_run_wannier90(ompthreads=2)
     #test_paramiko_nic4()
     #print(nic4run(jobname='name'))
+
     mycommander = commander(
         command='abinit',
         queue_type='pbspro',
-        local_dir='./tmpz',
+        #local_dir='./tmpz',
         job_fname='tscript.sh',
         queue='main',
         time="23:00:00",

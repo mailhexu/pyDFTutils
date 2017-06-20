@@ -1,0 +1,51 @@
+#!/bin/bash
+#PBS -q main
+#PBS -l walltime=2:00:00
+#PBS -l select=1:ncpus=2:mpiprocs=1:ompthreads=2:mem=3800mb
+#PBS -r y
+#PBS -W group_list=spinphon
+#PBS -M mailhexu@gmail.com
+#PBS -m abe
+#export MKL_NUM_THREADS=1
+#export OMP_NUM_THREADS=1
+
+module purge
+module load compiler/intel/2016.2.181 intelmpi/5.1.3.181/64 mkl/11.3.2
+#module load parallel_tools/intel/parallel_studio_xe/2015.1
+#module load python/2.7-RH6
+#module load compiler/intel/2015.5.223 intelmpi/5.0.3.049/64       mkl/lp64/11.2.4.223
+
+export I_MPI_HYDRA_BRANCH_COUNT=616
+
+echo $I_MPI_HYDRA_BRANCH_COUNT
+
+cat $0
+
+USERHOME=/home/acad/ulg-phythema/hexu
+LOCAL_DIR=`pwd`
+
+echo $LOCAL_DIR
+
+MPIRUN=
+
+#EXE=/projects/acad/phythema/Codes/abinit-8.1.1_Jordan/bin/abinit
+#EXE=/home/acad/ulg-phythema/hexu/.local/bin/vasp_hexu
+EXE=wannier90.x wannier90.win
+
+LOG=log.${PBS_JOBID}
+
+echo "";date;echo ""
+
+cd ${PBS_O_WORKDIR}
+#cd ${LOCAL_DIR}
+
+ls -l $EXE
+echo "mpirun = " $MPIRUN
+which $MPIRUN
+
+$MPIRUN $EXE  |tee log
+
+echo "Succeed" > ~/.jobs/${PBS_JOBID}.txt
+#rm abinit-t*
+
+echo "";date;echo ""
