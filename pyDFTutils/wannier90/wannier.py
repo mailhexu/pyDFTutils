@@ -42,7 +42,7 @@ string_keys = (
     "wannier_plot_mode",
     "bands_plot_format", )
 
-list_keys = ("wannier_plot_list", "bands_plot_project", "mp_grid")
+list_keys = ("wannier_plot_list", "bands_plot_project", "mp_grid", 'exclude_bands')
 
 all_keys = float_keys + bool_keys + string_keys + list_keys
 
