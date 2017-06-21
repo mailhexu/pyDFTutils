@@ -98,7 +98,7 @@ reversed_w90_orb_dict = dict(zip(w90_orb_dict.values(), w90_orb_dict.keys()))
 
 
 class wannier_input(object):
-    def __init__(self, atoms, seed=None, bands=None, spin=0, **kwargs):
+    def __init__(self, atoms, seed=None, bands=None, spin=0,kpoints=None, **kwargs):
         """
         The wannier.win generator.
         """
@@ -111,7 +111,7 @@ class wannier_input(object):
         self.spin = spin
 
         self.projection_dict = None
-        self.kpoints = None
+        self.kpoints = kpoints
         self.kpath = None
         self.mp_grid = None
         self.float_params = {}

@@ -60,7 +60,7 @@ class pwscf(Calculator):
         if 'PW_COMMAND' in os.environ:
             self.pw_command = os.environ['PW_COMMAND']
         else:
-            self.pw_command='mpirun -np 12 pw.x -npool 2 -ntg 2 -ndiag 3'
+            self.pw_command='mpirun -np 6 pw.x -npool 2 -ntg 3 -ndiag 1'
 
 
 
