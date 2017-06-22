@@ -516,5 +516,5 @@ def gen_atoms():
                 atoms,
                 vasp5=True)
 
-
-gen_atoms()
+if __name__=='__main__':
+    gen_atoms()
