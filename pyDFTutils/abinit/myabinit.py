@@ -11,7 +11,7 @@ from ase.atoms import Atoms
 import numpy as np
 
 from ase.data import atomic_numbers
-from ase.units import Bohr, Hartree, fs, Ha
+from ase.units import Bohr, Hartree, fs, Ha, eV
 from ase.data import chemical_symbols
 from ase.io.abinit import read_abinit
 from ase.io.vasp import write_vasp
