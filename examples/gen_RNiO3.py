@@ -374,8 +374,8 @@ def determinant(m):
             m[1][0] * m[2][1] - m[0][2] * m[1][1] * m[2][0])
 
 
-def gen_RNiO3(a=3.709, c=3.709, rot_R=1.0, rot_M=1.0, jt=0.0, br=0.00):
-    atoms = gen_primitive(name='YNiO3', mag_order='PM', latticeconstant=3.7094)
+def gen_RNiO3(name='YNiO3',a=3.709, c=3.709, rot_R=1.0, rot_M=1.0, jt=0.0, br=0.00):
+    atoms = gen_primitive(name=name, mag_order='PM', latticeconstant=3.7094)
     spos = atoms.get_scaled_positions()
     atoms.set_cell([a, a, c, 90, 90, 90])
     atoms.set_scaled_positions(spos)
