@@ -167,7 +167,7 @@ def zenobe_abinit_main(queue_type='pbspro',
 
 
 def zenobe_vasp_large(queue_type='pbspro',
-                      command='abinit',
+                      command='vasp',
                       queue='large',
                       group='spinphon',
                       time="23:00:00",
@@ -189,7 +189,7 @@ def zenobe_vasp_large(queue_type='pbspro',
 
 
 def zenobe_vasp_main(queue_type='pbspro',
-                     command='abinit',
+                     command='vasp',
                      queue='large',
                      group='spinphon',
                      time="23:00:00",
