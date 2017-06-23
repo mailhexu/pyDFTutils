@@ -43,7 +43,7 @@ ls -l $$EXE
 echo "mpirun = " $$MPIRUN
 which $$MPIRUN
 
-$$MPIRUN $$EXE  |tee log
+$$MPIRUN $$EXE  
 
 echo "Succeed" > ~/.jobs/$${PBS_JOBID}.txt
 #rm abinit-t*

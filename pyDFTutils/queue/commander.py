@@ -59,10 +59,10 @@ def zenobescript(
         mpirun=mpirun)
     if command == 'abinit':
         defaults[
-            'command'] = r'/home/acad/ulg-phythema/hexu/.local/abinit/abinit_git/bin/abinit'
+            'command'] = r'/home/acad/ulg-phythema/hexu/.local/abinit/abinit_git/bin/abinit <abinit.files >abinit.log'
     elif command == 'vasp':
         defaults[
-            'command'] = r'/home/acad/ulg-phythema/hexu/.local/bin/vasp_hexu'
+            'command'] = r'/home/acad/ulg-phythema/hexu/.local/bin/vasp_hexu |tee log'
     else:
         defaults['command'] = command
     with open(os.path.expanduser('~/.ase/zenobe.tmpl')) as myfile:
