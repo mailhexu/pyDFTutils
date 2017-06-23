@@ -28,15 +28,16 @@ def nic4script(command='abinit', **kwargs):
     return text
 
 
-def zenobescript(command='abinit',
-                 #queue_type='pbspro',
-                 queue='large',
-                 group='spinphon',
-                 time="23:00:00",
-                 ngroup=4,
-                 mpiprocs=24,
-                 ompthreads=1,
-                 mem_per_cpu=2400):
+def zenobescript(
+        command='abinit',
+        #queue_type='pbspro',
+        queue='large',
+        group='spinphon',
+        time="23:00:00",
+        ngroup=4,
+        mpiprocs=24,
+        ompthreads=1,
+        mem_per_cpu=2400):
     ncpus = mpiprocs * ompthreads
     if ncpus == 24 and ngroup >= 4:
         queue = 'large'
@@ -71,9 +72,9 @@ def zenobescript(command='abinit',
 
 
 class commander():
-    def __init__(self, job_fname='job.sh',**kwargs):
+    def __init__(self, job_fname='job.sh', **kwargs):
         self.job_fname = job_fname
-        self.queue_type=None
+        self.queue_type = None
         self.set_parameter(**kwargs)
 
     def set_parameter(self,
@@ -89,13 +90,12 @@ class commander():
            'abinit'|'vasp'| user defined com.
         **kwargs: jobname, time, ntask, ntask_per_node, mem_per_cpu
         """
-        self.queue_type=queue_type
+        self.queue_type = queue_type
         if queue_type == 'slurm':
             self.jobfile_text = nic4script(command, **kwargs)
         elif queue_type == 'pbspro':
             self.jobfile_text = zenobescript(command, **kwargs)
         self.max_time = max_time
-
 
     def run_zenobe(self):
         # write job script.
@@ -119,8 +119,8 @@ class commander():
         if self.queue_type == 'slurm':
             raise NotImplementedError('Slurm is not on zenobe')
         else:
-            raise NotImplementedError('%s is not on zenobe'%self.queue_type)
-        
+            raise NotImplementedError('%s is not on zenobe' % self.queue_type)
+
 
 def zenobe_abinit_large(queue_type='pbspro',
                         command='abinit',

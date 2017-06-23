@@ -5,6 +5,8 @@ from ase.calculators.vasp import Vasp
 from ase.dft.kpoints import get_bandpath
 import matplotlib.pyplot as plt
 import os
+import sys
+from ase.utils import devnull, basestring
 import numpy as np
 import tempfile
 import ase.io
@@ -119,6 +121,44 @@ class myvasp(Vasp):
             output_template='vasp',
             track_output=False,
             **kwargs)
+        self.commander = None
+
+    def set_commander(self, commander):
+        self.commander = commander
+
+    def run(self):
+        """Method which explicitely runs VASP."""
+
+        if self.track_output:
+            self.out = self.output_template + str(self.run_counts) + '.out'
+            self.run_counts += 1
+        else:
+            self.out = self.output_template + '.out'
+        stderr = sys.stderr
+        p = self.input_params
+        if p['txt'] is None:
+            sys.stderr = devnull
+        elif p['txt'] == '-':
+            pass
+        elif isinstance(p['txt'], basestring):
+            sys.stderr = open(p['txt'], 'w')
+
+        if self.commander is not None:
+            exitcode = self.commander.run()
+        elif 'VASP_COMMAND' in os.environ:
+            vasp = os.environ['VASP_COMMAND']
+            exitcode = os.system('%s > %s' % (vasp, self.out))
+        elif 'VASP_SCRIPT' in os.environ:
+            vasp = os.environ['VASP_SCRIPT']
+            locals = {}
+            exec(compile(open(vasp).read(), vasp, 'exec'), {}, locals)
+            exitcode = locals['exitcode']
+        else:
+            raise RuntimeError('Please set either VASP_COMMAND'
+                               ' or VASP_SCRIPT environment variable')
+        sys.stderr = stderr
+        if exitcode != 0:
+            raise RuntimeError('Vasp exited with exit code: %d.  ' % exitcode)
 
     def magnetic_calculation(self, do_nospin=True):
         self.set(ispin=1, istart=0)
