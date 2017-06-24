@@ -5,7 +5,7 @@ from ase import Atoms
 
 import numpy as np
 import copy
-import perovskite_mode
+import pyDFTutils.perovskite.perovskite_mode
 import spglib.spglib
 #from phonopy.structure.atoms import PhonopyAtoms as Atoms
 from pyDFTutils.perovskite.cubic_perovskite import gen_primitive
