@@ -1,7 +1,7 @@
 #!/usr/bin/env  python
 from ase.io.vasp import read_vasp
 from pyDFTutils.ase_utils import cell_to_cellpar
-import pyspglib.spglib as spglib
+import spglib.spglib as spglib
 import sys
 
 def view_cellpars(filename='POSCAR'):
