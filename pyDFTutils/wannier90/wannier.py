@@ -503,7 +503,7 @@ def sub_text(filename, **kwargs):
             outfile.write(line)
 
 
-def run_wannier(command=None, spin=None, copy_win=True):
+def run_wannier(command=None, spin=None, copy_win=True,zenobe=False):
     """
     run wannier90.
     """
@@ -522,7 +522,11 @@ def run_wannier(command=None, spin=None, copy_win=True):
             myfile.write(spinline)
             myfile.write(open('wannier90.win').read())
         #os.system('cp wannier90.win %s.win' % name)
-    os.system("%s %s" % (command, name))
+    if not zenobe:
+        os.system("%s %s" % (command, name))
+    else:
+        from pyDFTutils.queue.commander  import zenobe_run_wannier90
+        zenobe_run_wannier90(spin=spin)
     if spin is not None:
         if not os.path.exists(name):
             os.mkdir(name)
