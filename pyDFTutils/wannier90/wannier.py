@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from ase_utils import symbol_number, symnum_to_sym
+from pyDFTutils.ase_utils import symbol_number, symnum_to_sym
 import numpy as np
 import re
 import os
@@ -47,8 +47,8 @@ list_keys = ("wannier_plot_list", "bands_plot_project", "mp_grid", 'exclude_band
 all_keys = float_keys + bool_keys + string_keys + list_keys
 
 s_orbs = ['s']
-eg_orbs = ['dxz', 'dyz', 'dxy']
-t2g_orbs = ['dz2', 'dx2-y2']
+t2g_orbs = ['dxz', 'dyz', 'dxy']
+eg_orbs = ['dz2', 'dx2-y2']
 d_orbs = ['dz2', 'dxz', 'dyz', 'dx2-y2', 'dxy']
 p_orbs = ['pz', 'px', 'py']
 
@@ -94,7 +94,7 @@ w90_orb_dict = {
     'f': (None, 3),
 }
 
-reversed_w90_orb_dict = dict(zip(w90_orb_dict.values(), w90_orb_dict.keys()))
+reversed_w90_orb_dict = dict(list(zip(w90_orb_dict.values(), w90_orb_dict.keys())))
 
 
 class wannier_input(object):
@@ -184,7 +184,7 @@ class wannier_input(object):
                 self.initial_basis.append([atom_name, mi, l, r, spin])
                 if axis is not None:
                     self.axis[atom_name] = axis
-                    print "Axis added"
+                    #print("Axis added")
         else:
             sdict = symbol_number(self.atoms)
             for aname in sdict:
@@ -193,7 +193,7 @@ class wannier_input(object):
                         self.initial_basis.append([aname, mi, l, r, spin])
                         if axis is not None:
                             self.axis[aname] = axis
-                            print "Axis added"
+                            print("Axis added")
 
     def add_basis_from_dict(self, atom_map=None, conf_dict=None, band='v+c'):
         """
@@ -233,7 +233,7 @@ class wannier_input(object):
                         spin = None
                     elif len(conf) == 4:
                         orb_name, r, occ, spin = conf
-                    print conf
+                    print(conf)
                     if occ > 0 or band == 'v+c':
                         self.add_basis(
                             atom_name=s,
@@ -309,14 +309,14 @@ class wannier_input(object):
         :param  labels: the name of the kpoints.
         :param npoints: the number of kpoints in between.
         """
-        self.kpath = zip(labels, np.array(kpoints, dtype=float))
+        self.kpath = list(zip(labels, np.array(kpoints, dtype=float)))
         self.set(bands_num_points=npoints)
 
     def gen_input(self):
         if self.int_params['num_wann'] is None:
             self.int_params['num_wann'] = len(self.initial_basis)
-        print self.int_params
-        print self.float_params
+        print(self.int_params)
+        print(self.float_params)
         input_text = ""
         for key, value in self.float_params.items():
             if value is not None:
@@ -335,7 +335,7 @@ class wannier_input(object):
             if value is not None and key not in ['mp_grid']:
                 input_text += "{0} = {1}\n".format(key,
                                                    ','.join(map(str, value)))
-        print input_text
+        print(input_text)
 
         # projection block
         if self.projection_dict is not None or self.projection_dict_by_site is not None:
@@ -382,8 +382,8 @@ class wannier_input(object):
         # atom cordinates
         if self.atoms is not None:
             input_text += '\nbegin atoms_cart\n'
-            for sym, pos in zip(self.atoms.get_chemical_symbols(),
-                                self.atoms.get_positions()):
+            for sym, pos in list(zip(self.atoms.get_chemical_symbols(),
+                                self.atoms.get_positions())):
                 input_text += '{0}\t{1}\n'.format(sym,
                                                   '\t'.join(map(str, pos)))
             input_text += 'end atoms_cart\n\n'
@@ -402,7 +402,7 @@ class wannier_input(object):
         # k path
         if self.kpath is not None:
             input_text += 'begin kpoint_path\n'
-            for k_from, k_to in zip(self.kpath[:-1], self.kpath[1:]):
+            for k_from, k_to in list(zip(self.kpath[:-1], self.kpath[1:])):
                 input_text += "{0} {1}\t{2} {3}\n".format(
                     k_from[0], ' '.join([str(x) for x in k_from[1]]), k_to[0],
                     ' '.join([str(x) for x in k_to[1]]))
@@ -424,7 +424,7 @@ class wannier_input(object):
             infile.write(self.input_text)
         self.write_basis(fname=basis_fname)
         if save_dict:
-            with open('%s.pickle' % fname, 'w') as pfile:
+            with open('%s.pickle' % fname, 'wb') as pfile:
                 pickle.dump(self, pfile)
 
     def get_nwann(self):
@@ -503,7 +503,7 @@ def sub_text(filename, **kwargs):
             outfile.write(line)
 
 
-def run_wannier(command=None, spin=None, copy_win=True):
+def run_wannier(command=None, spin=None, copy_win=True,zenobe=False):
     """
     run wannier90.
     """
@@ -520,9 +520,15 @@ def run_wannier(command=None, spin=None, copy_win=True):
     if spin is not None and copy_win:
         with open("%s.win" % name, 'w') as myfile:
             myfile.write(spinline)
-            myfile.write(open('wannier90.win').read())
+            str=open('wannier90.win').read()
+            str=str.replace('hr_plot','write_hr')
+            myfile.write(str)
         #os.system('cp wannier90.win %s.win' % name)
-    os.system("%s %s" % (command, name))
+    if not zenobe:
+        os.system("%s %s" % (command, name))
+    else:
+        from pyDFTutils.queue.commander  import zenobe_run_wannier90
+        zenobe_run_wannier90(spin=spin)
     if spin is not None:
         if not os.path.exists(name):
             os.mkdir(name)
@@ -591,7 +597,7 @@ def wannier_closeshell(atoms, val_dict=None, band='v+c'):
     wa = wannier_input(atoms)
     wa.add_basis_from_dict(atom_map=vals, conf_dict=econf, band=band)
     syms = atoms.get_chemical_symbols()
-    print wa.gen_input()
+    print(wa.gen_input())
     #print wa.get_nwann()
     return wa
 

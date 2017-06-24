@@ -62,7 +62,7 @@ def zenobescript(
             'command'] = r'/home/acad/ulg-phythema/hexu/.local/abinit/abinit_git/bin/abinit <abinit.files >abinit.log'
     elif command == 'vasp':
         defaults[
-            'command'] = r'/home/acad/ulg-phythema/hexu/.local/bin/vasp_hexu |tee log'
+            'command'] = r'/home/acad/ulg-phythema/hexu/.local/bin/vasp_hexu'
     else:
         defaults['command'] = command
     with open(os.path.expanduser('~/.ase/zenobe.tmpl')) as myfile:
@@ -97,6 +97,7 @@ class commander():
         elif queue_type == 'pbspro':
             self.jobfile_text = zenobescript(command, **kwargs)
         self.max_time = max_time
+        self.wait = wait
 
     def run_zenobe(self):
         # write job script.
@@ -111,7 +112,7 @@ class commander():
             stderr=subprocess.PIPE)
         out, err = p.communicate()
         job_id = out.decode().strip()
-        if wait:
+        if self.wait:
             exitcode = wait_job_success(job_id, maxtime=self.max_time)
         else:
             exitcode = 0
@@ -216,7 +217,7 @@ def zenobe_vasp_main(queue_type='pbspro',
 
 
 def zenobe_wannier90(queue_type='pbspro',
-                     command='wannier90.x wannier90.up.win',
+                     command='/home/acad/ulg-phythema/hexu/.local/bin/wannier90.x wannier90.up.win',
                      queue='large',
                      group='spinphon',
                      time="2:00:00",
@@ -241,11 +242,11 @@ def zenobe_wannier90(queue_type='pbspro',
 
 def zenobe_run_wannier90(spin=None, **kwargs):
     if spin is None:
-        command = 'wannier90.x wannier90.win'
+        command = '/home/acad/ulg-phythema/hexu/.local/bin/wannier90.x wannier90.win'
     elif spin == 'up':
-        command = 'wannier90.x wannier90.up.win'
+        command = '/home/acad/ulg-phythema/hexu/.local/bin/wannier90.x wannier90.up.win'
     elif spin == 'dn' or spin == 'down':
-        command = 'wannier90.x wannier90.dn.win'
+        command = '/home/acad/ulg-phythema/hexu/.local/bin/wannier90.x wannier90.dn.win'
     else:
         raise NotImplementedError("spin should be None|up|dn")
     mycommander = zenobe_wannier90(command=command, **kwargs)
