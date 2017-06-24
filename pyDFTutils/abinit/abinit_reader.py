@@ -85,7 +85,9 @@ class abinit_reader():
         idtset: number of dataset.
         name: name of part. Ewald,Frozen_wf_non_local, Frozen_wf_xc1, Frozen_wf_xc2, non_stationary_local, non_stationary_non_local, non_stationary_wf_overlap,2nd_order (ifc), dynamical_matrix
         """
-        namedict = {"Ewald": "Ewald", }
+        namedict = {
+            "Ewald": "Ewald",
+        }
 
     def parse_perturbation_dataset(self, idtset, detail=True):
         lines = iter(self.dataset_out[idtset - 1])
@@ -322,9 +324,9 @@ def get_mat1d(dirname, masses, term='TOT'):
     ifcmat1d = np.zeros([5, 5], dtype=float)
     for ipert1 in range(5):
         for ipert2 in range(5):
-            ifcmat1d[ipert1, ipert2] = np.real(ifc[
-                1, ipert1 + 1, 1, ipert2 + 1]) / np.sqrt(masses[ipert1] *
-                                                         masses[ipert2])
+            ifcmat1d[ipert1, ipert2] = np.real(
+                ifc[1, ipert1 + 1, 1, ipert2 + 1]) / np.sqrt(masses[ipert1] *
+                                                             masses[ipert2])
     return ifcmat1d
 
 
@@ -340,7 +342,8 @@ def test_ddb(name):
     ifcmat1d = get_mat1d(dirname, masses, term='TOT')
     #ifcmat1d=asr_1d(ifcmat1d)
     #print ifcmat1d
-    eigvals, eigvecs = eigh(ifcmat1d, )
+    eigvals, eigvecs = eigh(
+        ifcmat1d, )
     s = np.sign(eigvals)
     #print eigvals
     #print "Phonon Freq (Ha):"
@@ -349,7 +352,6 @@ def test_ddb(name):
     print(s * np.sqrt(s * eigvals) * 19474.63 / Ha)
     #print np.dot(np.dot(v,ifcmat1d),v)
 
-    
     print("--Eigen vector:--")
     v = eigvecs[:, 0]
     ifcmat1d_fr = get_mat1d(dirname, masses, term='FR')
@@ -357,7 +359,8 @@ def test_ddb(name):
     ifcmat1d_ew = get_mat1d(dirname, masses, term='EW')
     print(ifcmat1d_ew)
     print("self IFC")
-    print([ifcmat1d[i,i] for i in range(5)])
+    print([ifcmat1d[i, i] for i in range(5)])
+
     #func=lambda mat: np.sign(v)* np.sqrt(np.sign(v)*)
     def func(mat):
         eigv = np.dot(np.dot(v, mat), v)
@@ -372,15 +375,15 @@ def test_ddb(name):
     print("Ewald:", func(ifcmat1d_ew))
 
     for i in range(5):
-        print("-- %s --"%symbols[i])
-        v=[0,0,0,0,0]
-        v[i]=1.0
+        print("-- %s --" % symbols[i])
+        v = [0, 0, 0, 0, 0]
+        v[i] = 1.0
+
         #func=lambda mat: np.sign(v)* np.sqrt(np.sign(v)*)
         def func(mat):
             eigv = np.dot(np.dot(v, mat), v)
             s = np.sign(eigv)
             return s * np.sqrt(s * eigv) * 19474.63 / Ha
-
 
         print("Total:", func(ifcmat1d))
         print("Frozen:", func(ifcmat1d_fr))
@@ -388,8 +391,8 @@ def test_ddb(name):
         print("Ewald:", func(ifcmat1d_ew))
 
 
-
-for name in [
+if __name__ == '__main__':
+    for name in [
             #'BaTiO3',
             'SrTiO3',
             'CaTiO3',
@@ -415,10 +418,10 @@ for name in [
             'BiGaO3',
             'NaNbO3',
             'KTaO3',
-]:
-    try:
-        print("===================")
-        print(name)
-        test_ddb(name)
-    except:
-        pass
+    ]:
+        try:
+            print("===================")
+            print(name)
+            test_ddb(name)
+        except:
+            pass

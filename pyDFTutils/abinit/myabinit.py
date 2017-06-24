@@ -11,16 +11,15 @@ from ase.atoms import Atoms
 import numpy as np
 
 from ase.data import atomic_numbers
-from ase.units import Bohr, Hartree, fs, Ha
+from ase.units import Bohr, Hartree, fs, Ha, eV
 from ase.data import chemical_symbols
 from ase.io.abinit import read_abinit
 from ase.io.vasp import write_vasp
 from ase.calculators.calculator import FileIOCalculator, Parameters, kpts2mp, \
     ReadError,all_changes,Calculator
 import subprocess
-from pyDFTutils.ase_utils.kpoints import get_ir_kpts,cubic_kpath
+from pyDFTutils.ase_utils.kpoints import get_ir_kpts, cubic_kpath
 from string import Template
-
 
 keys_with_units = {
     'toldfe': 'eV',
@@ -57,7 +56,8 @@ keys_with_units = {
     'warningminimumatomicdistance': 'Ang',
     'rcspatial': 'Ang',
     'kgridcutoff': 'Ang',
-    'latticeconstant': 'Ang'}
+    'latticeconstant': 'Ang'
+}
 
 
 class Abinit(FileIOCalculator):
@@ -74,8 +74,8 @@ class Abinit(FileIOCalculator):
     if 'ASE_ABINIT_SCRIPT' in os.environ:
         command = os.environ['ASE_ABINIT_SCRIPT']
     else:
-	print("Please set environment variable $ASE_ABINIT_SCRIPT")
-	raise ValueError('env $ASE_ABINIT_SCRIPT not set.')
+        print("Please set environment variable $ASE_ABINIT_SCRIPT")
+        raise ValueError('env $ASE_ABINIT_SCRIPT not set.')
     default_parameters = dict(
         xc='LDA',
         smearing=None,
@@ -85,8 +85,14 @@ class Abinit(FileIOCalculator):
         raw=None,
         pps='fhi')
 
-    def __init__(self, restart=None, ignore_bad_restart_file=False,
-                 label='abinit', atoms=None, scratch=None, pppaths=None, **kwargs):
+    def __init__(self,
+                 restart=None,
+                 ignore_bad_restart_file=False,
+                 label='abinit',
+                 atoms=None,
+                 scratch=None,
+                 pppaths=None,
+                 **kwargs):
         """Construct ABINIT-calculator object.
 
         Parameters
@@ -106,31 +112,32 @@ class Abinit(FileIOCalculator):
         """
 
         self.scratch = scratch
-	self.U_dict={}
+        self.U_dict = {}
         self.species = None
         self.ppp_list = None
-        self.pspdict={}
+        self.pspdict = {}
         self.pppaths = pppaths
-        self.ndtset=0 #num of data sets
-        self.atoms=atoms
+        self.ndtset = 0  #num of data sets
+        self.atoms = atoms
         FileIOCalculator.__init__(self, restart, ignore_bad_restart_file,
                                   label, atoms, **kwargs)
-        self.commander=None
+        self.commander = None
 
-    def set_command(self,command=None,commander=None):
+    def set_command(self, command=None, commander=None):
         """
         set command. will override command from $ASE_ABINIT_SCRIPT.
         Parameters:
         ==============
-        command: a single command to be excuted. 
+        command: a single command to be excuted.
         commander: A object which has commander.run()
         Only one of command and commander should be set.
         """
         if command is not None:
-            self.command=command
+            self.command = command
         if commander is not None:
-            self.command=None
-            self.commander=commander
+            self.command = None
+            self.commander = commander
+
     def check_state(self, atoms):
         system_changes = FileIOCalculator.check_state(self, atoms)
         # Ignore boundary conditions:
@@ -143,7 +150,7 @@ class Abinit(FileIOCalculator):
         if changed_parameters:
             self.reset()
 
-    def set_Hubbard_U(self, U_dict,type=1 ):
+    def set_Hubbard_U(self, U_dict, type=1):
         """
         set Hubbard_U parameters.
 
@@ -154,183 +161,322 @@ class Abinit(FileIOCalculator):
 
             calc.set_Hubbard_U({'Fe':{'L':,2,'U':4,'J',0.3}, 'O':{'L':1,'U':1,'J':0.3} },type=1)
         """
-        self.U_type=type
-        self.U_dict=U_dict
+        self.U_type = type
+        self.U_dict = U_dict
         self.set(usepawu=type)
 
-
-    def add_dataset(self,**kwargs):
-        self.ndtset +=1
+    def add_dataset(self, **kwargs):
+        self.ndtset += 1
         self.set(ndtset=self.ndtset)
-        kw={}
+        kw = {}
         for key in kwargs:
-            keyn="%s%s"%(key,self.ndtset)
-            kw[keyn]=kwargs[key]
+            keyn = "%s%s" % (key, self.ndtset)
+            kw[keyn] = kwargs[key]
         self.set(**kw)
 
-    def ldos_calculation(self,atoms,pdos=True):
+    def ldos_calculation(self, atoms, pdos=True):
         if os.path.exists('abinito_DEN'):
             if os.path.exists('abiniti_DEN'):
                 os.remove('abiniti_DEN')
-            os.symlink('./abinito_DEN','./abiniti_DEN')
+            os.symlink('./abinito_DEN', './abiniti_DEN')
         # pawprtdos=2 and prtdosm should be used together
-        self.set(autoparal=0, iscf=-2,prtdos=2, pawprtdos=0,prtdosm=0,tolwfr=1e-21,toldfe=0)
+        self.set(
+            autoparal=0,
+            iscf=-2,
+            prtdos=2,
+            pawprtdos=0,
+            prtdosm=0,
+            tolwfr=1e-21,
+            toldfe=0)
         if pdos:
-            self.set(autoparal=0, iscf=-2,prtdos=3, pawprtdos=2,prtdosm=2,tolwfr=1e-21,toldfe=0)
-        self.calculate(atoms,properties=[])
+            self.set(
+                autoparal=0,
+                iscf=-2,
+                prtdos=3,
+                pawprtdos=2,
+                prtdosm=2,
+                tolwfr=1e-21,
+                toldfe=0)
+        self.calculate(atoms, properties=[])
         if not os.path.exists('LDOS'):
             os.mkdir('LDOS')
-        for fname in ['abinit.in','abinit.txt','abinit.log','abinit.ase','abinito_DOS']:
+        for fname in [
+                'abinit.in', 'abinit.txt', 'abinit.log', 'abinit.ase',
+                'abinito_DOS'
+        ]:
             if os.path.exists(fname):
                 shutil.copy(fname, 'LDOS')
-        self.set(iscf=17,prtdos=0,prtdosm=0)
+        self.set(iscf=17, prtdos=0, prtdosm=0)
 
-    def band_calculation(self,kpts):
+    def band_calculation(self, kpts):
         # TODO finish this
         self.set(iscf=-3)
         pass
 
-    def relax_calculation(self,atoms,pre_relax=False,**kwargs):
-        self.set( ionmov=2,ecutsm=0.5,dilatmx=1.1,optcell=2,ntime=50)
+    def relax_calculation(self, atoms, pre_relax=False, **kwargs):
+        self.set(ionmov=2, ecutsm=0.5, dilatmx=1.1, optcell=2, ntime=50)
         if kwargs:
             self.set(**kwargs)
-        self.calculate(atoms=atoms,properties=[])
-        self.set(ntime=0,toldfe=0.0)
-        newatoms=read_output(fname='abinit.txt',afterend=True)
-        write_vasp('CONTCAR',newatoms,vasp5=True)
+        self.calculate(atoms=atoms, properties=[])
+        self.set(ntime=0, toldfe=0.0)
+        newatoms = read_output(fname='abinit.txt', afterend=True)
+        write_vasp('CONTCAR', newatoms, vasp5=True)
         print(newatoms)
-        scaled_positions=newatoms.get_scaled_positions()
-        cell=newatoms.get_cell()
+        scaled_positions = newatoms.get_scaled_positions()
+        cell = newatoms.get_cell()
         atoms.set_cell(cell)
         atoms.set_scaled_positions(scaled_positions)
         if not os.path.exists('RELAX'):
             os.mkdir('RELAX')
-        for fname in ['abinit.in','abinit.txt','abinit.log','abinit.ase','CONTCAR']:
+        for fname in [
+                'abinit.in', 'abinit.txt', 'abinit.log', 'abinit.ase',
+                'CONTCAR'
+        ]:
             if os.path.exists(fname):
                 shutil.copy(fname, 'RELAX')
 
         return atoms
 
-    def scf_calculation(self,atoms,dos=True,**kwargs):
-        self.set(ntime=0,toldfe=0.0)
+    def scf_calculation(self, atoms, dos=True, **kwargs):
+        self.set(ntime=0, toldfe=0.0)
         if dos:
             self.set(prtdos=2)
-        self.calculate(atoms=atoms,)
+        self.calculate(
+            atoms=atoms, )
         if not os.path.exists('SCF'):
             os.mkdir('SCF')
-        for fname in ['abinit.in','abinit.txt','abinit.log','abinit.ase']:
+        for fname in ['abinit.in', 'abinit.txt', 'abinit.log', 'abinit.ase']:
             if os.path.exists(fname):
                 shutil.copy(fname, 'SCF')
         if dos:
             if not os.path.exists('LDOS'):
                 os.mkdir('LDOS')
-        for fname in ['abinit.in','abinit.txt','abinit.log','abinit.ase','abinito_DOS']:
+        for fname in [
+                'abinit.in', 'abinit.txt', 'abinit.log', 'abinit.ase',
+                'abinito_DOS'
+        ]:
             if os.path.exists(fname):
                 shutil.copy(fname, 'LDOS')
         return atoms
 
-    def wannier_calculation(self,atoms,wannier_input,**kwargs):
-        self.set(ntime=0,toldfe=0.0,w90iniprj=2,prtwant=2,paral_kgb=0,kptopt=3,istwfk=1)
+    def wannier_calculation(self, atoms, wannier_input, **kwargs):
+        self.set(
+            ntime=0,
+            toldfe=0.0,
+            w90iniprj=2,
+            prtwant=2,
+            paral_kgb=0,
+            kptopt=3,
+            istwfk=1)
         self.set(**kwargs)
         wannier_input.write_input()
-        self.calculate(atoms=atoms,)
+        self.calculate(
+            atoms=atoms, )
         if not os.path.exists('Wannier'):
             os.mkdir('Wannier')
-        for fname in ['abinit.in','abinit.txt','abinit.log','abinit.ase','abinito_DOS']:
+        for fname in [
+                'abinit.in', 'abinit.txt', 'abinit.log', 'abinit.ase',
+                'abinito_DOS'
+        ]:
             if os.path.exists(fname):
                 shutil.copy(fname, 'Wannier')
         return atoms
 
-    def calculate_phonon(self, atoms,ddk=True, efield=True,strain=True, qpts=[2,2,2], tolwfr=1e-23, tolvrs=1e-12,prtwf=0,postproc=True,ifcout=10240,rfasr=1,plot_band=True,kpath=cubic_kpath()[0],prtbbb=0,split_dataset=True):
-        self.ndtset=0
-        self.add_dataset(getwfk=0,kptopt=1,nqpt=0,rfphon=0,tolvrs=0,tolwfr=tolwfr,iscf=17)
+    def calculate_phonon(self,
+                         atoms,
+                         ddk=True,
+                         efield=True,
+                         strain=True,
+                         qpts=[2, 2, 2],
+                         tolwfr=1e-23,
+                         tolvrs=1e-12,
+                         prtwf=0,
+                         postproc=True,
+                         ifcout=10240,
+                         rfasr=1,
+                         plot_band=True,
+                         kpath=cubic_kpath()[0],
+                         prtbbb=0,
+                         split_dataset=True):
+        self.ndtset = 0
+        self.add_dataset(
+            getwfk=0,
+            kptopt=1,
+            nqpt=0,
+            rfphon=0,
+            tolvrs=0,
+            tolwfr=tolwfr,
+            iscf=17)
         # d/dk
         # efield / strain Then dataset2: ddk, dataset3: efield/strain and Gamma phonon
         # else: dataset2: Gamma phonon
         if efield or strain:
-            self.add_dataset(iscf=-3,getwfk=1,kptopt=2,rfelfd=2,nqpt=1,rfphon=0,tolvrs=0,tolwfr=tolwfr*10,qpt='0 0 0')
-            self.add_dataset(getwfk=1,getddk=self.ndtset,kptopt=2,rfelfd=3*int(efield), rfstrs=3*strain, nqpt=1,iscf=7,qpt='0 0 0',rfphon=1 ,rfatpol="%s %s"%(1,len(atoms)),rfdir='1 1 1',tolvrs=tolvrs,toldfe=0,prtwf=prtwf,prtbbb=prtbbb)
+            self.add_dataset(
+                iscf=-3,
+                getwfk=1,
+                kptopt=2,
+                rfelfd=2,
+                nqpt=1,
+                rfphon=0,
+                tolvrs=0,
+                tolwfr=tolwfr * 10,
+                qpt='0 0 0')
+            self.add_dataset(
+                getwfk=1,
+                getddk=self.ndtset,
+                kptopt=2,
+                rfelfd=3 * int(efield),
+                rfstrs=3 * strain,
+                nqpt=1,
+                iscf=7,
+                qpt='0 0 0',
+                rfphon=1,
+                rfatpol="%s %s" % (1, len(atoms)),
+                rfdir='1 1 1',
+                tolvrs=tolvrs,
+                toldfe=0,
+                prtwf=prtwf,
+                prtbbb=prtbbb)
         # phonon
-        if isinstance(qpts[0],int):
-            qpoints=get_ir_kpts(atoms,qpts)
+        if isinstance(qpts[0], int):
+            qpoints = get_ir_kpts(atoms, qpts)
         else:
-            qpoints=qpts
-        list2str=lambda l: " ".join(map(str,l))
+            qpoints = qpts
+        list2str = lambda l: " ".join(map(str, l))
         for q in qpoints:
-            if np.isclose(np.array(q),np.array([0,0,0])).all():
+            if np.isclose(np.array(q), np.array([0, 0, 0])).all():
                 if not (efield or strain):
-                    self.add_dataset(getwfk=1, kptopt=2, rfphon=1, rfatpol="%s %s"%(1,len(atoms)), rfdir="1 1 1", toldfe=0,tolvrs=tolvrs,nqpt=1,qpt=list2str(q),iscf=7,rfasr=rfasr,prtwf=prtwf)
+                    self.add_dataset(
+                        getwfk=1,
+                        kptopt=2,
+                        rfphon=1,
+                        rfatpol="%s %s" % (1, len(atoms)),
+                        rfdir="1 1 1",
+                        toldfe=0,
+                        tolvrs=tolvrs,
+                        nqpt=1,
+                        qpt=list2str(q),
+                        iscf=7,
+                        rfasr=rfasr,
+                        prtwf=prtwf)
             else:
-                self.add_dataset(getwfk=1, kptopt=3, rfphon=1, rfatpol="%s %s"%(1,len(atoms)), rfdir="1 1 1", toldfe=0,tolvrs=tolvrs,nqpt=1,qpt=list2str(q),iscf=7,rfasr=rfasr,prtwf=prtwf)
+                self.add_dataset(
+                    getwfk=1,
+                    kptopt=3,
+                    rfphon=1,
+                    rfatpol="%s %s" % (1, len(atoms)),
+                    rfdir="1 1 1",
+                    toldfe=0,
+                    tolvrs=tolvrs,
+                    nqpt=1,
+                    qpt=list2str(q),
+                    iscf=7,
+                    rfasr=rfasr,
+                    prtwf=prtwf)
         if not split_dataset:
-            self.calculate(atoms,properties=[])
+            self.calculate(atoms, properties=[])
         else:
-            if True:#efield or strain:
+            if True:  #efield or strain:
                 # 1. ground state should be first.
                 # 2. ddk & efield/strain & gamma
                 # 3. qpoints.
                 # 2 and 3 can be parallelized. Will be implemented later.
                 for j in range(self.ndtset):
-                    jdtset=j+1
+                    jdtset = j + 1
                     self.set(ndtset=1, jdtset=jdtset)
-                    self.calculate(atoms,properties=[])
-                    os.system('cp abinit.in abinit_DS%s.in'%jdtset)
-                    os.system('cp abinit.txt abinit_DS%s.txt'%jdtset)
-                    os.system('cp abinit.log abinit_DS%s.log'%jdtset)
+                    self.calculate(atoms, properties=[])
+                    os.system('cp abinit.in abinit_DS%s.in' % jdtset)
+                    os.system('cp abinit.txt abinit_DS%s.txt' % jdtset)
+                    os.system('cp abinit.log abinit_DS%s.log' % jdtset)
             else:
                 raise Exception("Shouldn't be here.")
 
         if postproc:
             if efield or strain:
-                text=gen_mrgddb_input(self.prefix, list(range(3, self.ndtset+1)))
+                text = gen_mrgddb_input(self.prefix,
+                                        list(range(3, self.ndtset + 1)))
             else:
-                text=gen_mrgddb_input(self.prefix, list(range(2,self.ndtset+1)))
-            with open('%s.mrgddb.in'%self.prefix, 'w') as myfile:
+                text = gen_mrgddb_input(self.prefix,
+                                        list(range(2, self.ndtset + 1)))
+            with open('%s.mrgddb.in' % self.prefix, 'w') as myfile:
                 myfile.write(text)
-            os.system("mrgddb <%s.mrgddb.in |tee %s.mrgddb.log"%(self.prefix,self.prefix))
+            os.system("mrgddb <%s.mrgddb.in |tee %s.mrgddb.log" %
+                      (self.prefix, self.prefix))
 
-            with open('%s_ifc.files'%self.prefix, 'w') as myfile:
+            with open('%s_ifc.files' % self.prefix, 'w') as myfile:
                 myfile.write(gen_ifc_files(prefix=self.prefix))
             if efield:
-                dipdip=1
+                dipdip = 1
             else:
-                dipdip=0
-            with open('%s_ifc.in'%self.prefix, 'w') as myfile:
-                myfile.write( gen_ifc_in(ifcflag=1,brav=1,qpts=qpts,nqshft=1, ifcana=1, ifcout=ifcout, natifc=len(atoms), atifc=" ".join(map(str, list(range(1,len(atoms)+1)))), chneut=1, dipdip=dipdip,kpath=kpath))
-            os.system("anaddb < %s_ifc.files"%self.prefix)
+                dipdip = 0
+            with open('%s_ifc.in' % self.prefix, 'w') as myfile:
+                myfile.write(
+                    gen_ifc_in(
+                        ifcflag=1,
+                        brav=1,
+                        qpts=qpts,
+                        nqshft=1,
+                        ifcana=1,
+                        ifcout=ifcout,
+                        natifc=len(atoms),
+                        atifc=" ".join(
+                            map(str, list(range(1, len(atoms) + 1)))),
+                        chneut=1,
+                        dipdip=dipdip,
+                        kpath=kpath))
+            os.system("anaddb < %s_ifc.files" % self.prefix)
 
-
-
-    def postproc_phonon(self,atoms,prefix='abinit',ndtset=None,efield=True,qpts=[2,2,2], tolwfr=1e-23, tolvrs=1e-9,postproc=True,ifcout=1024,rfasr=1):
+    def postproc_phonon(self,
+                        atoms,
+                        prefix='abinit',
+                        ndtset=None,
+                        efield=True,
+                        qpts=[2, 2, 2],
+                        tolwfr=1e-23,
+                        tolvrs=1e-9,
+                        postproc=True,
+                        ifcout=1024,
+                        rfasr=1):
         if True:
-            ndtset=self.ndtset
+            ndtset = self.ndtset
             if efield:
-                text=gen_mrgddb_input(prefix, list(range(3, ndtset+1)))
+                text = gen_mrgddb_input(prefix, list(range(3, ndtset + 1)))
             else:
-                text=gen_mrgddb_input(prefix, list(range(2,ndtset+1)))
-            with open('%s.mrgddb.in'%prefix, 'w') as myfile:
+                text = gen_mrgddb_input(prefix, list(range(2, ndtset + 1)))
+            with open('%s.mrgddb.in' % prefix, 'w') as myfile:
                 myfile.write(text)
-            os.system("mrgddb <%s.mrgddb.in |tee %s.mrgddb.log"%(prefix,prefix))
+            os.system("mrgddb <%s.mrgddb.in |tee %s.mrgddb.log" %
+                      (prefix, prefix))
 
-            with open('%s_ifc.files'%prefix, 'w') as myfile:
+            with open('%s_ifc.files' % prefix, 'w') as myfile:
                 myfile.write(gen_ifc_files(prefix=prefix))
             if efield:
-                dipdip=1
+                dipdip = 1
             else:
-                dipdip=0
-            with open('%s_ifc.in'%prefix, 'w') as myfile:
-                myfile.write( gen_ifc_in(ifcflag=1,brav=1,qpts=qpts,nqshft=1, ifcana=1, ifcout=ifcout, natifc=len(atoms), atifc=" ".join(map(str, list(range(1,len(atoms)+1)))), chneut=1, dipdip=dipdip))
+                dipdip = 0
+            with open('%s_ifc.in' % prefix, 'w') as myfile:
+                myfile.write(
+                    gen_ifc_in(
+                        ifcflag=1,
+                        brav=1,
+                        qpts=qpts,
+                        nqshft=1,
+                        ifcana=1,
+                        ifcout=ifcout,
+                        natifc=len(atoms),
+                        atifc=" ".join(
+                            map(str, list(range(1, len(atoms) + 1)))),
+                        chneut=1,
+                        dipdip=dipdip))
 
-            os.system("anaddb < %s_ifc.files"%prefix)
-
-
+            os.system("anaddb < %s_ifc.files" % prefix)
 
     def write_input(self, atoms, properties=None, system_changes=None):
         """Write input parameters to files-file."""
         FileIOCalculator.write_input(self, atoms, properties, system_changes)
 
         if ('numbers' in system_changes or
-            'initial_magmoms' in system_changes):
+                'initial_magmoms' in system_changes):
             self.initialize(atoms)
 
         fh = open(self.label + '.files', 'w')
@@ -353,15 +499,14 @@ class Abinit(FileIOCalculator):
         for ppp in self.ppp_list:
             if not os.path.exists('psp'):
                 os.makedirs('psp')
-            newppp = os.path.join('psp',os.path.split(ppp)[-1])
+            newppp = os.path.join('psp', os.path.split(ppp)[-1])
             shutil.copyfile(ppp, newppp)
-            fh.write('%s\n' % (newppp)) # psp file path
+            fh.write('%s\n' % (newppp))  # psp file path
         fh.close()
 
         # write psp info
-        with open('pspinfo.txt','w') as myfile:
+        with open('pspinfo.txt', 'w') as myfile:
             myfile.write(str(self.pspdict))
-
 
         # Abinit will write to label.txtA if label.txt already exists,
         # so we remove it if it's there:
@@ -375,7 +520,7 @@ class Abinit(FileIOCalculator):
         fh = open(self.label + '.in', 'w')
         inp = {}
         inp.update(param)
-        for key in ['xc', 'smearing', 'kpts', 'pps', 'raw','gamma']:
+        for key in ['xc', 'smearing', 'kpts', 'pps', 'raw', 'gamma']:
             del inp[key]
 
         smearing = param.get('smearing')
@@ -383,8 +528,10 @@ class Abinit(FileIOCalculator):
             assert smearing is None
 
         if smearing is not None:
-            inp['occopt'] = {'fermi-dirac': 3,
-                             'gaussian': 7}[smearing[0].lower()]
+            inp['occopt'] = {
+                'fermi-dirac': 3,
+                'gaussian': 7
+            }[smearing[0].lower()]
             inp['tsmear'] = smearing[1]
 
         inp['natom'] = len(atoms)
@@ -394,12 +541,14 @@ class Abinit(FileIOCalculator):
             del inp['nbands']
 
         if 'ixc' not in param:
-            inp['ixc'] = {'LDA': 1,
-                          'PBE': 11,
-                          'revPBE': 14,
-                          'RPBE': 15,
-                          'WC': 23,
-                        'PBEsol':-116133}[param.xc]
+            inp['ixc'] = {
+                'LDA': 1,
+                'PBE': 11,
+                'revPBE': 14,
+                'RPBE': 15,
+                'WC': 23,
+                'PBEsol': -116133
+            }[param.xc]
 
         magmoms = atoms.get_initial_magnetic_moments()
         if magmoms.any():
@@ -411,21 +560,23 @@ class Abinit(FileIOCalculator):
             inp['nsppol'] = 1
 
         #### Mod by Hexu , add Hubbard U########################
-        if self.U_dict!={}:
-            syms=atoms.get_chemical_symbols()
-            elems=[]
+        if self.U_dict != {}:
+            syms = atoms.get_chemical_symbols()
+            elems = []
             for s in syms:
                 if not s in elems:
                     elems.append(s)
             for s in elems:
                 if s not in self.U_dict:
-                    self.U_dict[s]={'L':-1,'U':0,'J':0}
-            if self.U_dict !={}:
+                    self.U_dict[s] = {'L': -1, 'U': 0, 'J': 0}
+            if self.U_dict != {}:
                 fh.write('# DFT+U\n')
-                fh.write('lpawu %s\n'%(' '.join([str(self.U_dict[s]['L']) for s in elems])))
-                fh.write('upawu %s eV\n'%(' '.join([str(self.U_dict[s]['U']) for s in elems])))
-                fh.write('jpawu %s eV\n'%(' '.join([str(self.U_dict[s]['J']) for s in elems])))
-
+                fh.write('lpawu %s\n' %
+                         (' '.join([str(self.U_dict[s]['L']) for s in elems])))
+                fh.write('upawu %s eV\n' %
+                         (' '.join([str(self.U_dict[s]['U']) for s in elems])))
+                fh.write('jpawu %s eV\n' %
+                         (' '.join([str(self.U_dict[s]['J']) for s in elems])))
 
         for key in sorted(inp.keys()):
             value = inp[key]
@@ -451,7 +602,7 @@ class Abinit(FileIOCalculator):
         fh.write('%.14f %.14f %.14f Angstrom\n' % (1.0, 1.0, 1.0))
         fh.write('rprim\n')
         for v in atoms.cell:
-            fh.write('%.14f %.14f %.14f\n' %  tuple(v))
+            fh.write('%.14f %.14f %.14f\n' % tuple(v))
 
         fh.write('chkprim 0 # Allow non-primitive cells\n')
 
@@ -479,8 +630,8 @@ class Abinit(FileIOCalculator):
         fh.write('#Definition of the atoms\n')
         fh.write('xangst\n')
         for pos in atoms.positions:
-            fh.write('%.14f %.14f %.14f\n' %  tuple(pos))
-        gamma=self.parameters.gamma
+            fh.write('%.14f %.14f %.14f\n' % tuple(pos))
+        gamma = self.parameters.gamma
         if 'kptopt' not in param:
             mp = kpts2mp(atoms, param.kpts)
             fh.write('kptopt 1\n')
@@ -488,34 +639,42 @@ class Abinit(FileIOCalculator):
             fh.write('nshiftk 1\n')
             fh.write('shiftk\n')
             if gamma:
-                fh.write('%.1f %.1f %.1f\n' % tuple((np.array(mp) + 1) % 2 * 0.0))
+                fh.write('%.1f %.1f %.1f\n' % tuple(
+                    (np.array(mp) + 1) % 2 * 0.0))
             else:
-                fh.write('%.1f %.1f %.1f\n' % tuple((np.array(mp) + 1) % 2 * 0.5))
+                fh.write('%.1f %.1f %.1f\n' % tuple(
+                    (np.array(mp) + 1) % 2 * 0.5))
         #----Modified by hexu-----#
-        elif param['kptopt'] in [1,2,3,4]:
+        elif param['kptopt'] in [1, 2, 3, 4]:
             mp = kpts2mp(atoms, param.kpts)
             #fh.write('kptopt %s\n'%(param['kptopt']))
             fh.write('ngkpt %d %d %d\n' % tuple(mp))
             fh.write('nshiftk 1\n')
             fh.write('shiftk\n')
             if gamma:
-                fh.write('%.1f %.1f %.1f\n' % tuple((np.array(mp) + 1) % 2 * 0.0))
+                fh.write('%.1f %.1f %.1f\n' % tuple(
+                    (np.array(mp) + 1) % 2 * 0.0))
             else:
-                fh.write('%.1f %.1f %.1f\n' % tuple((np.array(mp) + 1) % 2 * 0.5))
+                fh.write('%.1f %.1f %.1f\n' % tuple(
+                    (np.array(mp) + 1) % 2 * 0.5))
 
-
-        fh.write('chkexit 1 # abinit.exit file in the running directory terminates after the current SCF\n')
+        fh.write(
+            'chkexit 1 # abinit.exit file in the running directory terminates after the current SCF\n'
+        )
 
         fh.close()
 
-    def calculate(self, atoms, properties=['energy'],
+    def calculate(self,
+                  atoms,
+                  properties=['energy'],
                   system_changes=all_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
         self.write_input(self.atoms, properties, system_changes)
         if self.command is None and self.commander is None:
-            raise RuntimeError('Please set $%s environment variable ' %
-                               ('ASE_' + self.name.upper() + '_COMMAND') +
-                               'or supply the command keyword or supply a commander with run() method (calc.set_command(...))')
+            raise RuntimeError('Please set $%s environment variable ' % (
+                'ASE_' + self.name.upper() + '_COMMAND'
+            ) + 'or supply the command keyword or supply a commander with run() method (calc.set_command(...))'
+                               )
         if self.commander is None:
             command = self.command.replace('PREFIX', self.prefix)
         olddir = os.getcwd()
@@ -532,12 +691,9 @@ class Abinit(FileIOCalculator):
         if errorcode:
             #raise RuntimeError('%s returned an error: %d' %
             #                   (self.name, errorcode))
-            print(('%s returned an error: %d' %
-                  (self.name, errorcode)))
-
+            print(('%s returned an error: %d' % (self.name, errorcode)))
 
         self.read_results()
-
 
     def read(self, label):
         """Read results from ABINIT's text-output file."""
@@ -557,7 +713,7 @@ class Abinit(FileIOCalculator):
         text = open(filename).read().lower()
 
         if ('error' in text or
-            'was not enough scf cycles to converge' in text):
+                'was not enough scf cycles to converge' in text):
             #raise ReadError("not enoubh scf cycles to converge")
             print("not enoubh scf cycles to converge")
 
@@ -573,7 +729,8 @@ class Abinit(FileIOCalculator):
         # sigma(3 3)=  4.02063464E-04  sigma(2 1)=  0.00000000E+00
         for line in lines:
             if line.rfind(
-                'cartesian components of stress tensor (hartree/bohr^3)') > -1:
+                    'cartesian components of stress tensor (hartree/bohr^3)'
+            ) > -1:
                 stress = np.empty(6)
                 for i in range(3):
                     entries = lines.next().split()
@@ -583,31 +740,34 @@ class Abinit(FileIOCalculator):
                 break
         else:
             #raise RuntimeError('Stress not found')
-	    print("Stress not found")
+            print("Stress not found")
 
         # Energy [Hartree]:
         # Warning: Etotal could mean both electronic energy and free energy!
         etotal = None
         efree = None
-        if 'PAW method is used'.lower() in text:  # read DC energy according to M. Torrent
+        if 'PAW method is used'.lower(
+        ) in text:  # read DC energy according to M. Torrent
             for line in iter(text.split('\n')):
                 if line.rfind('>>>>> internal e=') > -1:
-                    etotal = float(line.split('=')[-1])*Hartree  # second occurence!
+                    etotal = float(
+                        line.split('=')[-1]) * Hartree  # second occurence!
             for line in iter(text.split('\n')):
                 if line.rfind('>>>> etotal (dc)=') > -1:
-                    efree = float(line.split('=')[-1])*Hartree
+                    efree = float(line.split('=')[-1]) * Hartree
         else:
             for line in iter(text.split('\n')):
                 if line.rfind('>>>>> internal e=') > -1:
-                    etotal = float(line.split('=')[-1])*Hartree  # first occurence!
+                    etotal = float(
+                        line.split('=')[-1]) * Hartree  # first occurence!
                     break
             for line in iter(text.split('\n')):
                 if line.rfind('>>>>>>>>> etotal=') > -1:
-                    efree = float(line.split('=')[-1])*Hartree
+                    efree = float(line.split('=')[-1]) * Hartree
         if efree is None:
-	    print('Total energy not found')
-	    efree=0
-            #raise RuntimeError('Total energy not found')
+            print('Total energy not found')
+            efree = 0
+        #raise RuntimeError('Total energy not found')
         if etotal is None:
             etotal = efree
 
@@ -617,16 +777,17 @@ class Abinit(FileIOCalculator):
 
         # Forces:
         for line in lines:
-            if line.lower().rfind('cartesian forces (ev/angstrom) at end:') > -1:
+            if line.lower().rfind(
+                    'cartesian forces (ev/angstrom) at end:') > -1:
                 forces = []
                 for i in range(natoms):
-                    forces.append(np.array(
-                            [float(f) for f in lines.next().split()[1:]]))
+                    forces.append(
+                        np.array([float(f) for f in lines.next().split()[1:]]))
                 self.results['forces'] = np.array(forces)
                 break
         else:
             #raise RuntimeError('Forces not found')
-	    print("Forces not found!")
+            print("Forces not found!")
         #
         self.width = self.read_electronic_temperature()
         self.nband = self.read_number_of_bands()
@@ -644,23 +805,26 @@ class Abinit(FileIOCalculator):
         self.spinpol = atoms.get_initial_magnetic_moments().any()
 
         if self.pppaths is not None:
-            pppaths=self.pppaths
+            pppaths = self.pppaths
         elif 'ABINIT_PP_PATH' in os.environ:
             pppaths = os.environ['ABINIT_PP_PATH'].split(':')
         else:
             pppaths = []
 
         self.ppp_list = []
-        if self.parameters.xc != 'LDA' and self.parameters.xc!='PBEsol':
+        if self.parameters.xc != 'LDA' and self.parameters.xc != 'PBEsol':
             xcname = 'PBE'
         elif self.parameters.xc == 'PBEsol':
-            xcname='PBEsol'
+            xcname = 'PBEsol'
         else:
             xcname = 'LDA'
 
         pps = self.parameters.pps
-        self.pspdict['psptype']=pps
-        if pps not in ['fhi', 'hgh', 'hgh.sc', 'hgh.k', 'tm', 'paw','jth','gbrv','eric-gen','ONCV','jth_sp','GPAW']:
+        self.pspdict['psptype'] = pps
+        if pps not in [
+                'fhi', 'hgh', 'hgh.sc', 'hgh.k', 'tm', 'paw', 'jth', 'gbrv',
+                'eric-gen', 'ONCV', 'jth_sp', 'GPAW'
+        ]:
             raise ValueError('Unexpected PP identifier %s' % pps)
 
         for Z in self.species:
@@ -687,58 +851,61 @@ class Abinit(FileIOCalculator):
                 # Therefore we first use glob to get all relevant files,
                 # then pick the correct one afterwards.
                 name = hghtemplate % (number, symbol.lower(), '*')
-            elif pps in ['jth','jth_sp','jth_fincore']:
-		xcdict={'LDA':'LDA',
-			        'PBE':'GGA_PBE'}
+            elif pps in ['jth', 'jth_sp', 'jth_fincore']:
+                xcdict = {'LDA': 'LDA', 'PBE': 'GGA_PBE'}
                 #hghtemplate = '%s.%s-JTH.xml'
                 #name = hghtemplate%(symbol, xcdict[xcname.upper()])
-                print((os.path.join(pppaths[-1],'*/%s.%s*JTH*.xml'%(symbol,xcdict[xcname]))))
-                if pps=='jth':
-                    name=glob(os.path.join(pppaths[-1],'*/%s.%s*JTH.xml'%(symbol,xcdict[xcname])))[0]
-                elif pps=='jth_sp' or pps=='jth_fincore':
-                    names=None
-                    names=glob(os.path.join(pppaths[-1],'*/%s.%s*JTH*.xml'%(symbol,xcdict[xcname])))
-                    name=None
+                print((os.path.join(pppaths[-1], '*/%s.%s*JTH*.xml' %
+                                    (symbol, xcdict[xcname]))))
+                if pps == 'jth':
+                    name = glob(
+                        os.path.join(pppaths[-1], '*/%s.%s*JTH.xml' % (
+                            symbol, xcdict[xcname])))[0]
+                elif pps == 'jth_sp' or pps == 'jth_fincore':
+                    names = None
+                    names = glob(
+                        os.path.join(pppaths[-1], '*/%s.%s*JTH*.xml' % (
+                            symbol, xcdict[xcname])))
+                    name = None
                     for n in names:
-                        if n.find('_sp')!=-1 or n.find('_fincore')!=-1:
-                            name=n
+                        if n.find('_sp') != -1 or n.find('_fincore') != -1:
+                            name = n
                     if name is None:
-                        name=names[-1]
+                        name = names[-1]
                 print(name)
             elif pps in ['gbrv']:
-                xcdict={'LDA':'lda',
-		            'PBE':'pbe'}
-                name=glob(os.path.join(pppaths[-1],'*/%s_%s*'%(symbol.lower(),xcname.lower())))[-1]
+                xcdict = {'LDA': 'lda', 'PBE': 'pbe'}
+                name = glob(
+                    os.path.join(pppaths[-1], '*/%s_%s*' % (
+                        symbol.lower(), xcname.lower())))[-1]
             elif pps in ['eric-gen']:
-                xcdict={'LDA':'LDA',
-                        'PBE':'PBE',
-                        'PBEsol':'PBEsol'}
-                print('*/%s_%s_%s*'%(number,symbol,xcdict[xcname]))
-                name=glob(os.path.join(pppaths[-1],'*/%02d_%s_%s*'%(number,symbol,xcdict[xcname])))[-1]
+                xcdict = {'LDA': 'LDA', 'PBE': 'PBE', 'PBEsol': 'PBEsol'}
+                print('*/%s_%s_%s*' % (number, symbol, xcdict[xcname]))
+                name = glob(
+                    os.path.join(pppaths[-1], '*/%02d_%s_%s*' % (
+                        number, symbol, xcdict[xcname])))[-1]
             elif pps in ['ONCV']:
-                xcdict={'LDA':'PW',
-                        'PBE':'PBE',
-                        'PBEsol':'PBEsol'}
+                xcdict = {'LDA': 'PW', 'PBE': 'PBE', 'PBEsol': 'PBEsol'}
                 #print '*/%s_%s_%s*'%(number,symbol,xcdict[xcname])
-                name=glob(os.path.join(pppaths[-1],'ONCVPSP-%s-PDv0.3/%s/%s*.psp8'%(xcdict[xcname],symbol,symbol)))[-1]
+                name = glob(
+                    os.path.join(pppaths[-1], 'ONCVPSP-%s-PDv0.3/%s/%s*.psp8' %
+                                 (xcdict[xcname], symbol, symbol)))[-1]
             elif pps in ['GPAW']:
-                xcdict={'LDA':'LDA',
-                        'PBE':'PBE',
-                        'PBEsol':'PBEsol'}
-                print('*/%s_%s_%s*'%(number,symbol,xcdict[xcname]))
-                name=glob(os.path.join(pppaths[-1],'GPAW-%s/%s.%s.xml'%(xcdict[xcname],symbol,xcdict[xcname])))[-1]
-     
+                xcdict = {'LDA': 'LDA', 'PBE': 'PBE', 'PBEsol': 'PBEsol'}
+                print('*/%s_%s_%s*' % (number, symbol, xcdict[xcname]))
+                name = glob(
+                    os.path.join(pppaths[-1], 'GPAW-%s/%s.%s.xml' % (xcdict[
+                        xcname], symbol, xcdict[xcname])))[-1]
 
             found = False
-            print(pps,name,pppaths)
+            print(pps, name, pppaths)
 
             for path in pppaths:
-                if (pps.startswith('paw') or
-                    pps.startswith('hgh') or
-                    pps.startswith('tm')):
+                if (pps.startswith('paw') or pps.startswith('hgh') or
+                        pps.startswith('tm')):
                     #pps.startswith('jth')):
                     filenames = glob(join(path, name))
-                    print("fname",filenames)
+                    print("fname", filenames)
                     if not filenames:
                         continue
                     assert len(filenames) in [0, 1, 2]
@@ -747,20 +914,24 @@ class Abinit(FileIOCalculator):
                         # warning: see download.sh in
                         # abinit-pseudopotentials*tar.gz for additional
                         # information!
-                        S = selector(
-                            [str(os.path.split(name)[1].split('-')[2][:-4])
-                             for name in filenames])
+                        S = selector([
+                            str(os.path.split(name)[1].split('-')[2][:-4])
+                            for name in filenames
+                        ])
                         name = hghtemplate % (symbol, xcname, S)
                     elif pps == 'hgh':
                         selector = min  # Lowest valence electron count
-                        Z = selector([int(os.path.split(name)[1].split('.')[1])
-                                      for name in filenames])
+                        Z = selector([
+                            int(os.path.split(name)[1].split('.')[1])
+                            for name in filenames
+                        ])
                         name = hghtemplate % (number, symbol.lower(), str(Z))
                     elif pps == 'hgh.k':
                         selector = min  # Semicore - highest electron count
-                        Z = selector(
-                            [int(os.path.split(name)[1].split('-')[1][:-6][1:])
-                             for name in filenames])
+                        Z = selector([
+                            int(os.path.split(name)[1].split('-')[1][:-6][1:])
+                            for name in filenames
+                        ])
                         name = hghtemplate % (symbol, Z)
                     elif pps == 'tm':
                         selector = max  # Semicore - highest electron count
@@ -770,26 +941,28 @@ class Abinit(FileIOCalculator):
                         selector = max  # Semicore - highest electron count
                         # currently only one version of psp per atom
                         # name = hghtemplate % (symbol, xcname.upper())
-                    elif pps== 'gbrv':
+                    elif pps == 'gbrv':
                         selector = max
-                    elif pps== 'eric-gen':
-                        selector= max
-                    elif pps== 'ONCV':
-                        selector= max
-                    elif pps=='GPAW':
-                        selector=max
+                    elif pps == 'eric-gen':
+                        selector = max
+                    elif pps == 'ONCV':
+                        selector = max
+                    elif pps == 'GPAW':
+                        selector = max
                     else:
                         assert pps == 'hgh.sc'
                         selector = max  # Semicore - highest electron count
-                        Z = selector([int(os.path.split(name)[1].split('.')[1])
-                                      for name in filenames])
+                        Z = selector([
+                            int(os.path.split(name)[1].split('.')[1])
+                            for name in filenames
+                        ])
                         name = hghtemplate % (number, symbol.lower(), str(Z))
                 filename = join(path, name)
                 print(filename)
                 if isfile(filename) or islink(filename):
                     found = True
                     self.ppp_list.append(filename)
-                    self.pspdict[symbol]=filename
+                    self.pspdict[symbol] = filename
                     break
             if not found:
                 raise RuntimeError('No pseudopotential for %s!' % symbol)
@@ -800,7 +973,8 @@ class Abinit(FileIOCalculator):
     def read_number_of_iterations(self):
         niter = None
         for line in open(self.label + '.txt'):
-            if line.find(' At SCF step') != -1: # find the last iteration number
+            if line.find(
+                    ' At SCF step') != -1:  # find the last iteration number
                 niter = int(line.split(',')[0].split()[3].strip())
         return niter
 
@@ -831,8 +1005,8 @@ class Abinit(FileIOCalculator):
 
     def read_number_of_bands(self):
         nband = None
-        for line in open(self.label + '.txt'): # find last one
-            if line.find('     nband') != -1: # nband, or nband1, nband*
+        for line in open(self.label + '.txt'):  # find last one
+            if line.find('     nband') != -1:  # nband, or nband1, nband*
                 nband = int(line.split()[-1].strip())
         return nband
 
@@ -858,9 +1032,9 @@ class Abinit(FileIOCalculator):
         magmom = None
         if not self.get_spin_polarized():
             magmom = 0.0
-        else: # only for spinpolarized system Magnetisation is printed
+        else:  # only for spinpolarized system Magnetisation is printed
             for line in open(self.label + '.txt'):
-                if line.find('Magnetisation') != -1: # last one
+                if line.find('Magnetisation') != -1:  # last one
                     magmom = float(line.split('=')[-1].strip())
         return magmom
 
@@ -876,14 +1050,14 @@ class Abinit(FileIOCalculator):
     def read_fermi(self):
         """Method that reads Fermi energy in Hartree from the output file
         and returns it in eV"""
-        E_f=None
+        E_f = None
         filename = self.label + '.txt'
         text = open(filename).read().lower()
         assert 'error' not in text
         for line in iter(text.split('\n')):
             if line.rfind('fermi (or homo) energy (hartree) =') > -1:
                 E_f = float(line.split('=')[1].strip().split()[0])
-        return E_f*Hartree
+        return E_f * Hartree
 
     def read_nkpt(self):
         nkpt = None
@@ -909,7 +1083,6 @@ class Abinit(FileIOCalculator):
                     return nband
         return nband
 
-
     def read_kpts_info(self, kpt=0, spin=0, mode='eigenvalues'):
         """ Returns list of last eigenvalues, occupations, kpts weights, or
         kpts coordinates for given kpt and spin.
@@ -924,8 +1097,9 @@ class Abinit(FileIOCalculator):
         # kpt#   2, nband=  3, wtk=  0.04688, kpt=  0.1875  0.0625  0.0625 (reduced coord)
         # ...
         #
-        assert mode in ['eigenvalues', 'occupations', 'ibz_k_points',
-                        'k_point_weights'], mode
+        assert mode in [
+            'eigenvalues', 'occupations', 'ibz_k_points', 'k_point_weights'
+        ], mode
         if self.get_spin_polarized():
             spin = {0: 1, 1: 0}[spin]
         if spin == 0:
@@ -947,19 +1121,19 @@ class Abinit(FileIOCalculator):
         for n, line in enumerate(lines):
             if spin == 0:
                 if line.rfind('eigenvalues (hartree) for nkpt') > -1:
-                #if line.rfind('eigenvalues (   ev  ) for nkpt') > -1: #MDTMP
+                    #if line.rfind('eigenvalues (   ev  ) for nkpt') > -1: #MDTMP
                     contains_eigenvalues = n
             else:
                 if (line.rfind('eigenvalues (hartree) for nkpt') > -1 and
-                    line.rfind(spinname) > -1): # find the last 'SPIN UP'
-                        contains_eigenvalues = n
+                        line.rfind(spinname) > -1):  # find the last 'SPIN UP'
+                    contains_eigenvalues = n
         # find the end line of eigenvalues starting from contains_eigenvalues
         text_list = [lines[contains_eigenvalues]]
         for line in lines[contains_eigenvalues + 1:]:
             text_list.append(line)
             # find a blank line or eigenvalues of second spin
             if (not line.strip() or
-                line.rfind('eigenvalues (hartree) for nkpt') > -1):
+                    line.rfind('eigenvalues (hartree) for nkpt') > -1):
                 break
         # remove last (blank) line
         text_list = text_list[:-1]
@@ -982,7 +1156,7 @@ class Abinit(FileIOCalculator):
             assert contains_occupations, 'No occupations found in the output'
 
         if contains_occupations:
-            range_kpts = 2*n_kpts
+            range_kpts = 2 * n_kpts
         else:
             range_kpts = n_kpts
 
@@ -990,45 +1164,59 @@ class Abinit(FileIOCalculator):
         offset = 0
         for kpt_entry in range(range_kpts):
             full_line = ''
-            for entry_line in range(n_entry_lines+1):
-                full_line = full_line+str(text_list[offset+entry_line])
+            for entry_line in range(n_entry_lines + 1):
+                full_line = full_line + str(text_list[offset + entry_line])
             first_line = text_list[offset]
             if mode == 'occupations':
                 if first_line.rfind('occupation numbers') > -1:
                     # extract numbers
-                    full_line = [float(v) for v in full_line.split('#')[1].strip().split()[1:]]
+                    full_line = [
+                        float(v)
+                        for v in full_line.split('#')[1].strip().split()[1:]
+                    ]
                     values_list.append(full_line)
-                    full_line = [Hartree*float(v) for v in full_line.split(')')[1].strip().split()[:]]
-                        #full_line = [float(v) for v in full_line.split(')')[1].strip().split()[:]] #MDTMP
+                    full_line = [
+                        Hartree * float(v)
+                        for v in full_line.split(')')[1].strip().split()[:]
+                    ]
+                    #full_line = [float(v) for v in full_line.split(')')[1].strip().split()[:]] #MDTMP
                 elif mode == 'ibz_k_points':
-                    full_line = [float(v) for v in full_line.split('kpt=')[1].strip().split('(')[0].split()]
+                    full_line = [
+                        float(v)
+                        for v in full_line.split('kpt=')[1].strip().split('(')[
+                            0].split()
+                    ]
                 else:
-                    full_line = float(full_line.split('wtk=')[1].strip().split(',')[0].split()[0])
+                    full_line = float(
+                        full_line.split('wtk=')[1].strip().split(',')[0]
+                        .split()[0])
                     values_list.append(full_line)
-            offset = offset+n_entry_lines+1
+            offset = offset + n_entry_lines + 1
 
         if mode in ['occupations', 'eigenvalues']:
             return np.array(values_list[kpt])
         else:
             return np.array(values_list)
 
-def gen_mrgddb_input(prefix,idatasets):
+
+def gen_mrgddb_input(prefix, idatasets):
     """
     prefix_mrgddb.out
     Generated by mrgddb.
     number of datasets
     prefixo_DS[i=3,4,...]_DDB
     """
-    text=''
-    text+='%s_mrgddb.out\n'%prefix
-    text+='Unnamed\n'
-    text+='%s\n'%len(idatasets)
+    text = ''
+    text += '%s_mrgddb.out\n' % prefix
+    text += 'Unnamed\n'
+    text += '%s\n' % len(idatasets)
     for i in idatasets:
-        text+='%so_DS%s_DDB\n'%(prefix,i)
+        text += '%so_DS%s_DDB\n' % (prefix, i)
     return text
 
+
 def gen_ifc_files(prefix='abinit'):
-    text="""${prefix}_ifc.in
+    text = """${prefix}_ifc.in
 ${prefix}_ifc.out
 ${prefix}_mrgddb.out
 ${prefix}_band2eps
@@ -1036,16 +1224,17 @@ ${prefix}_dummy1
 ${prefix}_dummy2
 ${prefix}_dummy3
 """
-    template=Template(text)
-    t=template.substitute({"prefix":prefix})
+    template = Template(text)
+    t = template.substitute({"prefix": prefix})
     return t
+
 
 def gen_ifc_in(**kwargs):
     print(kwargs)
     if 'qpts' in kwargs:
-        kwargs['qpts']=' '.join(map(str, kwargs['qpts']))
+        kwargs['qpts'] = ' '.join(map(str, kwargs['qpts']))
 
-    text="""
+    text = """
 !Input file for anaddb to generate ifc.
     alphon 1
     eivec=2
@@ -1054,7 +1243,7 @@ def gen_ifc_in(**kwargs):
     ngqpt $qpts
     nqshft $nqshft
     q1shft 3*0.0
- 
+
     ifcana $ifcana
     ifcout $ifcout
     natifc $natifc
@@ -1064,92 +1253,323 @@ def gen_ifc_in(**kwargs):
 
     dipdip $dipdip\n"""
     template = Template(text)
-    t=template.substitute(kwargs)
+    t = template.substitute(kwargs)
     if 'kpath' in kwargs:
-        kpath=kwargs['kpath']
-        nk=len(kpath)
-        t+="!====Phonon band kpoints===\n"
-        t+="    nph1l %s\n"%nk
-        t+=" qph1l %s 1.0\n"%(' '.join([str(x) for x in kpath[0]]))
+        kpath = kwargs['kpath']
+        nk = len(kpath)
+        t += "!====Phonon band kpoints===\n"
+        t += "    nph1l %s\n" % nk
+        t += " qph1l %s 1.0\n" % (' '.join([str(x) for x in kpath[0]]))
         for kpt in kpath[1:]:
-            t+="       %s 1.0\n"%(' '.join([str(x) for x in kpt]))
+            t += "       %s 1.0\n" % (' '.join([str(x) for x in kpt]))
     return t
 
+
 def gen_ifc(prefix='abinit'):
-    with open('%s_ifc.files'%prefix, 'w') as myfile:
+    with open('%s_ifc.files' % prefix, 'w') as myfile:
         myfile.write(gen_ifc_files(prefix=prefix))
 
-    with open('%s_ifc.in'%prefix, 'w') as myfile:
-        myfile.write( gen_ifc_in(ifcflag=1,brav=1,nk=2,qpts=[2,2,2],nqshft=1, ifcana=1, ifcout=20, natifc=5, atifc="1 2 3 4 5", chneut=1, dipdip=1,kpath=cubic_kpath()[0]))
+    with open('%s_ifc.in' % prefix, 'w') as myfile:
+        myfile.write(
+            gen_ifc_in(
+                ifcflag=1,
+                brav=1,
+                nk=2,
+                qpts=[2, 2, 2],
+                nqshft=1,
+                ifcana=1,
+                ifcout=20,
+                natifc=5,
+                atifc="1 2 3 4 5",
+                chneut=1,
+                dipdip=1,
+                kpath=cubic_kpath()[0]))
+
 
     #os.system("anaddb < %s_ifc.files"%prefix)
 def read_nband(fname='abinit.txt'):
-    inside_outvar=False
+    inside_outvar = False
     with open(fname) as myfile:
         for line in myfile:
-            if line.strip().find('END DATASET')!=-1:
-                inside_outvar=True
+            if line.strip().find('END DATASET') != -1:
+                inside_outvar = True
             if inside_outvar:
                 #read nband
                 if line.strip().startswith('nband'):
-                    nband=int(line.strip().split()[-1])
+                    nband = int(line.strip().split()[-1])
                     return nband
     return None
-def read_output(fname='abinit.txt',afterend=True):
-    inside_outvar=False
-    cell=[]
+
+
+def read_output(fname='abinit.txt', afterend=True):
+    inside_outvar = False
+    cell = []
     with open(fname) as myfile:
         for line in myfile:
-            if line.strip().find('END DATASET')!=-1:
-                inside_outvar=True
-            if inside_outvar or afterend==False:
+            if line.strip().find('END DATASET') != -1:
+                inside_outvar = True
+            if inside_outvar or afterend == False:
                 # read acell
                 if line.strip().startswith('acell'):
                     #print line
-                    t=line.strip().split()[1:4]
-                    acell=list(map(float,t))
-                    acell=np.asarray(acell)*Bohr
+                    t = line.strip().split()[1:4]
+                    acell = list(map(float, t))
+                    acell = np.asarray(acell) * Bohr
                     #print "acell",acell
                 #read rprim:
                 if line.strip().startswith('rprim'):
-                    cell.append([float(x)*acell[0] for x in line.strip().split()[1:]])
-                    for i in range(1,3):
-                        line=next(myfile)
-                        cell.append([float(x)*acell[i] for x in line.strip().split()])
-                    #print cell 
+                    cell.append([
+                        float(x) * acell[0] for x in line.strip().split()[1:]
+                    ])
+                    for i in range(1, 3):
+                        line = next(myfile)
+                        cell.append([
+                            float(x) * acell[i] for x in line.strip().split()
+                        ])
+                    #print cell
 
-
-                #read natom
+                    #read natom
                 if line.strip().startswith('natom'):
-                    natom=int(line.strip().split()[-1])
+                    natom = int(line.strip().split()[-1])
                     #print natom
                 #read ntypat
                 if line.strip().startswith('ntypat'):
-                    ntypat=int(line.strip().split()[-1])
+                    ntypat = int(line.strip().split()[-1])
                     print(ntypat)
- 
+
                 if line.strip().startswith('typat'):
-                    t=line.strip().split()[1:]
-                    typat=list(map(int,t))
+                    t = line.strip().split()[1:]
+                    typat = list(map(int, t))
                     #print typat
 
- 
                 #read positions:
                 if line.strip().startswith('xred'):
-                    poses=[]
+                    poses = []
                     poses.append([float(x) for x in line.strip().split()[1:]])
-                    for i in range(1,natom):
-                        line=next(myfile)
+                    for i in range(1, natom):
+                        line = next(myfile)
                         poses.append([float(x) for x in line.strip().split()])
                     #print poses
 
-                #read znucl
+                    #read znucl
                 if line.strip().startswith('znucl'):
-                    t=line.strip().split()[1:4]
-                    znucl=list(map(int,list(map(float,t))))
+                    t = line.strip().split()[1:4]
+                    znucl = list(map(int, list(map(float, t))))
                     #print znucl
-    if cell==[]:
-        cell=np.diag(acell)
-    numbers=[znucl[i-1] for i in typat]
-    atoms=Atoms(numbers=numbers,scaled_positions=poses,cell=cell,pbc=True)
+    if cell == []:
+        cell = np.diag(acell)
+    numbers = [znucl[i - 1] for i in typat]
+    atoms = Atoms(numbers=numbers, scaled_positions=poses, cell=cell, pbc=True)
     return atoms
+
+
+def default_abinit_calculator(ecut=35 * Ha,
+                              xc='LDA',
+                              nk=8,
+                              mag_order='PM',
+                              is_metal=False,
+                              pps='ONCV',
+                              **kwargs):
+    """
+    default abinit calculator.
+
+    Parameters
+    ------------
+    ecut: float
+        energy cutoff
+    xc: string
+        XC functional
+    nk: int
+        k-point mesh  nk*nk*nk. use kpts=[nk1,nk2,nk3] for unequal nk's.
+    mag_order: string
+        FM|PM|A|G|C|
+    is_metal: bool
+        is it metallic? it unkown, set is_metal to True.
+    **kwargs:
+        args passed to myvasp.set function.
+
+    Returns
+    ------------
+    A abinit calculator object. derived from ase.calculator.abinit
+    """
+    calc = Abinit(
+        label='abinit',
+        xc=xc,
+        accuracy=5,
+        ecut=ecut * eV,  # warning - used to speedup the test
+        kpts=[nk, nk, nk],  # warning - used to speedup the test
+        gamma=False,
+        #chksymbreak=0,
+        pppaths=['/home/hexu/.local/pp/abinit/'],
+        pps=pps,
+        chksymbreak=0,
+        pawecutdg=ecut * 1.8 * eV,
+        diemac=5.4,
+        diemix=0.7,
+        #iprcel=45,
+        autoparal=1, )
+    if mag_order == 'PM' and is_metal:
+        calc.set(occopt=7, nsppol=1, nspinor=1, nspden=1, diemac=1e5)
+        calc.set(tsmear=0.001 * Ha)
+    elif mag_order == 'PM' and not is_metal:
+        calc.set(occopt=1, nsppol=1, nspinor=1, nspden=1)
+    elif mag_order == 'FM' or is_metal:
+        calc.set(occopt=4, nsppol=2)
+        calc.set(tsmear=0.001 * Ha, diemac=1e5)
+    else:
+        calc.set(occopt=1, nsppol=1, nspinor=1, nspden=2)
+    calc.set(iscf=17, nstep=50)
+    calc.set(**kwargs)
+    return calc
+
+
+class DDB_reader():
+    def __init__(self, fname):
+        """
+        class for reading DDB files.
+        """
+        self.fname = fname
+
+    def read_atoms(self):
+        """
+        read atomic structure from DDB file.
+        Returns:
+        -----------
+        ase.atoms object.
+        """
+        with open(self.fname) as myfile:
+            for line in myfile:
+                if line.strip().startswith('natom'):
+                    self.natom = int(line.strip().split()[-1])
+                if line.strip().startswith("ntypat"):
+                    ntypat = int(line.strip().split()[-1])
+                if line.strip().startswith("acell"):
+                    acell = [
+                        float(s.replace('D', 'E')) * Bohr
+                        for s in line.strip().split()[1:4]
+                    ]
+                if line.strip().startswith("typat"):
+                    typat = [int(s) for s in line.strip().split()[1:]]
+                if line.strip().startswith("znucl"):
+                    znucl = [
+                        int(float(s.replace('D', 'E')))
+                        for s in line.strip().split()[1:4]
+                    ]
+                if line.strip().startswith("rprim"):
+                    rprim0 = [
+                        float(s.replace('D', 'E')) * acell[0]
+                        for s in line.strip().split()[1:4]
+                    ]
+                    line = myfile.next()
+                    rprim1 = [
+                        float(s.replace('D', 'E')) * acell[1]
+                        for s in line.strip().split()
+                    ]
+                    line = myfile.next()
+                    rprim2 = [
+                        float(s.replace('D', 'E')) * acell[2]
+                        for s in line.strip().split()
+                    ]
+
+                if line.strip().startswith("xred"):
+                    spos = np.zeros((self.natom, 3, ))
+                    spos[0] = [
+                        float(s.replace('D', 'E'))
+                        for s in line.strip().split()[-3:]
+                    ]
+                    for i in range(1, self.natom):
+                        line = myfile.next()
+                        print line
+                        spos[i] = [
+                            float(s.replace('D', 'E'))
+                            for s in line.strip().split()[-3:]
+                        ]
+            numbers = [znucl[i - 1] for i in typat]
+            self.symbols = [chemical_symbols[i] for i in numbers]
+            self.masses = [atomic_masses[i] for i in numbers]
+            self.cell = [rprim0, rprim1, rprim2]
+            print self.symbols
+            self.atoms = Atoms(self.symbols, positions=spos, cell=self.cell)
+            return self.atoms
+
+    def read_2DE_DDB(self, mat=True):
+        """
+        Read total energy 2nd derivatives from DDB files.
+
+        Parameters:
+        -------------
+        fname: string
+          The name of the DDB file.
+
+        Returns:
+        -------------
+        dict dds.
+        The keys are tuples: (idir1, ipert1, idir2, ipert2), values are complex numbers.
+        idir, idir2 are the directions (1,2,3), ipert1, ipert2 are perturbations.
+        ipert= 1..natom are atomic displacements;
+        natom+1: ddk;
+        natom+2: electric field;
+        natom+3: uniaxial strains;
+        natom+4: shear strain.
+        """
+        dds = {}
+        with open(self.fname) as myfile:
+            for line in myfile:
+                if line.find('**** Database of total energy derivatives ****'
+                             ) != -1:
+                    l = myfile.next()
+                    nblock = int(l.strip().split()[-1])
+                    #print "Nblock:",nblock
+                    myfile.next()
+                    l = myfile.next()
+                    nelem = int(l.strip().split()[-1])
+                    #print nelem
+                    l = myfile.next()
+                    self.qpt = [
+                        float(x.replace('D', 'E'))
+                        for x in l.strip().split()[1:4]
+                    ]
+                    #print qpts
+                    for i in range(nelem):
+                        try:
+                            l = myfile.next()
+                            idir1, ipert1, idir2, ipert2 = [
+                                int(x) for x in l.strip().split()[0:4]
+                            ]
+                            realval, imageval = [
+                                float(x.replace('D', 'E'))
+                                for x in l.strip().split()[4:6]
+                            ]
+                            dds[(idir1, ipert1, idir2,
+                                 ipert2)] = realval + 1j * imageval
+                        except:
+                            pass
+        self.dynamic_matrix_dict = dds
+        return self.dynamic_matrix_dict
+
+    def get_dynamic_matrix(self):
+        """
+        Parameters:
+        ------------
+        dds: output or read_2DE_DDB
+        Returns:
+        ------------
+        2D matrix. the indices means: (ipert,idir) = (1,1) (1,2) (1,3) (2,1) ...(natom,3)
+        """
+        natom = len(self.atoms)
+        dynmat = np.zeros((natom * 3, natom * 3), dtype=complex)
+        for ipert1 in range(natom):
+            for idir1 in range(3):
+                for ipert2 in range(natom):
+                    for idir2 in range(3):
+                        dynmat[ipert1 * 3 + idir1, ipert2 * 3 +
+                               idir2] = self.dynamic_matrix_dict[(
+                                   idir1 + 1, ipert1 + 1, idir2 + 1,
+                                   ipert2 + 1)]
+        return dynmat
+
+
+#myreader = DDB_reader("../test/BaTiO3_bak/abinito_DS2_DDB")
+#print myreader.read_atoms().get_positions()
+#myreader.read_2DE_DDB()
+#print myreader.get_dynamic_matrix()

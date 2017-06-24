@@ -7,7 +7,7 @@ import numpy as np
 import os.path
 from ase.io import read
 from ase.io.vasp import read_vasp
-from pyDFTutils.symbol import symbol_number,symnum_to_sym
+from pyDFTutils.ase_utils.symbol import symbol_number,symnum_to_sym
 from ase.atoms import Atoms
 def read_sort(sort_file='ase-sort.dat'):
     """

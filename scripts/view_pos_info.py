@@ -1,6 +1,6 @@
 #!/usr/bin/env  python
 from ase.io.vasp import read_vasp
-from mypylib.myDFT.ase_utils import cell_to_cellpar
+from pyDFTutils.ase_utils import cell_to_cellpar
 import pyspglib.spglib as spglib
 import sys
 
