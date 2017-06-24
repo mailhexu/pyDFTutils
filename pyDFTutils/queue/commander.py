@@ -81,6 +81,7 @@ class commander():
                       queue_type='pbspro',
                       command='abinit',
                       max_time=24 * 60 * 60,
+                      wait=True,
                       **kwargs):
         """
         set script parameters.
@@ -110,7 +111,11 @@ class commander():
             stderr=subprocess.PIPE)
         out, err = p.communicate()
         job_id = out.decode().strip()
-        exitcode = wait_job_success(job_id, maxtime=self.max_time)
+        if wait:
+            exitcode = wait_job_success(job_id, maxtime=self.max_time)
+        else:
+            exitcode = 0
+
         return exitcode
 
     def run(self):
@@ -218,7 +223,8 @@ def zenobe_wannier90(queue_type='pbspro',
                      ngroup=1,
                      mpiprocs=1,
                      ompthreads=12,
-                     mem_per_cpu=1900):
+                     mem_per_cpu=1900,
+                     wait=False):
     mycommander = commander(
         queue_type=queue_type,
         command=command,
@@ -228,7 +234,8 @@ def zenobe_wannier90(queue_type='pbspro',
         ngroup=ngroup,
         mpiprocs=mpiprocs,
         ompthreads=ompthreads,
-        mem_per_cpu=mem_per_cpu)
+        mem_per_cpu=mem_per_cpu,
+        wait=wait)
     return mycommander
 
 
