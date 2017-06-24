@@ -12,7 +12,6 @@ def read_basis(fname='basis.txt'):
         basis.append(line.strip().split()[:2])
     return basis
 
-
 class Wannier_interface():
     """
     utils for wannier90 input and output
