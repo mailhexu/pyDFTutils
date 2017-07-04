@@ -772,7 +772,11 @@ def expand_bonds(atoms, center, target, add_length=0.1, maxlength=3.0):
                     mic=True)
     return atoms
 
+
 def gen_disped_atoms(atoms, sym, distance, direction='all'):
+    """
+    shift one of the atoms. Often used for calculating the Born Effective Charge. sym: like 'Fe1'. direction can be 0|1|2|all. If direction is 'all', return a list of displaced structures with disp along x, y, z.
+    """
     sdict = get_symdict(atoms)
     poses = atoms.get_positions()
     if direction in [0, 1, 2]:
