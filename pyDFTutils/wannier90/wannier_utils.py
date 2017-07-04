@@ -31,24 +31,6 @@ def read_value(key, filename='wannier90.up.win'):
             return m.group(1)
     return None
 
-
-def read_efermi(filename='OUTCAR'):
-    """
-    read the fermi energy from OUTCAR.
-    """
-    text = open(filename, 'r').read()
-    m = re.search(r'fermi\s*:\s*([-+]?\d*\.\d*)', text)
-    if m:
-        t = m.group(1)
-    else:
-        raise ValueError('fermi energy not found')
-    try:
-        t=float(t)
-    except Exception as E:
-        raise ValueError("t:%s can not be converted to float."%t)
-    return t
-
-
 def find_value_line(lines, key):
     for i, line in enumerate(lines):
         m = re.search('^\s*%s\s*[=|:]\s*.*' % key, line)
