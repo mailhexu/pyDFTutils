@@ -13,8 +13,8 @@ import matplotlib.pyplot as plt
 #from ase.optimize import BFGS,BFGSLineSearch
 from ase.utils.geometry import cut
 from .ioput import my_write_vasp
-from .symbol import symbol_number, symnum_to_sym
-
+from .symbol import symbol_number, symnum_to_sym, get_symdict
+import copy
 
 def gen_STO():
     a = b = c = 3.94
@@ -771,6 +771,26 @@ def expand_bonds(atoms, center, target, add_length=0.1, maxlength=3.0):
                     fix=0,
                     mic=True)
     return atoms
+
+def gen_disped_atoms(atoms, sym, distance, direction='all'):
+    sdict = get_symdict(atoms)
+    poses = atoms.get_positions()
+    if direction in [0, 1, 2]:
+        d = np.zeros(3, dtype=float)
+        d[direction] = 1.0
+        disp = distance * d
+        poses[sdict[sym]] += disp
+        natoms = copy.deepcopy(atoms)
+        natoms.set_positions(poses)
+        return natoms
+    elif direction == 'all':
+        return [
+            gen_disped_atoms(atoms, sym, distance, direction=direct)
+            for direct in [0, 1, 2]
+        ]
+    else:
+        raise NotImplementedError
+
 
 
 if __name__ == '__main__':

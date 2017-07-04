@@ -8,6 +8,7 @@ from ase import Atoms
 import numpy as np
 import os
 
+
 def calculate_phonon(atoms,
                      calc,
                      ndim=np.eye(3),
