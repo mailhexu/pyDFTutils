@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from pyDFTutils.ase_utils import symbol_number, symnum_to_sym
-from .wannier_utils import read_efermi 
 import numpy as np
 import re
 import os
