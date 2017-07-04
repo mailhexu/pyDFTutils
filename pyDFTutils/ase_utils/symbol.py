@@ -1,5 +1,6 @@
 import re
 from collections import OrderedDict
+from ase.io import read
 
 def symbol_number(symbols):
     """
@@ -35,7 +36,7 @@ def get_symdict(filename='POSCAR',atoms=None):
     """
     get a symbol_number: index dict.
     """
-    if filename is None and atoms is not None:
+    if atoms is not None:
         syms=atoms.get_chemical_symbols()
     elif filename is not None and atoms is None:
         syms=read(filename).get_chemical_symbols()

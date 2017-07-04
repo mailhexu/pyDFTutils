@@ -777,7 +777,7 @@ def gen_disped_atoms(atoms, sym, distance, direction='all'):
     """
     shift one of the atoms. Often used for calculating the Born Effective Charge. sym: like 'Fe1'. direction can be 0|1|2|all. If direction is 'all', return a list of displaced structures with disp along x, y, z.
     """
-    sdict = get_symdict(atoms)
+    sdict = get_symdict(atoms=atoms)
     poses = atoms.get_positions()
     if direction in [0, 1, 2]:
         d = np.zeros(3, dtype=float)
