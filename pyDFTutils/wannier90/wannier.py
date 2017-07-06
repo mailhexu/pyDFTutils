@@ -521,7 +521,7 @@ def run_wannier(command=None, spin=None, copy_win=True,zenobe=False):
         with open("%s.win" % name, 'w') as myfile:
             myfile.write(spinline)
             str=open('wannier90.win').read()
-            str=str.replace('hr_plot','write_hr')
+            #str=str.replace('hr_plot','write_hr')
             myfile.write(str)
         #os.system('cp wannier90.win %s.win' % name)
     if not zenobe:
@@ -652,6 +652,9 @@ def occupation(fname, efermi):
                  data[:, 0][data[:, 0] - efermi < 0]) / 2
 
 def read_basis(fname):
+    """
+    return basis names from file (often named as basis.txt). Return a dict. key: basis name. value: basis index, from 0
+    """
     bdict = OrderedDict()
     with open(fname) as myfile:
         for iline, line in enumerate(myfile.readlines()):

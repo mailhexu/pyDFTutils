@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 from matplotlib.colors import colorConverter
@@ -97,11 +98,13 @@ def plot_band(fname='wannier90.up_band.dat', efermi=None):
     plt.show()
 
 
-def plot_band_weight(kslist,ekslist,wkslist=None,efermi=None,yrange=None,output=None,style='alpha',color='blue',axis=None,width=10,xticks=None):
+def plot_band_weight(kslist,ekslist,wkslist=None,efermi=None,yrange=None,output=None,style='alpha',color='blue',axis=None,width=10,xticks=None,cmap=mpl.cm.coolwarm,weight_min=-4,weight_max=4):
     if axis is None:
         fig,a = plt.subplots()
     else:
         a=axis
+    if efermi is not None:
+        ekslist=np.array(ekslist)-efermi
 
     xmax=max(kslist[0])
     if yrange is None:
@@ -111,19 +114,27 @@ def plot_band_weight(kslist,ekslist,wkslist=None,efermi=None,yrange=None,output=
         for i in range(len(kslist)):
             x=kslist[i]
             y=ekslist[i]
-            lwidths=np.array(wkslist[i])*width
             #lwidths=np.ones(len(x))
             points = np.array([x, y]).T.reshape(-1, 1, 2)
             segments = np.concatenate([points[:-1], points[1:]], axis=1)
             if style=='width':
+                lwidths=np.array(wkslist[i])*width
                 lc = LineCollection(segments, linewidths=lwidths,colors=color)
             elif style=='alpha':
+                lwidths=np.array(wkslist[i])*width
                 lc = LineCollection(segments,linewidths=[4]*len(x), colors=[colorConverter.to_rgba(color,alpha=lwidth/(width+0.001)) for lwidth in lwidths])
+            elif style=='color' or style=='colormap':
+                lwidths=np.array(wkslist[i])*1
+                norm = mpl.colors.Normalize(vmin=weight_min, vmax=weight_max)
+                #norm = mpl.colors.SymLogNorm(linthresh=0.03,vmin=weight_min, vmax=weight_max)
+                m = mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
+                #lc = LineCollection(segments,linewidths=np.abs(norm(lwidths)-0.5)*1, colors=[m.to_rgba(lwidth) for lwidth in lwidths])
+                lc = LineCollection(segments,linewidths=lwidths, colors=[m.to_rgba(lwidth) for lwidth in lwidths])
 
             a.add_collection(lc)
     if axis is None:
         for ks , eks in zip(kslist,ekslist):
-            plt.plot(ks,eks,color='gray')
+            plt.plot(ks,eks,color='gray',linewidth=0.01)
         a.set_xlim(0,xmax)
         a.set_ylim(yrange)
         if xticks is not None:
