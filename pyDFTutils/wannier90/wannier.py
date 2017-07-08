@@ -42,7 +42,8 @@ string_keys = (
     "wannier_plot_mode",
     "bands_plot_format", )
 
-list_keys = ("wannier_plot_list", "bands_plot_project", "mp_grid", 'exclude_bands')
+list_keys = ("wannier_plot_list", "bands_plot_project", "mp_grid",
+             'exclude_bands')
 
 all_keys = float_keys + bool_keys + string_keys + list_keys
 
@@ -94,11 +95,18 @@ w90_orb_dict = {
     'f': (None, 3),
 }
 
-reversed_w90_orb_dict = dict(list(zip(w90_orb_dict.values(), w90_orb_dict.keys())))
+reversed_w90_orb_dict = dict(
+    list(zip(w90_orb_dict.values(), w90_orb_dict.keys())))
 
 
 class wannier_input(object):
-    def __init__(self, atoms, seed=None, bands=None, spin=0,kpoints=None, **kwargs):
+    def __init__(self,
+                 atoms,
+                 seed=None,
+                 bands=None,
+                 spin=0,
+                 kpoints=None,
+                 **kwargs):
         """
         The wannier.win generator.
         """
@@ -265,7 +273,7 @@ class wannier_input(object):
         self.get_basis()
         with open(fname, 'w') as myfile:
             for i, b in enumerate(self.basis):
-                myfile.write(str(b) + '\t' + str(i+1) + '\n')
+                myfile.write(str(b) + '\t' + str(i + 1) + '\n')
 
     def set(self, **kwargs):
         """
@@ -382,8 +390,9 @@ class wannier_input(object):
         # atom cordinates
         if self.atoms is not None:
             input_text += '\nbegin atoms_cart\n'
-            for sym, pos in list(zip(self.atoms.get_chemical_symbols(),
-                                self.atoms.get_positions())):
+            for sym, pos in list(
+                    zip(self.atoms.get_chemical_symbols(),
+                        self.atoms.get_positions())):
                 input_text += '{0}\t{1}\n'.format(sym,
                                                   '\t'.join(map(str, pos)))
             input_text += 'end atoms_cart\n\n'
@@ -503,7 +512,7 @@ def sub_text(filename, **kwargs):
             outfile.write(line)
 
 
-def run_wannier(command=None, spin=None, copy_win=True,zenobe=False):
+def run_wannier(command=None, spin=None, copy_win=True, zenobe=False):
     """
     run wannier90.
     """
@@ -520,14 +529,14 @@ def run_wannier(command=None, spin=None, copy_win=True,zenobe=False):
     if spin is not None and copy_win:
         with open("%s.win" % name, 'w') as myfile:
             myfile.write(spinline)
-            str=open('wannier90.win').read()
+            str = open('wannier90.win').read()
             #str=str.replace('hr_plot','write_hr')
             myfile.write(str)
         #os.system('cp wannier90.win %s.win' % name)
     if not zenobe:
         os.system("%s %s" % (command, name))
     else:
-        from pyDFTutils.queue.commander  import zenobe_run_wannier90
+        from pyDFTutils.queue.commander import zenobe_run_wannier90
         zenobe_run_wannier90(spin=spin)
     if spin is not None:
         if not os.path.exists(name):
@@ -601,6 +610,7 @@ def wannier_closeshell(atoms, val_dict=None, band='v+c'):
     #print wa.get_nwann()
     return wa
 
+
 def replace_value(text, valdict, position='start'):
     """
     Replace text line a=b with a=c (if a=... exist, else add line a=c)
@@ -616,17 +626,17 @@ def replace_value(text, valdict, position='start'):
     lines = text.split('\n')
     newlines = []
     for line in lines:
-        indict=False
+        indict = False
         for key in valdict:
             if re.findall(r'\s*%s\s*=' % key, line) != []:
-                indict=True
-                found_key=key
+                indict = True
+                found_key = key
                 newlines.append('%s = %s\n' % (key, str(valdict[key])))
         if not indict:
-            newlines.append(line+'\n')
+            newlines.append(line + '\n')
         else:
             valdict.pop(found_key)
-    
+
     for key in valdict:
         if position == 'start':
             newlines.insert(0, '%s = %s\n' % (key, str(valdict[key])))
@@ -635,14 +645,14 @@ def replace_value(text, valdict, position='start'):
 
     return ''.join(newlines)
 
+
 def replace_value_file(fname, valdict, position='start'):
     """
     same as replace_value, but replace text from file instead of replacing a text
     """
     with open(fname) as myfile:
-        text=myfile.read()
-    return replace_value(text,valdict,position=position)
-
+        text = myfile.read()
+    return replace_value(text, valdict, position=position)
 
 
 def occupation(fname, efermi):
@@ -651,17 +661,35 @@ def occupation(fname, efermi):
     return trapz(data[:, 1][data[:, 0] - efermi < 0],
                  data[:, 0][data[:, 0] - efermi < 0]) / 2
 
+
 def read_basis(fname):
     """
     return basis names from file (often named as basis.txt). Return a dict. key: basis name. value: basis index, from 0
     """
     bdict = OrderedDict()
-    with open(fname) as myfile:
-        for iline, line in enumerate(myfile.readlines()):
-            a = line.strip().split()
-            if len(a) != 0:
-                bdict[a[0]] = iline
+    if fname.endswith('.win'):
+        with open(fname) as myfile:
+            inside = False
+            iline=0
+            for line in myfile.readlines():
+                if line.strip().startswith('end projections'):
+                    inside = False
+                if inside:
+                    a = line.strip().split('#')
+                    assert len(
+                        a) == 2, "The format should be .... # label_of_basis"
+                    bdict[a[-1].strip()] = iline
+                    iline += 1
+                if line.strip().startswith('begin projections'):
+                    inside = True
+    else:
+        with open(fname) as myfile:
+            for iline, line in enumerate(myfile.readlines()):
+                a = line.strip().split()
+                if len(a) != 0:
+                    bdict[a[0]] = iline
     return bdict
+
 
 #wannier_default()
 #wannier_closeshell()
