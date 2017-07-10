@@ -378,6 +378,7 @@ def gen_distorted_perovskite(name,
              cell=[3.9, 3.9, 3.9],
              supercell_matrix=[[1, -1, 0], [1, 1, 0], [0, 0, 2]],
              out_of_phase_rotation=0.0,
+             in_phase_rotation=0.0,
              in_phase_tilting=0.0,
              breathing=0.0,
              JT_d=0.0,
@@ -400,6 +401,8 @@ def gen_distorted_perovskite(name,
 
     eig_out_of_phase_rotation_x = np.array(perovskite_mode.R25_1)
     eig_out_of_phase_rotation_y = np.array(perovskite_mode.R25_2)
+    
+    eig_in_phase_rotation_z = np.array(perovskite_mode.M3)
 
 
     disp_br = dcell._get_displacements(
@@ -420,13 +423,19 @@ def gen_distorted_perovskite(name,
         q=[0.5, 0.5, 0.5],
         amplitude=out_of_phase_rotation,
         argument=0)
+    disp_rotz = dcell._get_displacements(
+        eigvec=eig_in_phase_rotation_z,
+        q=[0.5, 0.5, 0.0],
+        amplitude=in_phase_rotation,
+        argument=0)
+
     #print(out_of_phase_rotation)
     #print(disp_rotx)
     #print(disp_jt)
 
     #print disp.shape
     newcell = dcell._get_cell_with_modulation(
-        disp_jt + disp_rotx + disp_roty +disp_br +disp_tilting)
+        disp_jt + disp_rotx + disp_roty +disp_rotz + disp_br +disp_tilting)
     print(spglib.get_spacegroup(newcell))
     #vesta_view(newcell)
     return newcell
