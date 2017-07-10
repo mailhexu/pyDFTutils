@@ -145,6 +145,9 @@ class wannier_input(object):
         self.initial_basis = []
         self.axis = {}
 
+    def set_kpoints(self, kpoints):
+        self.kpoints=kpoints
+
     def set_atoms(self, atoms):
         self.atoms = atoms
         self.unit_cell = atoms.get_cell()

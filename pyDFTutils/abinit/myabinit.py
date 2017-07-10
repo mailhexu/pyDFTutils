@@ -186,7 +186,7 @@ class Abinit(FileIOCalculator):
             prtdos=2,
             pawprtdos=0,
             prtdosm=0,
-            tolwfr=1e-21,
+            tolwfr=1e-18,
             toldfe=0)
         if pdos:
             self.set(
@@ -195,7 +195,7 @@ class Abinit(FileIOCalculator):
                 prtdos=3,
                 pawprtdos=2,
                 prtdosm=2,
-                tolwfr=1e-21,
+                tolwfr=1e-18,
                 toldfe=0)
         self.calculate(atoms, properties=[])
         if not os.path.exists('LDOS'):
@@ -260,6 +260,7 @@ class Abinit(FileIOCalculator):
         return atoms
 
     def wannier_calculation(self, atoms, wannier_input, **kwargs):
+        nkpts=np.product(self.parameters['kpts'])
         self.set(
             ntime=0,
             toldfe=0.0,
@@ -267,7 +268,7 @@ class Abinit(FileIOCalculator):
             prtwant=2,
             paral_kgb=0,
             kptopt=3,
-            istwfk=1)
+            istwfk="%s*1"%nkpts)
         self.set(**kwargs)
         wannier_input.write_input()
         self.calculate(
