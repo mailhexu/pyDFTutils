@@ -7,7 +7,7 @@ from ase.build import make_supercell
 from ase.atoms import Atoms
 import numpy as np
 
-class phonon_unfolder:
+class unfolder():
     """ phonon unfolding class"""
     def __init__(self, cell, basis, positions , supercell_matrix, eigenvectors, qpoints, tol_r=0.04, compare=None):
         """
