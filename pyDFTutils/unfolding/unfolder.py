@@ -7,7 +7,7 @@ from ase.build import make_supercell
 from ase.atoms import Atoms
 import numpy as np
 
-class unfolder():
+class Unfolder():
     """ phonon unfolding class"""
     def __init__(self, cell, basis, positions , supercell_matrix, eigenvectors, qpoints, tol_r=0.04, compare=None):
         """
@@ -30,8 +30,6 @@ class unfolder():
         self._evecs = eigenvectors
         self._qpts = qpoints
         self._tol_r = tol_r
-        self._ndim = ndim
-        self._labels=labels
         self._trans_rs = None
         self._trans_indices = None
         self._make_translate_maps()
@@ -81,7 +79,7 @@ class unfolder():
 
         self._trans_rs = rs
         self._trans_indices = indices
-        print indices
+        print(indices)
 
     def get_weight(self, evec, qpt):
         """
