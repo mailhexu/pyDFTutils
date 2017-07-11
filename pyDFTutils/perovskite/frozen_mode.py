@@ -436,6 +436,7 @@ def gen_distorted_perovskite(name,
     #print disp.shape
     newcell = dcell._get_cell_with_modulation(
         disp_jt + disp_rotx + disp_roty +disp_rotz + disp_br +disp_tilting)
+    newcell=Atoms(newcell)
     print(spglib.get_spacegroup(newcell))
     #vesta_view(newcell)
     return newcell
