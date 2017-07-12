@@ -81,7 +81,7 @@ class phonon_unfolder:
         self._trans_indices = indices
         print indices
 
-    def get_weight(self, evec, qpt, G=np.array(0,0,0)):
+    def get_weight(self, evec, qpt, G=np.array([0,0,0]) ):
         """
         get the weight of a mode which has the wave vector of qpt and eigenvector of evec.
         W= sum_1^N < evec| T(r_i)exp(-I (K+G) * r_i| evec>, here G=0. T(r_i)exp(-I K r_i)| evec> = evec[indices[i]]
@@ -91,7 +91,7 @@ class phonon_unfolder:
         for r_i, ind in zip(self._trans_rs, self._trans_indices):
             if self._phase:
                 #r_i =np.dot(self._scmat,r_i)
-                weight += np.vdot(evec, evec[ind]*np.exp(-1j * np.dot(qpt+G,r_i)) ) /N
+                weight += np.vdot(evec, evec[ind]*np.exp(-1j *2 * np.pi * np.dot(qpt+G,r_i)) ) /N
             else:
                 weight += np.vdot(evec, evec[ind]) / N
 
