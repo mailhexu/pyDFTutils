@@ -630,8 +630,7 @@ class myvasp(Vasp):
         # Read output
         atoms_sorted = ase.io.read('CONTCAR', format='vasp')
 
-        if (self.int_params['ibrion'] is not None) and (self.int_params['nsw'] is not None)
-             and (self.int_params['ibrion'] > -1 and self.int_params['nsw'] > 0):
+        if (not (self.int_params['ibrion'] is None or self.int_params['nsw'] is None)) and (self.int_params['ibrion'] > -1 and self.int_params['nsw'] > 0):
             # Update atomic positions and unit cell with the ones read
             # from CONTCAR.
             atoms.positions = atoms_sorted[self.resort].positions
