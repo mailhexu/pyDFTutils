@@ -39,30 +39,9 @@ def kpath():
     names = ['$\Gamma$', 'X', 'W', '$\Gamma$', 'L']
     return kpts, x, X, names, GXW
 
-def displacement_cart_to_evec(displ_cart, masses, scaled_positions, qpoint=None, add_phase=True):
-    """
-    displ_cart: cartisien displacement. (atom1_x, atom1_y, atom1_z, atom2_x, ...)
-    masses: masses of atoms.
-    scaled_postions: scaled postions of atoms.
-    qpoint: if phase needs to be added, qpoint must be given.
-    add_phase: whether to add phase to the eigenvectors.
-    """
-    if add_phase and qpoint is None:
-        raise ValueError('qpoint must be given if adding phase is needed')
-    m = np.sqrt(np.kron(masses,[1,1,1]))
-    evec=displ_cart *m
-    if add_phase:
-        phase = [np.exp(-2j*np.pi*np.dot(pos,qpoint)) for pos in scaled_positions]
-        phase = np.kron(phase,[1,1,1])
-        evec*=phase
-        evec /= np.linalg.norm(evec)
-    return evec
 
-
-
-
-def DDB_unfolder(DDB_fname, kpath_bounds,sc_mat ):
-    DDB = abilab.abiopen(DDB_fname)
+def get_structure():
+    DDB = abilab.abiopen('out_DDB')
     struct = DDB.structure
     atoms = DDB.structure.to_ase_atoms()
     scaled_positions = struct.frac_coords
@@ -75,9 +54,12 @@ def DDB_unfolder(DDB_fname, kpath_bounds,sc_mat ):
     print cell
     print scaled_positions
 
+    points = kpath()[-1]
 
+    sc_mat = np.linalg.inv((np.array([[0, 1, 1], [1, 0, 1], [1, 1, 0]]) / 2.0))
 
-    #print kpath_bounds
+    kpath_bounds = [np.dot(k, sc_mat) for k in points]
+    print kpath_bounds
 
     phbst, phdos = DDB.anaget_phbst_and_phdos_files(
         nqsmall=5,
@@ -103,12 +85,11 @@ def DDB_unfolder(DDB_fname, kpath_bounds,sc_mat ):
         for ibranch in range(nbranch):
             phmode = phbst.get_phmode(qpt, ibranch)
             evals[iqpt, ibranch] = phmode.freq
-            #evec=phmode.displ_cart *m
-            #phase = [np.exp(-2j*np.pi*np.dot(pos,qpt)) for pos in scaled_positions]
-            #phase = np.kron(phase,[1,1,1])
-            #evec*=phase
-            #evec /= np.linalg.norm(evec)
-            evec=displacement_cart_to_evec(phmode.displ_cart, masses, scaled_positions, qpoint=qpt, add_phase=True)
+            evec=phmode.displ_cart *m
+            phase = [np.exp(-2j*np.pi*np.dot(pos,qpt)) for pos in scaled_positions]
+            phase = np.kron(phase,[1,1,1])
+            evec*=phase
+            evec /= np.linalg.norm(evec)
             evecs[iqpt,:,ibranch] = evec
             
     uf = phonon_unfolder(atoms,sc_mat,evecs,qpoints,phase=False)
@@ -124,9 +105,7 @@ def DDB_unfolder(DDB_fname, kpath_bounds,sc_mat ):
 
 
 def main():
-    sc_mat = np.linalg.inv((np.array([[0, 1, 1], [1, 0, 1], [1, 1, 0]]) / 2.0))
-    points = kpath()[-1]
-    DDB_unfolder(DDB_fname='out_DDB', kpath_bounds = [np.dot(k, sc_mat) for k in points],sc_mat=sc_mat)
+    get_structure()
 
 
 main()
