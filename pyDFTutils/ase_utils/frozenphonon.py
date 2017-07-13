@@ -4,6 +4,7 @@ from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.units import VaspToTHz
 from phonopy.file_IO import write_FORCE_CONSTANTS, write_disp_yaml
 from phonopy.interface.vasp import write_supercells_with_displacements
+from pickle import pickle
 from ase import Atoms
 import numpy as np
 import os
@@ -95,4 +96,6 @@ def calculate_phonon(atoms,
     for i, freq in enumerate(phonon.get_frequencies((0, 0, 0))):
         print(("[Phonopy] %3d: %10.5f THz" % (i + 1, freq)))  # THz
         print(("[Phonopy] %3d: %10.5f cm-1" % (i + 1, freq * 33.35)))  #cm-1
+    with open('phonon.pickle','wb') as myfile:
+        pickle.dump(myfile, phonon)
     return phonon

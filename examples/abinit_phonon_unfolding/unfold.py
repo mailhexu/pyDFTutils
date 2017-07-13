@@ -28,9 +28,6 @@ atomic_masses = np.array([
 
 
 def kpath():
-    #DDB = abilab.abiopen('out_DDB')
-    #struct = DDB.structure
-    #atoms = DDB.structure.to_ase_atoms()
     atoms = bulk('Cu','fcc')
     print atoms.cell
     points = get_special_points('fcc', atoms.cell, eps=0.01)
@@ -66,14 +63,10 @@ def DDB_unfolder(DDB_fname, kpath_bounds,sc_mat ):
     struct = DDB.structure
     atoms = DDB.structure.to_ase_atoms()
     scaled_positions = struct.frac_coords
-
     cell = struct.lattice_vectors()
     numbers = struct.atomic_numbers
     masses = [atomic_masses[i] for i in numbers]
 
-    print numbers
-    print cell
-    print scaled_positions
 
 
 
@@ -98,22 +91,14 @@ def DDB_unfolder(DDB_fname, kpath_bounds,sc_mat ):
 
     m = np.sqrt(np.kron(masses,[1,1,1]))
     #positions=np.kron(scaled_positions,[1,1,1])
-    
     for iqpt, qpt in enumerate(qpoints):
         for ibranch in range(nbranch):
             phmode = phbst.get_phmode(qpt, ibranch)
             evals[iqpt, ibranch] = phmode.freq
-            #evec=phmode.displ_cart *m
-            #phase = [np.exp(-2j*np.pi*np.dot(pos,qpt)) for pos in scaled_positions]
-            #phase = np.kron(phase,[1,1,1])
-            #evec*=phase
-            #evec /= np.linalg.norm(evec)
             evec=displacement_cart_to_evec(phmode.displ_cart, masses, scaled_positions, qpoint=qpt, add_phase=True)
             evecs[iqpt,:,ibranch] = evec
-            
     uf = phonon_unfolder(atoms,sc_mat,evecs,qpoints,phase=False)
     weights = uf.get_weights()
-    print weights.min(), weights.max()
     x=np.arange(nqpts)
     freqs=evals
     names = ['$\Gamma$', 'X', 'W', '$\Gamma$', 'L']
