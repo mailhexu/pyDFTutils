@@ -17,7 +17,7 @@ class phonon_unfolder:
         atoms: The structure of supercell.
         supercell matrix: The matrix that convert the primitive cell to supercell.
         eigenvectors: The phonon eigenvectors. format np.array() index=[ikpts, ifreq, 3*iatoms+j]. j=0..2
-        qpoints: list of q-points.
+        qpoints: list of q-points, note the q points are in the BZ of the supercell. 
         tol_r: tolerance. If abs(a-b) <r, they are seen as the same atom.
         ndim: number of dimensions. For 3D phonons, use ndim=3. For electrons(no spin), ndim=1. For spinors, use ndim=2 (TODO: spinor not tested. is it correct?).
         labels: labels of the basis. for 3D phonons, ndim can be set to 1 alternately, with labels set to ['x','y','z']*natoms. The labels are used to decide if two basis are identical by translation. (Not used for phonon)
@@ -81,7 +81,7 @@ class phonon_unfolder:
         self._trans_indices = indices
         print indices
 
-    def get_weight(self, evec, qpt, G=np.array(0,0,0)):
+    def get_weight(self, evec, qpt, G=np.array([0,0,0]) ):
         """
         get the weight of a mode which has the wave vector of qpt and eigenvector of evec.
         W= sum_1^N < evec| T(r_i)exp(-I (K+G) * r_i| evec>, here G=0. T(r_i)exp(-I K r_i)| evec> = evec[indices[i]]
@@ -90,7 +90,12 @@ class phonon_unfolder:
         N = len(self._trans_rs)
         for r_i, ind in zip(self._trans_rs, self._trans_indices):
             if self._phase:
+<<<<<<< HEAD
                 weight += np.vdot(evec, evec[ind]*np.exp(-1j * np.dot(qpt+G,r_i)) ) /N
+=======
+                #r_i =np.dot(self._scmat,r_i)
+                weight += np.vdot(evec, evec[ind])*np.exp(-1j *2 * np.pi * np.dot(qpt+G,r_i))  /N
+>>>>>>> origin/HEAD
             else:
                 weight += np.vdot(evec, evec[ind]) / N
 
