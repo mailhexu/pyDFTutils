@@ -358,18 +358,18 @@ def wait_job_success(job_id, maxtime=20 * 60 * 60):
 
 
 if __name__ == '__main__':
-    zenobe_run_wannier90(ompthreads=2)
+    zenobe_run_wannier90(ompthreads=12)
     #test_paramiko_nic4()
     #print(nic4run(jobname='name'))
 
-    mycommander = commander(
-        command='abinit',
-        queue_type='pbspro',
-        #local_dir='./tmpz',
-        job_fname='tscript.sh',
-        queue='main',
-        time="23:00:00",
-        ngroup=1,
-        mpiprocs=1,
-        mem_per_cpu=400)
-    mycommander.run()
+    #mycommander = commander(
+    #    command='abinit',
+    #    queue_type='pbspro',
+    #    #local_dir='./tmpz',
+    #    job_fname='tscript.sh',
+    #    queue='main',
+    #    time="23:00:00",
+    #    ngroup=1,
+    #    mpiprocs=1,
+    #    mem_per_cpu=400)
+    #mycommander.run()
