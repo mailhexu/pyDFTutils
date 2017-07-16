@@ -1,14 +1,14 @@
 #!/usr/bin/env python
+import copy
+from ase import Atoms
+import numpy as np
+import os
+import pickle
 from phonopy import Phonopy
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.units import VaspToTHz
 from phonopy.file_IO import write_FORCE_CONSTANTS, write_disp_yaml
 from phonopy.interface.vasp import write_supercells_with_displacements
-from pickle import pickle
-from ase import Atoms
-import numpy as np
-import os
-
 
 def calculate_phonon(atoms,
                      calc,
@@ -19,6 +19,7 @@ def calculate_phonon(atoms,
                      is_symmetry=True,
                      symprec=1e-5,
                      func=None,
+                     prepare_initial_wavecar=False,
                      **func_args):
     """
     """
@@ -58,6 +59,29 @@ def calculate_phonon(atoms,
 
     # 2. calculated forces.
     set_of_forces = []
+
+    if prepare_initial_wavecar:
+        scell=supercell0
+        cell = Atoms(
+            symbols=scell.get_chemical_symbols(),
+            scaled_positions=scell.get_scaled_positions(),
+            cell=scell.get_cell(),
+            pbc=True)
+        if is_mag:
+            cell.set_initial_magnetic_moments(
+                atoms.get_initial_magnetic_moments())
+        mcalc=copy.deepcopy(calc)
+        mcalc.set(lwave=True,lcharg=True)
+        cell.set_calculator(mcalc)
+        dir_name = "SUPERCELL0"
+        cur_dir = os.getcwd()
+        if not os.path.exists(dir_name):
+            os.mkdir(dir_name)
+        os.chdir(dir_name)
+        mcalc.scf_calculation()
+        os.chdir(cur_dir)
+
+
     for iscell, scell in enumerate(supercells):
         cell = Atoms(
             symbols=scell.get_chemical_symbols(),
@@ -72,6 +96,9 @@ def calculate_phonon(atoms,
         cur_dir = os.getcwd()
         if not os.path.exists(dir_name):
             os.mkdir(dir_name)
+        if prepare_initial_wavecar:
+            os.system('ln -s %s %s'%(os.path.abspath("SUPERCELL0/WAVECAR"),os.path.join(dir_name,'WAVECAR')))
+        
         os.chdir(dir_name)
         forces = cell.get_forces()
         print("[Phonopy] Forces: %s" % forces)
@@ -97,5 +124,5 @@ def calculate_phonon(atoms,
         print(("[Phonopy] %3d: %10.5f THz" % (i + 1, freq)))  # THz
         print(("[Phonopy] %3d: %10.5f cm-1" % (i + 1, freq * 33.35)))  #cm-1
     with open('phonon.pickle','wb') as myfile:
-        pickle.dump(myfile, phonon)
+        pickle.dump(phonon,myfile)
     return phonon

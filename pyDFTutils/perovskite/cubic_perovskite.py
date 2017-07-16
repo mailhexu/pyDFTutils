@@ -6,13 +6,18 @@ from ase.atoms import string2symbols
 import numpy as np
 from ase.build import make_supercell
 
-def gen222(A='Sr',
+def gen222(name=None,
+           A='Sr',
            B='Mn',
            O='O',
            latticeconstant=3.9,
            mag_order='FM',
            m=5,
            sort=True):
+    if name is not None:
+        symbols=string2symbols(name)
+        A, B, O, _, _ = symbols
+
     atoms = PerovskiteCubic([A, B, O], latticeconstant=latticeconstant)
     atoms = atoms.repeat([2, 2, 2])
     if sort:
