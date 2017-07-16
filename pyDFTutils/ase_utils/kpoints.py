@@ -5,7 +5,7 @@ import numpy as np
 from collections import Counter
 
 
-def cubic_kpath(npoints=500):
+def cubic_kpath(npoints=500,name=True):
     """
     return the kpoint path for cubic
     Parameters:
@@ -28,7 +28,10 @@ def cubic_kpath(npoints=500):
     special_kpts = [points[k] for k in paths[0]]
     kpts, xs, xspecial = bandpath(
         special_kpts, cell=np.eye(3), npoints=npoints)
-    return kpts, xs, xspecial
+    if not name:
+        return kpts, xs, xspecial
+    else:
+        return kpts, xs, xspecial,special_path
 
 
 def get_ir_kpts(atoms, mesh):
