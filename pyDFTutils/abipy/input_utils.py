@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 from glob import glob
+import json
 from ase.data import chemical_symbols
 from ase.atoms import Atoms
 from collections import OrderedDict
@@ -67,23 +68,25 @@ def find_pp(symbol, xc, family, label=''):
         if label == '':
             label = 'standard'
         pp_dir = os.path.join(pp_path, 'ONCVPSP-%s-PD*' % (xcdict[xc]))
-        fname = glob(os.path.join(pp_dir, label))
-        if len(fname) > 0:
-
-            print(fname)
-            ppdict = {}
-            with open(fname[0]) as myfile:
-                lines = myfile.readlines()
-            for line in lines:
-                elem = line.strip().split('/')[0]
-                name = os.path.join(pp_dir, line.strip())
-                ppdict[elem] = name
-            for i in range(57, 72):
-                elem = chemical_symbols[i]
-                ppdict[elem] = os.path.join(pp_dir,
-                                            '%s/*f-in-core*.psp8' % elem)
-        name = ppdict[symbol]
-        print(name)
+        fname = glob(os.path.join(pp_dir, '%s.djson'%label))
+        if len(fname)>0:
+            pp_dict=json.load(open(fname[0]))['pseudos_metadata']
+        name=os.path.join(pp_dir,symbol,pp_dict[symbol]['basename'])
+        #if len(fname) > 0:
+        #    print(fname)
+        #    ppdict = {}
+        #    with open(fname[0]) as myfile:
+        #        lines = myfile.readlines()
+        #    for line in lines:
+        #        elem = line.strip().split('/')[0]
+        #        name = os.path.join(pp_dir, line.strip())
+        #        ppdict[elem] = name
+        #    for i in range(57, 72):
+        #        elem = chemical_symbols[i]
+        #        ppdict[elem] = os.path.join(pp_dir,
+        #                                    '%s/*f-in-core*.psp8' % elem)
+        #name = ppdict[symbol]
+        #print(name)
 
     pp = os.path.join(pp_path, name)
     names = glob(pp)
@@ -150,11 +153,12 @@ def test_pp_finder():
     print(find_pp('Sn', 'LDA', 'jth', label='_sp'))
     print(find_pp('Ga', 'LDA', 'gbrv'))
     print(find_pp('Lu', 'LDA', 'gbrv', label='_fincore'))
-    #print(find_pp('Ca', 'LDA', 'dojo', label=''))
+    print(find_pp('Ca', 'LDA', 'dojo', label=''))
     #print(find_pp('Lu', 'PBEsol', 'dojo', label=''))
     #print(find_pp('Lu', 'PBEsol', 'dojo', label=''))
 
     print(find_all_pp(['Ba', 'Ti', 'O'], 'LDA', 'gbrv'))
+    print(find_all_pp(['Sr', 'Mn', 'O'], 'LDA', 'dojo'))
 
 
 test_pp_finder()
