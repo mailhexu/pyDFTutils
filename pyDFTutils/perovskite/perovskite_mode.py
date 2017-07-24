@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import numpy as np
 from collections import namedtuple, OrderedDict
+from ase.data import atomic_numbers, atomic_masses
 
 nmode = namedtuple('nmode', [
     'Ax', 'Ay', 'Az', 'Bx', 'By', 'Bz', 'O1x', 'O1y', 'O1z', 'O2x', 'O2y',
@@ -263,32 +264,39 @@ def label(qname, phdisp, masses, notation='IR'):
     return mode
 
 
-def mass_to_Gamma_basis(masses,eigen_type='eigen_displacement'):
+def mass_to_Gamma_basis(masses, eigen_type='eigen_displacement'):
     """
     return the slater-last-axe basis.
     type: eigenvector |eigendisplacement
     """
-    masses=np.sqrt(masses)
-    A,B,O= masses[0],masses[1],masses[2]
-
+    masses = np.sqrt(masses)
+    A, B, O = masses[0], masses[1], masses[2]
 
     #slater: A0, B+, O//- O|_-
-    s=np.array([0, O*3, -B, -B,-B])
-    slater=s/np.linalg.norm(s)
+    s = np.array([0, O * 3, -B, -B, -B])
+    slater = s / np.linalg.norm(s)
 
-     # axe
-    s=np.array([0,0,2,-1,-1])
-    axe=s/np.linalg.norm(s)
+    # axe
+    s = np.array([0, 0, 2, -1, -1])
+    axe = s / np.linalg.norm(s)
 
     # last :  A- B- O+
-    s=np.array([B+O*3, -A,-A, -A, -A])
-    last = s-np.dot(s,slater)*slater
-    last = last/np.linalg.norm(last)
+    s = np.array([B + O * 3, -A, -A, -A, -A])
+    last = s - np.dot(s, slater) * slater
+    last = last / np.linalg.norm(last)
 
-    if eigen_type=='eigen_vector':
-        slater=slater*masses
-        axe=axe*masses
-        last=last*masses
+    if eigen_type == 'eigen_vector':
+        slater = slater * masses
+        axe = axe * masses
+        last = last * masses
 
     return slater, axe, last
 
+
+def elem_to_Gamma_basis(elems, eigen_type='eigen_displacement'):
+    """
+    Input A, B, X and get Slater, axe, Last mode in perovskite structure.
+    eigen_type: eigen_displacement or eigen_vector. Default is eigen displacement. 
+    """
+    masses = [atomic_masses[atomic_numbers[elem]] for elem in elems]
+    return mass_to_Gamma_basis(masses, eigen_type=eigen_type)
