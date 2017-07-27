@@ -2041,7 +2041,7 @@ class wf_array(object):
     An irregular grid of points, or a grid that includes also
     one or more parametric dimensions, can be populated manually
     with the help of the *[]* operator.  For example, to copy
-    eigenvectors *evec* into coordinate (2,3) in the *wf_array*
+    eeigenvectors *evec* into coordinate (2,3) in the *wf_array*
     object *wf* one can simply do::
 
       wf[2,3]=evec
