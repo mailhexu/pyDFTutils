@@ -318,5 +318,24 @@ class mytb(tb_model):
         """
         raise NotImplementedError('Projected DOS is not yet implemented!')
 
+    def get_band_gap_and_edges(self, nel=None,kpts=None):
+        """
+        return band gap, VBM and CBM. The VBM is defined as the highest nelth band energy.
+        """
+        VBM=None
+        CBM=None
+        if nel is None:
+            nel=self._nel
+        if kpts is None:
+            kpts=self._kpts
+        if self._eigenvals is None:
+            eigvals = self.solve_all(k_list=kpts,eig_vectors=False)
+        VBM=np.maximum(eigvals[nel-1,:])
+        CBM=np.minimum(eigvals[nel,:])
+        band_gap=CBM-VBM
+        return band_gap, VBM, CBM
+
+
+
 
 
