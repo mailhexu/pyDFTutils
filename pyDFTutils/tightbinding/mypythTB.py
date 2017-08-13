@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/env python3
-from pythtb import tb_model
+from pythtb import tb_model,w90
 from ase.calculators.interface import Calculator,DFTCalculator
 from ase.dft.dos import DOS
 from ase.dft.kpoints import monkhorst_pack
@@ -11,7 +11,7 @@ from pyDFTutils.wannier90.band_plot import plot_band_weight
 import matplotlib.pyplot as plt
 
 
-class mytb(tb_model):
+class my_tb_model(tb_model):
     """
     :param dim_k: Dimensionality of reciprocal space, i.e., specifies how
       many directions are considered to be periodic.
@@ -338,4 +338,148 @@ class mytb(tb_model):
 
 
 
+
+class myw90(w90):
+    """
+    wrapper of pythtb.w90, the only difference is that it use mypythtb as model class.
+    """
+    def model(self,zero_energy=0.0,min_hopping_norm=None,max_distance=None,ignorable_imaginary_part=None):
+        """
+
+        This function returns :class:`pythtb.tb_model` object that can
+        be used to interpolate the band structure at arbitrary
+        k-point, analyze the wavefunction character, etc.  
+
+        The tight-binding basis orbitals in the returned object are
+        maximally localized Wannier functions as computed by
+        Wannier90.  The orbital character of these functions can be
+        inferred either from the *projections* block in the
+        *prefix*.win or from the *prefix*.nnkp file.  Please note that
+        the character of the maximally localized Wannier functions is
+        not exactly the same as that specified by the initial
+        projections.  One way to ensure that the Wannier functions are
+        as close to the initial projections as possible is to first
+        choose a good set of initial projections (for these initial
+        and final spread should not differ more than 20%) and then
+        perform another Wannier90 run setting *num_iter=0* in the
+        *prefix*.win file.
+
+        Number of spin components is always set to 1, even if the
+        underlying DFT calculation includes spin.  Please refer to the
+        *projections* block or the *prefix*.nnkp file to see which
+        orbitals correspond to which spin.
+
+        Locations of the orbitals in the returned
+        :class:`pythtb.tb_model` object are equal to the centers of
+        the Wannier functions computed by Wannier90.
+        
+        :param zero_energy: Sets the zero of the energy in the band
+          structure.  This value is typically set to the Fermi level
+          computed by the density-functional code (or to the top of the
+          valence band).  Units are electron-volts.
+
+        :param min_hopping_norm: Hopping terms read from Wannier90 with
+          complex norm less than *min_hopping_norm* will not be included
+          in the returned tight-binding model.  This parameters is
+          specified in electron-volts.  By default all terms regardless
+          of their norm are included.
+        
+        :param max_distance: Hopping terms from site *i* to site *j+R* will
+          be ignored if the distance from orbital *i* to *j+R* is larger
+          than *max_distance*.  This parameter is given in Angstroms.
+          By default all terms regardless of the distance are included.
+
+        :param ignorable_imaginary_part: The hopping term will be assumed to
+          be exactly real if the absolute value of the imaginary part as
+          computed by Wannier90 is less than *ignorable_imaginary_part*.
+          By default imaginary terms are not ignored.  Units are again
+          eV.
+
+        :returns:
+           * **tb** --  The object of type :class:`pythtb.tb_model` that can be used to
+               interpolate Wannier90 band structure to an arbitrary k-point as well
+               as to analyze the character of the wavefunctions.  Please note 
+
+        Example usage::
+
+          # returns tb_model with all hopping parameters
+          my_model=silicon.model()
+
+          # simplified model that contains only hopping terms above 0.01 eV
+          my_model_simple=silicon.model(min_hopping_norm=0.01)
+          my_model_simple.display()
+        
+        """    
+
+        # make the model object
+        tb=my_tb_model(3,3,self.lat,self.red_cen)
+
+        # remember that this model was computed from w90
+        tb._assume_position_operator_diagonal=False
+
+        # add onsite energies
+        onsite=np.zeros(self.num_wan,dtype=float)
+        for i in range(self.num_wan):
+            tmp_ham=self.ham_r[(0,0,0)]["h"][i,i]/float(self.ham_r[(0,0,0)]["deg"])
+            onsite[i]=tmp_ham.real
+            if np.abs(tmp_ham.imag)>1.0E-9:
+                raise Exception("Onsite terms should be real!")
+        tb.set_onsite(onsite-zero_energy)
+
+        # add hopping terms
+        for R in self.ham_r:
+            # avoid double counting
+            use_this_R=True
+            # avoid onsite terms
+            if R[0]==0 and R[1]==0 and R[2]==0:
+                avoid_diagonal=True
+            else:
+                avoid_diagonal=False
+                # avoid taking both R and -R
+                if R[0]!=0:
+                    if R[0]<0:
+                        use_this_R=False
+                else:
+                    if R[1]!=0:
+                        if R[1]<0:
+                            use_this_R=False
+                    else:
+                        if R[2]<0:
+                            use_this_R=False
+            # get R vector
+            vecR=_red_to_cart((self.lat[0],self.lat[1],self.lat[2]),[R])[0]
+            # scan through unique R
+            if use_this_R==True:
+                for i in range(self.num_wan):
+                    vec_i=self.xyz_cen[i]
+                    for j in range(self.num_wan):
+                        vec_j=self.xyz_cen[j]
+                        # get distance between orbitals
+                        dist_ijR=np.sqrt(np.dot(-vec_i+vec_j+vecR,
+                                                -vec_i+vec_j+vecR))
+                        # to prevent double counting
+                        if not (avoid_diagonal==True and j<=i):
+                            
+                            # only if distance between orbitals is small enough
+                            if max_distance is not None:
+                                if dist_ijR>max_distance:
+                                    continue
+
+                            # divide the matrix element from w90 with the degeneracy
+                            tmp_ham=self.ham_r[R]["h"][i,j]/float(self.ham_r[R]["deg"])
+
+                            # only if big enough matrix element
+                            if min_hopping_norm is not None:
+                                if np.abs(tmp_ham)<min_hopping_norm:
+                                    continue
+
+                            # remove imaginary part if needed
+                            if ignorable_imaginary_part is not None:
+                                if np.abs(tmp_ham.imag)<ignorable_imaginary_part:
+                                    tmp_ham=tmp_ham.real+0.0j
+
+                            # set the hopping term
+                            tb.set_hop(tmp_ham,i,j,list(R))
+
+        return tb
 
