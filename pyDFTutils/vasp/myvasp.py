@@ -66,7 +66,7 @@ default_pps_1 = {
     'P': 'P',
     'Si': 'Si',
     'Sn': 'Sn_d',
-    'W': 'W_pv',
+    'W': 'W_sv',
     'V': 'V_sv',
     'Sc': 'Sc_sv',
     'Sb': 'Sb',
