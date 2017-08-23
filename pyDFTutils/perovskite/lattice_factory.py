@@ -211,6 +211,7 @@ def R_3c_builder(a,alpha,symbol_list,basis=[(0,0,0),(0.227,0.227,0.227),(0.542,0
     scaled_positions.append(force_in_cell(array([y,z,x])+0.5))
 
     atoms=Atoms(symbols=symbols,scaled_positions=scaled_positions,cell=cellpar_to_cell([a,a,a,alpha,alpha,alpha]))
+    raise NotImplementedError('Implementation Wrong, try to use sth instead , e.g. LaAlO3')
     return atoms
 
 class NaClPrimFactory(TriclinicFactory):
