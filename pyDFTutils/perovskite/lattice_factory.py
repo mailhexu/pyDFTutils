@@ -184,7 +184,7 @@ def cut_R3c_22(atoms):
     return new_atoms
 
 
-def R_3c_builder(a,alpha,symbol_list,basis):
+def R_3c_builder(a,alpha,symbol_list,basis=[(0,0,0),(0.227,0.227,0.227),(0.542,0.943,0.397)]):
     """
     a, alpha: as they are
     symbols: a list. eg. ['Bi','Fe',O]
@@ -206,11 +206,12 @@ def R_3c_builder(a,alpha,symbol_list,basis):
     scaled_positions.append(force_in_cell(array([z,x,y])))
     scaled_positions.append(force_in_cell(array([y,z,x])))
     ####NOTE: not just the above +0.5 but with a rotation.
-    scaled_positions.append(force_in_cell(array([y,x,z])+0.5))
-    scaled_positions.append(force_in_cell(array([x,z,y])+0.5))
-    scaled_positions.append(force_in_cell(array([z,y,x])+0.5))
+    scaled_positions.append(force_in_cell(array([x,y,z])+0.5))
+    scaled_positions.append(force_in_cell(array([z,x,y])+0.5))
+    scaled_positions.append(force_in_cell(array([y,z,x])+0.5))
 
     atoms=Atoms(symbols=symbols,scaled_positions=scaled_positions,cell=cellpar_to_cell([a,a,a,alpha,alpha,alpha]))
+    raise NotImplementedError('Implementation Wrong, try to use sth instead , e.g. LaAlO3')
     return atoms
 
 class NaClPrimFactory(TriclinicFactory):

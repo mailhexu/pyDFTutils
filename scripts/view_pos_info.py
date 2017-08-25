@@ -1,15 +1,15 @@
 #!/usr/bin/env  python
-from ase.io.vasp import read_vasp
+from ase.io import read
 from pyDFTutils.ase_utils import cell_to_cellpar
 import spglib.spglib as spglib
 import sys
 
 def view_cellpars(filename='POSCAR'):
-    atoms=read_vasp(filename)
+    atoms=read(filename)
     print('CELLPARS: %s'%cell_to_cellpar(atoms.get_cell()))
     print('Volume: %s'%atoms.get_volume())
 def view_spacegroup(filename='POSCAR',symprec=1e-3):
-    atoms=read_vasp(filename)
+    atoms=read(filename)
     print("SPACEGROUP: %s"%spglib.get_spacegroup(atoms,symprec=symprec))
 
 def viewall(filename='POSCAR',symprec=1e-3):
