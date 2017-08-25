@@ -644,6 +644,7 @@ def set_substrate(atoms,
     cellpars = cell_to_cellpar(atoms.get_cell())
     print(a,b,c)
 
+    a0, b0, c0 = cellpars[0:3]
     if a is not None:
         cellpars[0] = a * m
     if b is not None:
@@ -657,7 +658,6 @@ def set_substrate(atoms,
 
     print(cellpars)
     if fix_volume:
-        a0, b0, c0 = cellpars[0:3]
         ab = cellpars[5]
         c = (a0 * b0 * c0 * math.sin(math.radians(ab)) /
              (a * b * m * m * math.sin(math.radians(angle_ab))))
