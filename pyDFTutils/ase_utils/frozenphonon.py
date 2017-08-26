@@ -68,6 +68,7 @@ def calculate_phonon(atoms,
         #set_of_forces=np.array(set_of_forces)
         #set_of_forces=[np.asarray(f) for f in set_of_forces]
         phonon.set_displacement_dataset(set_of_forces)
+        phonon.produce_force_constants()
     else:
         set_of_forces = []
 
@@ -126,11 +127,12 @@ def calculate_phonon(atoms,
                 force -= drift_force / forces.shape[0]
             set_of_forces.append(forces)
 
+        phonon.set_displacement_dataset(set_of_forces)
     # Phonopy post-process
     print('==============')
     print(phonon._displacement_dataset['first_atoms'])
     #phonon.produce_force_constants(forces=np.array(set_of_forces))
-    phonon.produce_force_constants()
+    #phonon.produce_force_constants()
     force_constants = phonon.get_force_constants()
     print(force_constants)
     write_FORCE_CONSTANTS(force_constants, filename='FORCE_CONSTANTS')
