@@ -23,6 +23,7 @@ def calculate_phonon(atoms,
                      symprec=1e-5,
                      func=None,
                      prepare_initial_wavecar=False,
+                     skip=None,
                      **func_args):
     """
     """
@@ -94,6 +95,8 @@ def calculate_phonon(atoms,
             os.chdir(cur_dir)
 
         for iscell, scell in enumerate(supercells):
+            if skip is not None and iscell<skip:
+                continue
             cell = Atoms(
                 symbols=scell.get_chemical_symbols(),
                 scaled_positions=scell.get_scaled_positions(),
