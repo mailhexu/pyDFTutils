@@ -73,7 +73,7 @@ def calculate_phonon(atoms,
     else:
         set_of_forces = []
 
-        if prepare_initial_wavecar:
+        if prepare_initial_wavecar and not skip is None:
             scell = supercell0
             cell = Atoms(
                 symbols=scell.get_chemical_symbols(),
