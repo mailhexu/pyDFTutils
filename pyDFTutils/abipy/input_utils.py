@@ -51,7 +51,7 @@ def set_spinat(abi_inp, magmoms):
 pp_path = os.path.expanduser('~/.local/pp/abinit')
 
 
-def find_pp(symbol, xc, family, label=''):
+def find_pp(symbol, xc, family, label='',pp_path=pp_path):
     """
     find pseudo potential.
     """
@@ -118,7 +118,7 @@ def to_abi_structure(obj,magmoms=False):
         return structure
 
 
-def find_all_pp(obj, xc, family, label_dict={}):
+def find_all_pp(obj, xc, family, label_dict={},pp_path=pp_path):
     symbols = []
     if isinstance(obj, collections.Iterable) and (
             not isinstance(obj, str)) and isinstance(obj[0], str):
@@ -143,7 +143,7 @@ def find_all_pp(obj, xc, family, label_dict={}):
                 label = label_dict
             else:
                 label = ''
-            ppdict[elem] = find_pp(elem, xc, family, label)
+            ppdict[elem] = find_pp(elem, xc, family, label,pp_path=pp_path)
     return list(ppdict.values())
 
 
