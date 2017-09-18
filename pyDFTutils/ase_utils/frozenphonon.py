@@ -10,6 +10,10 @@ from phonopy.units import VaspToTHz
 from phonopy.file_IO import (write_FORCE_CONSTANTS, write_disp_yaml,
                              parse_FORCE_SETS)
 from phonopy.interface.vasp import write_supercells_with_displacements
+import copy
+#from concurrent.futures import ProcessPoolExecutor
+#from multiprocessing import Pool
+from pathos.multiprocessing import ProcessingPool as Pool
 
 
 def calculate_phonon(atoms,
@@ -24,6 +28,7 @@ def calculate_phonon(atoms,
                      func=None,
                      prepare_initial_wavecar=False,
                      skip=None,
+                     parallel=True,
                      **func_args):
     """
     """
@@ -73,7 +78,7 @@ def calculate_phonon(atoms,
     else:
         set_of_forces = []
 
-        if prepare_initial_wavecar and not skip is None:
+        if prepare_initial_wavecar and skip is None:
             scell = supercell0
             cell = Atoms(
                 symbols=scell.get_chemical_symbols(),
@@ -94,9 +99,8 @@ def calculate_phonon(atoms,
             mcalc.scf_calculation()
             os.chdir(cur_dir)
 
-        for iscell, scell in enumerate(supercells):
-            if skip is not None and iscell<skip:
-                continue
+        def calc_force(iscell):
+            scell=supercells[iscell]
             cell = Atoms(
                 symbols=scell.get_chemical_symbols(),
                 scaled_positions=scell.get_scaled_positions(),
@@ -105,7 +109,7 @@ def calculate_phonon(atoms,
             if is_mag:
                 cell.set_initial_magnetic_moments(
                     atoms.get_initial_magnetic_moments())
-            cell.set_calculator(calc)
+            cell.set_calculator(copy.deepcopy(calc))
             dir_name = "PHON_CELL%s" % iscell
             cur_dir = os.getcwd()
             if not os.path.exists(dir_name):
@@ -128,7 +132,23 @@ def calculate_phonon(atoms,
             # Simple translational invariance
             for force in forces:
                 force -= drift_force / forces.shape[0]
-            set_of_forces.append(forces)
+            return forces
+
+        #with ProcessPoolExecutor() as executor:
+        #    if skip is not None:
+        #        skip=0
+        #    set_of_forces=executor.map(calc_force,list(range(skip,len(supercells))))
+        if skip is None:
+            iskip=0
+        else:
+            iskip=skip
+        if parallel:
+            p=Pool()
+            set_of_forces=p.map(calc_force,list(range(iskip,len(supercells))))
+        else:
+            set_of_forces=[]
+            for iscell, scell in enumerate(supercells[iskip:]):
+                set_of_forces.append(calc_force(iscell))
 
         #phonon.set_displacement_dataset(set_of_forces)
         phonon.produce_force_constants(forces=np.array(set_of_forces))
