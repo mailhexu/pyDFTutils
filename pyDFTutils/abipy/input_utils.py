@@ -161,4 +161,4 @@ def test_pp_finder():
     print(find_all_pp(['Sr', 'Mn', 'O'], 'LDA', 'dojo'))
 
 
-test_pp_finder()
+#test_pp_finder()
