@@ -6,7 +6,7 @@ from ase.data import atomic_numbers, atomic_masses
 nmode = namedtuple('nmode', [
     'Ax', 'Ay', 'Az', 'Bx', 'By', 'Bz', 'O1x', 'O1y', 'O1z', 'O2x', 'O2y',
     'O2z', 'O3x', 'O3y', 'O3z'
-])
+])  # Note: A, B, Oz, Ox, Oy
 
 IR_dict = OrderedDict()
 
@@ -191,9 +191,11 @@ IR_dict['R'] = {
 }
 
 
-def label(qname, phdisp, masses, notation='IR'):
-    IR_dict = {}
-
+def label_zone_boundary(qname,
+                        phdisp=None,
+                        masses=None,
+                        evec=None,
+                        notation='IR'):
     IR_translation = {}
 
     IR_translation['Gamma'] = {
@@ -228,49 +230,71 @@ def label(qname, phdisp, masses, notation='IR'):
         '$M_5$': '$M_5^+$',
         '$M_5\prime$': '$M_5^-$',
     }
-    #with open('names.txt','w') as myfile:
-    #    for q in IR_translation:
-    #        myfile.write('## %s\n\n'%q)
-    #        myfile.write('|Cowley | ? |\n|------|-----|\n')
-    #        for cname in IR_translation[q]:
-    #            myfile.write('| '+cname+' | '+IR_translation[q][cname]+' |\n')
-    #        myfile.write("\n")
-    evec = np.array(phdisp) * np.sqrt(np.kron(masses, [1, 1, 1]))
-    evec = np.real(evec) / np.linalg.norm(evec)
+
+    if phdisp is not None or masses is not None:
+        evec = np.array(phdisp) * np.sqrt(np.kron(masses, [1, 1, 1]))
+        evec = np.real(evec) / np.linalg.norm(evec)
 
     mode = None
     for m in IR_dict[qname]:
-        #print m
         mvec = np.real(m)
         mvec = mvec / np.linalg.norm(mvec)
-        #print mvec
+        evec = evec / np.linalg.norm(evec)
         p = np.abs(np.dot(np.real(evec), mvec))
-        #print p
-        if p > 0.5:  #1.0 / np.sqrt(2):
+        if p > 0.7:  #1.0 / np.sqrt(2):
             print("-------------")
-            print("Found! p= %s" % p)
-            print("eigen vector: ", nmode._make(mvec))
-            if notation == 'Cowley':
+            #print("Found! p= %s" % p)
+            #print("eigen vector: ", nmode._make(mvec))
+            if notation.lower() == 'cowley':
                 mode = IR_dict[qname][m]
-            else:
-                print(IR_translation[qname])
+            elif notation.upper() == 'IR':
+                #print(IR_translation[qname])
                 mode = IR_translation[qname][IR_dict[qname][m]]
-            print("mode: ", mode, m)
-        #return IR_dict[m]
+            elif notation.lower() == 'both':
+                mode = (IR_dict[qname][m],
+                        IR_translation[qname][IR_dict[qname][m]])
+            else:
+                raise ValueError('notation should be Cowley|IR|both')
+            #print("mode: ", mode, m)
     if mode is None:
         print("==============")
         print("eigen vector: ", nmode._make(evec))
-    #return None
     return mode
 
 
-def mass_to_Gamma_basis(masses, eigen_type='eigen_displacement'):
+def label_Gamma(phdisp=None, masses=None, evec=None):
+    if phdisp is not None and masses is not None:
+        evec = np.array(phdisp) * np.sqrt(np.kron(masses, [1, 1, 1]))
+        evec = np.real(evec) / np.linalg.norm(evec)
+
+    basis_dict = mass_to_Gamma_basis_3d(masses, eigen_type='eigen_vector')
+    mode = None
+
+    for m in basis_dict:
+        mvec = np.real(m)
+        mvec = mvec / np.linalg.norm(mvec)
+        evec = evec / np.linalg.norm(evec)
+        p = np.abs(np.dot(np.real(evec), mvec))
+        if p > 0.6:  #1.0 / np.sqrt(2):
+            mode = basis_dict[m]
+    if mode is None:
+        print("==============")
+        print("eigen vector: ", nmode._make(evec))
+    return mode
+
+
+def mass_to_Gamma_basis(masses, eigen_type='eigen_vector'):
     """
     return the slater-last-axe basis.
     type: eigenvector |eigendisplacement
+    Notice that the sequence of the atoms are A, B, O_inplane, O_inplane, O_out_of_plane.
     """
     masses = np.sqrt(masses)
     A, B, O = masses[0], masses[1], masses[2]
+
+    # acoustic
+    s = np.array([1, 1, 1, 1, 1])
+    acoustic = s / np.linalg.norm(s)
 
     #slater: A0, B+, O//- O|_-
     s = np.array([0, O * 3, -B, -B, -B])
@@ -285,18 +309,126 @@ def mass_to_Gamma_basis(masses, eigen_type='eigen_displacement'):
     last = s - np.dot(s, slater) * slater
     last = last / np.linalg.norm(last)
 
+    # Gamma4 :
+    s = np.array([0, 0, 0, 1, -1])
+    g4 = s / np.linalg.norm(s)
+
     if eigen_type == 'eigen_vector':
         slater = slater * masses
+        slater = slater / np.linalg.norm(slater)
         axe = axe * masses
+        axe = axe / np.linalg.norm(axe)
         last = last * masses
+        last = last / np.linalg.norm(last)
+        acoustic = acoustic * masses
+        acoustic = acoustic / np.linalg.norm(acoustic)
+        g4 = g4 * masses
+        g4 = g4 / np.linalg.norm(g4)
 
-    return slater, axe, last
+    #return acoustic, slater, axe, last, g4
+    return {
+        'acoustic': acoustic,
+        'slater': slater,
+        'axe': axe,
+        'last': last,
+        'g4': g4
+    }
+
+
+def mass_to_Gamma_basis_3d(masses, eigen_type='eigen_vector'):
+    evecs = mass_to_Gamma_basis(masses, eigen_type=eigen_type)
+    M = nmode._make([0.0] * 15)
+
+    a = evecs['acoustic']
+    s = evecs['slater']
+    ax = evecs['axe']
+    l = evecs['last']
+    g = evecs['g4']
+
+    # acoustic mode.
+    v = np.zeros(15, dtype=float)
+    v[0::3] = a
+    Ax = nmode._make(v)
+
+    v = np.zeros(15, dtype=float)
+    v[1::3] = a
+    Ay = nmode._make(v)
+
+    v = np.zeros(15, dtype=float)
+    v[2::3] = a
+    Az = nmode._make(v)
+
+    # Slater mode
+    v = np.zeros(15, dtype=float)
+    v[0::3] = s
+    Sx = nmode._make(v)
+
+    v = np.zeros(15, dtype=float)
+    v[1::3] = s
+    Sy = nmode._make(v)
+
+    v = np.zeros(15, dtype=float)
+    v[2::3] = s
+    Sz = nmode._make(v)
+
+    # Axe mode
+    r1, r2 = ax[2], ax[3]  # O1, O2 -- Oz Ox
+    Axex = M._replace(O1x=r2, O2x=r1, O3x=r2)
+    Axey = M._replace(O1y=r2, O2y=r2, O3y=r1)
+    Axez = M._replace(O1z=r1, O2z=r2, O3z=r2)
+
+    # Last mode
+    v = np.zeros(15, dtype=float)
+    v[0::3] = l
+    Lx = nmode._make(v)
+
+    v = np.zeros(15, dtype=float)
+    v[1::3] = l
+    Ly = nmode._make(v)
+
+    v = np.zeros(15, dtype=float)
+    v[2::3] = l
+    Lz = nmode._make(v)
+
+    # Gamma4 silent mode
+    r1, r2 = g[3], g[4]
+    G4x = M._replace(O1x=r1, O3x=r2)  # Ox, Oy in z direction
+    G4y = M._replace(O1y=r1, O2y=r2)  # Ox, Oz in y direction
+    G4z = M._replace(O2z=r1, O3z=r2)  # Ox, Oy in z direction
+
+    mode_dict = {
+        Ax: 'Ax',
+        Ay: 'Ay',
+        Az: 'Az',
+        Sx: 'Sx',
+        Sy: 'Sy',
+        Sz: 'Sz',
+        Axex: 'Axex',
+        Axey: 'Axey',
+        Axez: 'Axez',
+        Lx: 'Lx',
+        Ly: 'Ly',
+        Lz: 'Lz',
+        G4x: 'G4x',
+        G4y: 'G4y',
+        G4z: 'G4z'
+    }
+    return mode_dict
 
 
 def elem_to_Gamma_basis(elems, eigen_type='eigen_displacement'):
     """
     Input A, B, X and get Slater, axe, Last mode in perovskite structure.
-    eigen_type: eigen_displacement or eigen_vector. Default is eigen displacement. 
+    eigen_type: eigen_displacement or eigen_vector. Default is eigen displacement.
     """
     masses = [atomic_masses[atomic_numbers[elem]] for elem in elems]
     return mass_to_Gamma_basis(masses, eigen_type=eigen_type)
+
+def test():
+    from ase import Atoms
+    atoms=Atoms('BaTiO3')
+    masses=atoms.get_masses()
+    m=mass_to_Gamma_basis_3d(masses, eigen_type='eigen_vector')
+    for k in m:
+        print(m[k],k)
+#test()
