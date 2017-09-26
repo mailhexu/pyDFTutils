@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from abipy.abilab import abiopen
-from perovskite_mode import label_zone_boundary, label_Gamma
+from pyDFTutils.perovskite.perovskite_mode import label_zone_boundary, label_Gamma
 
 property_categories = ['scf', 'phonon', 'relax']
 
@@ -195,3 +195,12 @@ class mat_data():
                 evecs[iqpt, :, ibranch] = evec / np.linalg.norm(evec)
                 edisps[iqpt, :, ibranch] = phmode.displ_cart
         return qpoints, evals, evecs, edisps
+
+
+def test_parser():
+    md = mat_data()
+    md.read_DDB('out_DDB')
+    print(md.get_zb_mode('R','$R_3^-$'))
+    print(md.get_gamma_mode('G4x'))
+
+
