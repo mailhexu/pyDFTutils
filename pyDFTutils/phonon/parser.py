@@ -2,9 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from abipy.abilab import abiopen
-from pyDFTutils.perovskite.perovskite_mode import label_zone_boundary, label_Gamma
-
-property_categories = ['scf', 'phonon', 'relax']
+from perovskite_mode import label_zone_boundary, label_Gamma
 
 
 def displacement_cart_to_evec(displ_cart,
@@ -35,59 +33,156 @@ def displacement_cart_to_evec(displ_cart,
 
 
 class mat_data():
-    def __init__(self):
-        self._id = None
-        self._uid = None
-        self._name = None
-        self._db_directory = None
-        self._all_data_directory = None
+    def __init__(self,
+                 name,
+                 mag='PM',
+                 description="None",
+                 author='High Throughput Bot',
+                 email='x.he@ulg.ac.be',
+                 is_verified=False,
+                 verification_info=""):
+        self._already_in_db = False
+        self.name = name
+        self.db_directory = None
+        self.all_data_directory = None
+        self.mag = 'PM'
+        self.insert_time = None
+        self.update_time = None
+        self.log = ""
+        self.description = ""
+        self.author = 'High Throughput Bot'
+        self.email = 'x.he@ulg.ac.be'
 
-        self._insert_time = None
-        self._update_time = None
-        self._log = ""
-        self._note = ""
-        self._author = None
-        self._email = None
-
-        self._checked = False
-        self._check_info = ""
+        self.is_verified = is_verified
+        self.verification_info = verification_info
 
         # properties in database. should be band | phonon
-        self._properties = []
+        self.has_ebands = False
+        self.has_phonon = False
 
-        self._results = {}
-        for p in property_categories:
-            self._results[p] = {}
+        self.is_cubic_perovskite = True
+
+        self.cellpar = [0] * 6
+        self.natoms = 0
+        self.chemical_symbols = []
+        self.masses = []
+        self.scaled_positions = []
+        self.ispin = 0
+        self.spinat = []
+        self.spgroup = 1
+        self.spgroup_name = 'P1'
+        self.ixc = 1
+        self.XC = 'PBEsol'
+        self.pp_type = 'ONCV'
+        self.pp_info = 'Not implemented yet.'
+
+        self.U = {'ldau_type': 1, 'ldau_luj': {}}
+        self.GSR_parameters = {}
+        self.energy = 0
+        self.efermi = 0
+        self.bandgap = 0
+        self.ebands = {}
+
+        self.emacro = [0.0] * 9
+        self.becs = {}
+        self.elastic = []
+        self.nqpts = [1, 1, 1]
+        self.special_qpts = {}
+
+        self.phonon_mode_freqs = {}
+        self.phonon_mode_names = {}
+        self.phonon_mode_evecs = {}
+        self.phonon_mode_phdispl = {}
+
+        self.phonon_mode_freqs_LOTO = {}
+        self.phonon_mode_names_LOTO = {}
+        self.phonon_mode_evecs_LOTO = {}
+        self.phonon_mode_phdispl_LOTO = {}
+
+    def read_BAND_nc(self, fname):
+        try:
+            self.band_file = abiopen(fname)
+            self.has_eband = True
+        except Exception:
+            raise IOError("can't read %s" % fname)
+        self.efermi = self.band_file.energy_terms.e_fermie
+
+        gap = self.band_file.ebands.fundamental_gaps
+        if len(gap) != 0:
+            for g in gap:
+                self.gap = g.energy
+                self.is_direct_gap = g.is_direct
+        self.bandgap = self.gap
+
+    def plot_ebands(self, outputfile):
+        fig, ax = plt.subplots()
+        fig = self.band_file.ebands.plot(ax=ax, show=False, ylims=[-7, 5])
+        fig.savefig(outputfile)
 
     def read_OUT_nc(self, fname):
-        pass
+        self.out_file = abiopen(fname)
+        f = self.out_file
+        self.invars = f.get_allvars()
+        for key in self.invars:
+            if isinstance(self.invars[key], np.ndarray):
+                self.invars[key] = tuple(self.invars[key])
+        self.spgroup = f.spgroup[0]
+        self.ixc = f.ixc[0]
+        self.ecut = f.ecut[0]
+        self.nband = f.nband[0]
+        self.kptrlatt = tuple(f.kptrlatt)
+
+    def read_GSR_nc(self, fname):
+        self.gsr_file = abiopen(fname)
+        f = self.gsr_file
+        self.energy = f.energy
+        self.stress_tensor = f.cart_stress_tensor  # unit ?
+        self.forces = np.array(f.cart_forces)  # unit eV/ang
+
+    def print_scf_info(self):
+        for key, val in self.invars:
+            print("%s : %s\n" % (key, val))
 
     def read_DDB(self, fname=None, do_label=True):
         """
         read phonon related properties from DDB file.
         """
-        if 'phonon' not in self._properties:
-            self._properties.append('phonon')
+        self.has_phonon = True
 
         ddb = abiopen(fname)
 
+        self.ddb_header = ddb.header
+
         self.atoms = ddb.structure.to_ase_atoms()
+        self.natoms = len(self.atoms)
+        self.cellpar = self.atoms.get_cell_lengths_and_angles()
+        self.masses = self.atoms.get_masses()
+        self.scaled_positions = self.atoms.get_scaled_positions()
+        self.chemical_symbols = self.atoms.get_chemical_symbols()
+
+        self.ixc = self.ddb_header['ixc']
+        self.ispin = self.ddb_header['nsppol']
+        self.spinat = self.ddb_header['spinat']
+        self.nband = self.ddb_header['nband']
 
         emacror, becsr = ddb.anaget_emacro_and_becs()
         emacro = emacror[0].cartesian_tensor
-        becs = becsr.values
+        becs_array = becsr.values
+        becs = {}
+        for i, bec in enumerate(becs_array):
+            becs[str(i)] = becs_array
         nqpts = ddb._guess_ngqpt()
         qpts = tuple(ddb.qpoints.frac_coords)
 
-        self._results['phonon']['emacro'] = emacro
-        self._results['phonon']['becs'] = becs
-        self._results['phonon']['nqpts'] = nqpts
-        self._results['phonon']['qpoints'] = qpts
+        self.emacro = emacro
+        self.becs = becs
+        self.nqpts = nqpts
+        self.qpts = qpts
         for qpt in qpts:
             qpt = tuple(qpt)
             m = ddb.anaget_phmodes_at_qpoint(qpt)
-            #self._results['phonon'][qpt]['frequencies'] = m.phfreqs
-            #self._results['phonon'][qpt][
+            #self.results['phonon'][qpt]['frequencies'] = m.phfreqs
+            #self.results['phonon'][qpt][
             #    'eigen_displacements'] = m.phdispl_cart
 
         qpoints, evals, evecs, edisps = self.phonon_band(
@@ -95,12 +190,22 @@ class mat_data():
 
         #for i in range(15):
         #    print(evecs[0, :, i])
+        self.special_qpts = {
+            'X': (0, 0.5, 0.0),
+            'M': (0.5, 0.5, 0),
+            'R': (0.5, 0.5, 0.5)
+        }
 
         if do_label:
             zb_modes = self.label_zone_boundary(qpoints, evals, evecs)
+            for qname in self.special_qpts:
+                self.phonon_mode_freqs[qname] = zb_modes[qname][0]
+                self.phonon_mode_names[qname] = zb_modes[qname][1]
+                self.phonon_mode_evecs[qname] = zb_modes[qname][2]
             Gmodes = self.label_Gamma(qpoints, evals, evecs)
-            self._results['phonon']['boundary_modes'] = zb_modes
-            self._results['phonon']['Gamma_modes'] = Gmodes
+            self.phonon_mode_freqs['Gamma'] = Gmodes[0]
+            self.phonon_mode_names['Gamma'] = Gmodes[1]
+            self.phonon_mode_evecs['Gamma'] = Gmodes[2]
 
     def get_zb_mode(self, qname, mode_name):
         """
@@ -109,20 +214,23 @@ class mat_data():
         ibranches = []
         freqs = []
         for imode, mode in enumerate(
-                self._results['phonon']['boundary_modes'][qname]):
+                self.results['phonon']['boundary_modes'][qname]):
             freq, mname = mode
             if mname == mode_name:
                 ibranches.append(imode)
                 freqs.append(freq)
         return ibranches, freqs
 
-    def get_gamma_mode(self,  mode_name):
+    def get_gamma_modes(self):
+        return self.results['phonon']['Gamma_modes']
+
+    def get_gamma_mode(self, mode_name):
         """
         return the frequencies of mode name.
         """
         ibranches = []
         freqs = []
-        for imode, mode in enumerate(self._results['phonon']['Gamma_modes']):
+        for imode, mode in enumerate(self.results['phonon']['Gamma_modes']):
             freq, mname = mode
             if mname == mode_name:
                 ibranches.append(imode)
@@ -130,7 +238,9 @@ class mat_data():
         return ibranches, freqs
 
     def label_Gamma(self, qpoints, evals, evecs):
-        Gamma_modes = []
+        Gamma_mode_freqs = []
+        Gamma_mode_names = []
+        Gamma_mode_evecs= []
         for i, qpt in enumerate(qpoints):
             if np.isclose(qpt, [0, 0, 0], rtol=1e-5, atol=1e-3).all():
                 evecq = evecs[i]
@@ -138,11 +248,13 @@ class mat_data():
                     mode = label_Gamma(
                         evec=evec, masses=self.atoms.get_masses())
                     freq = evals[i][j]
-                    Gamma_modes.append([freq, mode])
-            return Gamma_modes
-        if Gamma_modes == []:
+                    Gamma_mode_names.append(mode)
+                    Gamma_mode_freqs.append(freq)
+                    Gamma_mode_evecs.append(np.real(evec))
+            return Gamma_mode_freqs, Gamma_mode_names, Gamma_mode_evecs
+        if Gamma_mode_names == []:
             print("Warning: No Gamma point found in qpoints.\n")
-            return Gamma_modes
+            return Gamma_mode_freqs, Gamma_mode_names, Gamma_mode_evecs
 
     def label_zone_boundary(self, qpoints, evals, evecs):
         mode_dict = {}
@@ -150,14 +262,19 @@ class mat_data():
         for i, qpt in enumerate(qpoints):
             for qname in qdict:
                 if np.isclose(qpt, qdict[qname], rtol=1e-5, atol=1e-3).all():
-                    mode_dict[qname] = []
-                    print "===================================="
-                    print qname
+                    mode_freqs = []
+                    mode_names = []
+                    mode_evecs = []
+                    #print "===================================="
+                    #print qname
                     evecq = evecs[i]
                     for j, evec in enumerate(evecq.T):
                         mode = label_zone_boundary(qname, evec=evec)
                         freq = evals[i][j]
-                        mode_dict[qname].append([freq, mode])
+                        mode_freqs.append(freq)
+                        mode_names.append(mode)
+                        mode_evecs.append(np.real(evec))
+                    mode_dict[qname] = (mode_freqs, mode_names,mode_evecs)
         return mode_dict
 
     def phonon_band(self, ddb, lo_to_splitting=False):
@@ -185,7 +302,7 @@ class mat_data():
         for iqpt, qpt in enumerate(qpoints):
             for ibranch in range(nbranch):
                 phmode = phbst.get_phmode(qpt, ibranch)
-                evals[iqpt, ibranch] = phmode.freq
+                evals[iqpt, ibranch] = phmode.freq * 8065.6
                 evec = displacement_cart_to_evec(
                     phmode.displ_cart,
                     masses,
@@ -197,10 +314,11 @@ class mat_data():
         return qpoints, evals, evecs, edisps
 
 
-def test_parser():
-    md = mat_data()
-    md.read_DDB('out_DDB')
-    print(md.get_zb_mode('R','$R_3^-$'))
-    print(md.get_gamma_mode('G4x'))
+def test():
+    m = mat_data()
+    m.read_BAND_nc('./BAND_GSR.nc')
+    m.read_OUT_nc('./OUT.nc')
+    m.read_DDB('out_DDB')
 
 
+#test()
