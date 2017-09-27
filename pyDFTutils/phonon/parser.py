@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from abipy.abilab import abiopen
-from perovskite_mode import label_zone_boundary, label_Gamma
+from pyDFTutils.perovskite.perovskite_mode import label_zone_boundary, label_Gamma
 
 
 def displacement_cart_to_evec(displ_cart,
@@ -99,29 +99,27 @@ class mat_data():
         self.phonon_mode_evecs_LOTO = {}
         self.phonon_mode_phdispl_LOTO = {}
 
-    def read_BAND_nc(self, fname):
+    def read_BAND_nc(self, fname, outputfile=None):
         try:
-            self.band_file = abiopen(fname)
+            band_file = abiopen(fname)
             self.has_eband = True
         except Exception:
             raise IOError("can't read %s" % fname)
         self.efermi = self.band_file.energy_terms.e_fermie
 
-        gap = self.band_file.ebands.fundamental_gaps
+        gap = band_file.ebands.fundamental_gaps
         if len(gap) != 0:
             for g in gap:
                 self.gap = g.energy
                 self.is_direct_gap = g.is_direct
         self.bandgap = self.gap
-
-    def plot_ebands(self, outputfile):
-        fig, ax = plt.subplots()
-        fig = self.band_file.ebands.plot(ax=ax, show=False, ylims=[-7, 5])
-        fig.savefig(outputfile)
+        if plot_ebands:
+            fig, ax = plt.subplots()
+            fig = band_file.ebands.plot(ax=ax, show=False, ylims=[-7, 5])
+            fig.savefig(outputfile)
 
     def read_OUT_nc(self, fname):
-        self.out_file = abiopen(fname)
-        f = self.out_file
+        f= abiopen(fname)
         self.invars = f.get_allvars()
         for key in self.invars:
             if isinstance(self.invars[key], np.ndarray):
@@ -129,19 +127,20 @@ class mat_data():
         self.spgroup = f.spgroup[0]
         self.ixc = f.ixc[0]
         self.ecut = f.ecut[0]
-        self.nband = f.nband[0]
+        #self.nband = f.nband[0]
         self.kptrlatt = tuple(f.kptrlatt)
-
-    def read_GSR_nc(self, fname):
-        self.gsr_file = abiopen(fname)
-        f = self.gsr_file
-        self.energy = f.energy
-        self.stress_tensor = f.cart_stress_tensor  # unit ?
-        self.forces = np.array(f.cart_forces)  # unit eV/ang
 
     def print_scf_info(self):
         for key, val in self.invars:
             print("%s : %s\n" % (key, val))
+
+
+
+    def read_GSR_nc(self, fname):
+        f = abiopen(fname)
+        self.energy = f.energy
+        self.stress_tensor = f.cart_stress_tensor  # unit ?
+        self.forces = np.array(f.cart_forces)  # unit eV/ang
 
     def read_DDB(self, fname=None, do_label=True):
         """
