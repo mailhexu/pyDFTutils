@@ -169,7 +169,7 @@ class mat_data():
         becs_array = becsr.values
         becs = {}
         for i, bec in enumerate(becs_array):
-            becs[str(i)] = becs_array
+            becs[str(i)] = bec
         nqpts = ddb._guess_ngqpt()
         qpts = tuple(ddb.qpoints.frac_coords)
 
