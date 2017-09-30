@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from abipy.abilab import abiopen
@@ -99,7 +100,7 @@ class mat_data():
         self.phonon_mode_evecs_LOTO = {}
         self.phonon_mode_phdispl_LOTO = {}
 
-    def read_BAND_nc(self, fname, outputfile=None):
+    def read_BAND_nc(self, fname, outputfile='Ebands.png', plot_ebands=True):
         try:
             band_file = abiopen(fname)
             self.has_eband = True
@@ -119,7 +120,7 @@ class mat_data():
             fig.savefig(outputfile)
 
     def read_OUT_nc(self, fname):
-        f= abiopen(fname)
+        f = abiopen(fname)
         self.invars = f.get_allvars()
         for key in self.invars:
             if isinstance(self.invars[key], np.ndarray):
@@ -134,15 +135,18 @@ class mat_data():
         for key, val in self.invars:
             print("%s : %s\n" % (key, val))
 
-
-
     def read_GSR_nc(self, fname):
         f = abiopen(fname)
         self.energy = f.energy
         self.stress_tensor = f.cart_stress_tensor  # unit ?
         self.forces = np.array(f.cart_forces)  # unit eV/ang
 
-    def read_DDB(self, fname=None, do_label=True):
+    def read_DDB(self,
+                 fname=None,
+                 do_label=True,
+                 workdir=None,
+                 phonon_output_dipdip='phonon_band_dipdip.png',
+                 phonon_output_nodipdip='phonon_band_nodipdip.png'):
         """
         read phonon related properties from DDB file.
         """
@@ -185,7 +189,10 @@ class mat_data():
             #    'eigen_displacements'] = m.phdispl_cart
 
         qpoints, evals, evecs, edisps = self.phonon_band(
-            ddb, lo_to_splitting=False)
+            ddb,
+            lo_to_splitting=False,
+            phonon_output_dipdip=phonon_output_dipdip,
+            phonon_output_nodipdip=phonon_output_nodipdip)
 
         #for i in range(15):
         #    print(evecs[0, :, i])
@@ -195,16 +202,16 @@ class mat_data():
             'R': (0.5, 0.5, 0.5)
         }
 
-        if do_label:
-            zb_modes = self.label_zone_boundary(qpoints, evals, evecs)
-            for qname in self.special_qpts:
-                self.phonon_mode_freqs[qname] = zb_modes[qname][0]
-                self.phonon_mode_names[qname] = zb_modes[qname][1]
-                self.phonon_mode_evecs[qname] = zb_modes[qname][2]
-            Gmodes = self.label_Gamma(qpoints, evals, evecs)
-            self.phonon_mode_freqs['Gamma'] = Gmodes[0]
-            self.phonon_mode_names['Gamma'] = Gmodes[1]
-            self.phonon_mode_evecs['Gamma'] = Gmodes[2]
+        zb_modes = self.label_zone_boundary(
+            qpoints, evals, evecs, label=do_label)
+        for qname in self.special_qpts:
+            self.phonon_mode_freqs[qname] = zb_modes[qname][0]
+            self.phonon_mode_names[qname] = zb_modes[qname][1]
+            self.phonon_mode_evecs[qname] = zb_modes[qname][2]
+        Gmodes = self.label_Gamma(qpoints, evals, evecs, label=do_label)
+        self.phonon_mode_freqs['Gamma'] = Gmodes[0]
+        self.phonon_mode_names['Gamma'] = Gmodes[1]
+        self.phonon_mode_evecs['Gamma'] = Gmodes[2]
 
     def get_zb_mode(self, qname, mode_name):
         """
@@ -236,18 +243,21 @@ class mat_data():
                 freqs.append(freq)
         return ibranches, freqs
 
-    def label_Gamma(self, qpoints, evals, evecs):
+    def label_Gamma(self, qpoints, evals, evecs, label=True):
         Gamma_mode_freqs = []
         Gamma_mode_names = []
-        Gamma_mode_evecs= []
+        Gamma_mode_evecs = []
         for i, qpt in enumerate(qpoints):
             if np.isclose(qpt, [0, 0, 0], rtol=1e-5, atol=1e-3).all():
                 evecq = evecs[i]
                 for j, evec in enumerate(evecq.T):
-                    mode = label_Gamma(
-                        evec=evec, masses=self.atoms.get_masses())
                     freq = evals[i][j]
-                    Gamma_mode_names.append(mode)
+                    if label:
+                        mode = label_Gamma(
+                            evec=evec, masses=self.atoms.get_masses())
+                        Gamma_mode_names.append(mode)
+                    else:
+                        Gamma_mode_names.append('')
                     Gamma_mode_freqs.append(freq)
                     Gamma_mode_evecs.append(np.real(evec))
             return Gamma_mode_freqs, Gamma_mode_names, Gamma_mode_evecs
@@ -255,7 +265,7 @@ class mat_data():
             print("Warning: No Gamma point found in qpoints.\n")
             return Gamma_mode_freqs, Gamma_mode_names, Gamma_mode_evecs
 
-    def label_zone_boundary(self, qpoints, evals, evecs):
+    def label_zone_boundary(self, qpoints, evals, evecs, label=True):
         mode_dict = {}
         qdict = {'X': (0, 0.5, 0.0), 'M': (0.5, 0.5, 0), 'R': (0.5, 0.5, 0.5)}
         for i, qpt in enumerate(qpoints):
@@ -268,16 +278,72 @@ class mat_data():
                     #print qname
                     evecq = evecs[i]
                     for j, evec in enumerate(evecq.T):
-                        mode = label_zone_boundary(qname, evec=evec)
                         freq = evals[i][j]
                         mode_freqs.append(freq)
-                        mode_names.append(mode)
+                        if label:
+                            mode = label_zone_boundary(qname, evec=evec)
+                            mode_names.append(mode)
+                        else:
+                            mode_names.append('')
                         mode_evecs.append(np.real(evec))
-                    mode_dict[qname] = (mode_freqs, mode_names,mode_evecs)
+                    mode_dict[qname] = (mode_freqs, mode_names, mode_evecs)
         return mode_dict
 
-    def phonon_band(self, ddb, lo_to_splitting=False):
+    def phonon_band(self,
+                    ddb,
+                    lo_to_splitting=False,
+                    workdir=None,
+                    phonon_output_dipdip='phonon_band_dipdip.png',
+                    phonon_output_nodipdip='phonon_band_nodipdip.png',
+                    show=False):
         atoms = ddb.structure.to_ase_atoms()
+
+        if workdir is not None:
+            workdir_dip = os.path.join(workdir, '/phbst_dipdip')
+            #if os.path.exists(workdir_dip):
+            #    os.system('rm -r %s' % workdir_dip)
+        else:
+            workdir_dip = None
+        phbst, phdos = ddb.anaget_phbst_and_phdos_files(
+            nqsmall=5,
+            asr=1,
+            chneut=1,
+            dipdip=1,
+            verbose=1,
+            lo_to_splitting=True,
+            anaddb_kwargs={'alphon': 1},
+            workdir=workdir_dip,
+            #qptbounds=kpath_bounds,
+        )
+        fig, ax = plt.subplots(nrows=1, ncols=1)
+        plt.tight_layout(pad=2.19)
+        plt.axis('tight')
+        plt.gcf().subplots_adjust(left=0.17)
+        ax.axhline(0, linestyle='--', color='black')
+
+        ax.set_title(self.name)
+        ticks, labels = phbst.phbands._make_ticks_and_labels(qlabels=None)
+        fig.axes[0].set_xlim([ticks[0],ticks[-1]])
+        fig = phbst.phbands.plot(
+            ax=ax,
+            units='cm-1',
+            match_bands=False,
+            linewidth=1.7,
+            color='blue',
+            show=False)
+        fig.axes[0].grid(False)
+
+        if show:
+            plt.show()
+        if phonon_output_dipdip:
+            fig.savefig(phonon_output_dipdip)
+
+        if workdir is not None:
+            workdir_nodip = os.path.join(workdir, 'phbst_nodipdip')
+            #if os.path.exists(workdir_dip):
+            #    os.system('rm -r %s' % workdir_nodip)
+        else:
+            workdir_nodip = None
         phbst, phdos = ddb.anaget_phbst_and_phdos_files(
             nqsmall=5,
             asr=1,
@@ -285,8 +351,32 @@ class mat_data():
             dipdip=0,
             verbose=1,
             lo_to_splitting=False,
+            anaddb_kwargs={'alphon': 1},
+            workdir=workdir_nodip
             #qptbounds=kpath_bounds,
         )
+
+        fig, ax = plt.subplots(nrows=1, ncols=1)
+        #plt.tight_layout(pad=2.19)
+        #plt.axis('tight')
+        plt.gcf().subplots_adjust(left=0.17)
+        ax.axhline(0, linestyle='--', color='black')
+        ax.set_title(self.name)
+
+        fig = phbst.phbands.plot(
+            ax=ax,
+            units='cm-1',
+            match_bands=False,
+            linewidth=1.4,
+            color='blue',
+            show=False)
+        fig.axes[0].grid(False)
+
+        if show:
+            plt.show()
+        if phonon_output_dipdip:
+            fig.savefig(phonon_output_nodipdip)
+        plt.close()
 
         qpoints = phbst.qpoints.frac_coords
         nqpts = len(qpoints)
