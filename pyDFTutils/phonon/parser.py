@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 import os
 import numpy as np
+from ase.data import chemical_symbols
 import matplotlib.pyplot as plt
 from abipy.abilab import abiopen
 from pyDFTutils.perovskite.perovskite_mode import label_zone_boundary, label_Gamma
+from ase.units import Ha
+from spglib import spglib
 
 
 def displacement_cart_to_evec(displ_cart,
@@ -33,6 +36,44 @@ def displacement_cart_to_evec(displ_cart,
     return evec
 
 
+def ixc_to_xc(ixc):
+    """
+    translate ixc (positive: abinit. negative: libxc) to XC.
+    """
+    xcdict = {
+        0: 'NO-XC',
+        1: 'LDA',
+        2: 'LDA-PZCA',
+        3: 'LDA-CA',
+        4: 'LDA-Winger',
+        5: 'LDA-Hedin-Lundqvist',
+        6: 'LDA-X-alpha',
+        7: 'LDA-PW92',
+        8: 'LDA-PW92-xonly',
+        9: 'LDA-PW92-xRPA',
+        11: 'GGA-PBE',
+        12: 'GGA-PBE-xonly',
+        14: 'GGA-revPBE',
+        15: 'GGA-RPBE',
+        16: 'GGA-HTCH93',
+        17: 'GGA-HTCH120',
+        23: 'GGA-WC',
+        40: 'Hartree-Fock',
+        41: 'GGA-PBE0',
+        42: 'GGA-PBE0-1/3',
+        -1009: 'LDA-PZCA',
+        -101130: 'GGA-PBE',
+        -106131: 'GGA-BLYP',
+        -106132: 'GGA-BP86',
+        -116133: 'GGA-PBEsol',
+        -118130: 'GGA-WC',
+    }
+    if ixc in xcdict:
+        return xcdict[ixc]
+    else:
+        return 'libxc_%s' % ixc
+
+
 class mat_data():
     def __init__(self,
                  name,
@@ -41,18 +82,21 @@ class mat_data():
                  author='High Throughput Bot',
                  email='x.he@ulg.ac.be',
                  is_verified=False,
-                 verification_info=""):
+                 verification_info="",
+                 tags=[]
+                 ):
         self._already_in_db = False
         self.name = name
         self.db_directory = None
         self.all_data_directory = None
-        self.mag = 'PM'
+        self.mag = mag
         self.insert_time = None
         self.update_time = None
         self.log = ""
-        self.description = ""
-        self.author = 'High Throughput Bot'
-        self.email = 'x.he@ulg.ac.be'
+        self.description = description
+        self.author = author
+        self.email = email
+        self.tags=tags
 
         self.is_verified = is_verified
         self.verification_info = verification_info
@@ -64,6 +108,7 @@ class mat_data():
         self.is_cubic_perovskite = True
 
         self.cellpar = [0] * 6
+        self.cell = [0]*9
         self.natoms = 0
         self.chemical_symbols = []
         self.masses = []
@@ -77,12 +122,23 @@ class mat_data():
         self.pp_type = 'ONCV'
         self.pp_info = 'Not implemented yet.'
 
-        self.U = {'ldau_type': 1, 'ldau_luj': {}}
+        self.U_type=0
+        self.species=[]
+        self.zion=[]
+        self.U_l=[]
+        self.U_u=[]
+        self.U_j=[]
         self.GSR_parameters = {}
         self.energy = 0
         self.efermi = 0
         self.bandgap = 0
         self.ebands = {}
+
+        self.kptrlatt=[]
+        self.usepaw=0
+        self.pawecutdg=0.0
+        self.nsppol=1
+        self.nspden=1
 
         self.emacro = [0.0] * 9
         self.becs = {}
@@ -103,10 +159,10 @@ class mat_data():
     def read_BAND_nc(self, fname, outputfile='Ebands.png', plot_ebands=True):
         try:
             band_file = abiopen(fname)
-            self.has_eband = True
+            self.has_ebands = True
         except Exception:
             raise IOError("can't read %s" % fname)
-        self.efermi = self.band_file.energy_terms.e_fermie
+        self.efermi = band_file.energy_terms.e_fermie
 
         gap = band_file.ebands.fundamental_gaps
         if len(gap) != 0:
@@ -127,7 +183,17 @@ class mat_data():
                 self.invars[key] = tuple(self.invars[key])
         self.spgroup = f.spgroup[0]
         self.ixc = f.ixc[0]
+        self.XC = ixc_to_xc(self.ixc)
         self.ecut = f.ecut[0]
+        self.species = [chemical_symbols[int(i)] for i in f.znucl]
+        if 'usepawu' in self.invars:
+            self.U_type= f.usepawu[0]
+        else:
+            self.U_type= 0
+        if self.U_type:
+            self.U_l = f.lpawu
+            self.U_u= [ x * Ha for x in f.upawu] 
+            self.U_j= [ x* Ha for x in f.jpawu ]
         #self.nband = f.nband[0]
         self.kptrlatt = tuple(f.kptrlatt)
 
@@ -159,15 +225,26 @@ class mat_data():
         self.atoms = ddb.structure.to_ase_atoms()
         self.natoms = len(self.atoms)
         self.cellpar = self.atoms.get_cell_lengths_and_angles()
+        self.cell=self.atoms.get_cell().flatten()
         self.masses = self.atoms.get_masses()
         self.scaled_positions = self.atoms.get_scaled_positions()
         self.chemical_symbols = self.atoms.get_chemical_symbols()
+        self.spgroup_name = spglib.get_spacegroup(self.atoms,symprec=1e-4)
 
         self.ixc = self.ddb_header['ixc']
+        self.XC = ixc_to_xc( self.ixc)
         self.ispin = self.ddb_header['nsppol']
         self.spinat = self.ddb_header['spinat']
         self.nband = self.ddb_header['nband']
+        self.ecut = self.ddb_header['ecut'] 
+        self.tsmear =self.ddb_header['tsmear'] 
+        self.usepaw =self.ddb_header['usepaw']
+        self.pawecutdg = self.ddb_header['tsmear'] 
+        self.nsppol = self.ddb_header['nsppol']
+        self.nspden= self.ddb_header['nspden']
 
+        self.species = [chemical_symbols[int(i)] for i in self.ddb_header['znucl']]
+        self.zion = self.ddb_header['zion']
         emacror, becsr = ddb.anaget_emacro_and_becs()
         emacro = emacror[0].cartesian_tensor
         becs_array = becsr.values
@@ -202,13 +279,13 @@ class mat_data():
             'R': (0.5, 0.5, 0.5)
         }
 
-        zb_modes = self.label_zone_boundary(
+        zb_modes = self.label_zone_boundary_all(
             qpoints, evals, evecs, label=do_label)
         for qname in self.special_qpts:
             self.phonon_mode_freqs[qname] = zb_modes[qname][0]
             self.phonon_mode_names[qname] = zb_modes[qname][1]
             self.phonon_mode_evecs[qname] = zb_modes[qname][2]
-        Gmodes = self.label_Gamma(qpoints, evals, evecs, label=do_label)
+        Gmodes = self.label_Gamma_all(qpoints, evals, evecs, label=do_label)
         self.phonon_mode_freqs['Gamma'] = Gmodes[0]
         self.phonon_mode_names['Gamma'] = Gmodes[1]
         self.phonon_mode_evecs['Gamma'] = Gmodes[2]
@@ -243,7 +320,7 @@ class mat_data():
                 freqs.append(freq)
         return ibranches, freqs
 
-    def label_Gamma(self, qpoints, evals, evecs, label=True):
+    def label_Gamma_all(self, qpoints, evals, evecs, label=True):
         Gamma_mode_freqs = []
         Gamma_mode_names = []
         Gamma_mode_evecs = []
@@ -265,7 +342,7 @@ class mat_data():
             print("Warning: No Gamma point found in qpoints.\n")
             return Gamma_mode_freqs, Gamma_mode_names, Gamma_mode_evecs
 
-    def label_zone_boundary(self, qpoints, evals, evecs, label=True):
+    def label_zone_boundary_all(self, qpoints, evals, evecs, label=True):
         mode_dict = {}
         qdict = {'X': (0, 0.5, 0.0), 'M': (0.5, 0.5, 0), 'R': (0.5, 0.5, 0.5)}
         for i, qpt in enumerate(qpoints):
@@ -305,7 +382,7 @@ class mat_data():
         else:
             workdir_dip = None
         phbst, phdos = ddb.anaget_phbst_and_phdos_files(
-            nqsmall=5,
+            nqsmall=10,
             asr=1,
             chneut=1,
             dipdip=1,
@@ -316,8 +393,8 @@ class mat_data():
             #qptbounds=kpath_bounds,
         )
         fig, ax = plt.subplots(nrows=1, ncols=1)
-        plt.tight_layout(pad=2.19)
-        plt.axis('tight')
+        #plt.tight_layout(pad=2.19)
+        #plt.axis('tight')
         plt.gcf().subplots_adjust(left=0.17)
         ax.axhline(0, linestyle='--', color='black')
 
@@ -337,6 +414,7 @@ class mat_data():
             plt.show()
         if phonon_output_dipdip:
             fig.savefig(phonon_output_dipdip)
+        plt.close()
 
         if workdir is not None:
             workdir_nodip = os.path.join(workdir, 'phbst_nodipdip')
@@ -363,6 +441,10 @@ class mat_data():
         ax.axhline(0, linestyle='--', color='black')
         ax.set_title(self.name)
 
+
+        ax.set_title(self.name)
+        ticks, labels = phbst.phbands._make_ticks_and_labels(qlabels=None)
+        fig.axes[0].set_xlim([ticks[0],ticks[-1]])
         fig = phbst.phbands.plot(
             ax=ax,
             units='cm-1',

@@ -241,7 +241,7 @@ def label_zone_boundary(qname,
         mvec = mvec / np.linalg.norm(mvec)
         evec = evec / np.linalg.norm(evec)
         p = np.abs(np.dot(np.real(evec), mvec))
-        if p > 0.7:  #1.0 / np.sqrt(2):
+        if p > 0.4:  #1.0 / np.sqrt(2):
             print("-------------")
             #print("Found! p= %s" % p)
             #print("eigen vector: ", nmode._make(mvec))
@@ -275,7 +275,7 @@ def label_Gamma(phdisp=None, masses=None, evec=None):
         mvec = mvec / np.linalg.norm(mvec)
         evec = evec / np.linalg.norm(evec)
         p = np.abs(np.dot(np.real(evec), mvec))
-        if p > 0.6:  #1.0 / np.sqrt(2):
+        if p > 0.5:  #1.0 / np.sqrt(2):
             mode = basis_dict[m]
     if mode is None:
         print("==============")
