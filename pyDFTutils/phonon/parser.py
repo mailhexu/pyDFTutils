@@ -244,7 +244,8 @@ class mat_data():
         self.nspden= self.ddb_header['nspden']
 
         self.species = [chemical_symbols[int(i)] for i in self.ddb_header['znucl']]
-        self.zion = self.ddb_header['zion']
+        self.zion = [int(x) for x in self.ddb_header['zion']]
+        self.znucl = [int(x) for x in self.ddb_header['znucl']]
         emacror, becsr = ddb.anaget_emacro_and_becs()
         emacro = emacror[0].cartesian_tensor
         becs_array = becsr.values
@@ -305,7 +306,11 @@ class mat_data():
         return ibranches, freqs
 
     def get_gamma_modes(self):
-        return self.results['phonon']['Gamma_modes']
+        """
+        return (Freqs, names, evecs)
+        """
+        return self.phonon_mode_freqs['Gamma'], self.phonon_mode_names['Gamma'], self.phonon_mode_evecs['Gamma'], 
+
 
     def get_gamma_mode(self, mode_name):
         """
@@ -313,7 +318,7 @@ class mat_data():
         """
         ibranches = []
         freqs = []
-        for imode, mode in enumerate(self.results['phonon']['Gamma_modes']):
+        for imode, mode in enumerate(zip(self.phonon_mode_freqs['Gamma'], self.phonon_mode_names['Gamma'])):
             freq, mname = mode
             if mname == mode_name:
                 ibranches.append(imode)
