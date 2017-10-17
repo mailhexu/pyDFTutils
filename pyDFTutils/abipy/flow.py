@@ -1,9 +1,55 @@
 #!/usr/bin/env python
 from __future__ import unicode_literals, division, print_function
 import numpy as np
+from abipy.abio.inputs import *
 from pymatgen.io.abinit.works import BecWork, PhononWork
 from pymatgen.io.abinit.flows import PhononFlow
+_TOLVARS = set([
+    'toldfe',
+    'tolvrs',
+    'tolwfr',
+    'tolrff',
+    "toldff",
+    "tolimg", # ?
+    "tolmxf",
+    "tolrde",
+])
 
+class BecStrainWork(BecWork):
+    """
+    Work for the computation of the Born effective charges, and strain
+
+    This work consists of DDK tasks and phonon + electric field perturbation + strain perturbation,
+    It provides the callback method (on_all_ok) that calls mrgddb to merge the
+    partial DDB files produced by the work.
+    """
+
+    @classmethod
+    def from_scf_task(cls, scf_task, ddk_tolerance=None):
+        """Build a BecWork from a ground-state task."""
+        if not isinstance(scf_task, ScfTask):
+            raise TypeError("task %s does not inherit from GsTask" % scf_task)
+
+        new = cls() #manager=scf_task.manager)
+
+        # DDK calculations
+        multi_ddk = scf_task.input.make_ddk_inputs(tolerance=ddk_tolerance)
+
+        ddk_tasks = []
+        for ddk_inp in multi_ddk:
+            ddk_task = new.register_ddk_task(ddk_inp, deps={scf_task: "WFK"})
+            ddk_tasks.append(ddk_task)
+
+        # Build the list of inputs for electric field perturbation and phonons
+        # Each bec task is connected to all the previous DDK task and to the scf_task.
+        bec_deps = {ddk_task: "DDK" for ddk_task in ddk_tasks}
+        bec_deps.update({scf_task: "WFK"})
+
+        str_bec_inputs = scf_task.input.make_strain_and_bec_inputs() #tolerance=efile
+        for bec_inp in str_bec_inputs:
+             new.register_bec_task(bec_inp, deps=bec_deps)
+
+        return new
 
 class myPhononFlow(PhononFlow):
     """
@@ -56,7 +102,7 @@ class myPhononFlow(PhononFlow):
         # Create a PhononWork for each q-point. Add DDK and E-field if q == Gamma and with_becs.
         for qpt in qpoints:
             if np.allclose(qpt, 0) and with_becs:
-                ph_work = BecWork.from_scf_task(scf_task)
+                ph_work = BecStrainWork.from_scf_task(scf_task)
             else:
                 ph_work = PhononWork.from_scf_task(
                     scf_task, qpoints=qpt, tolerance=tolerance)
