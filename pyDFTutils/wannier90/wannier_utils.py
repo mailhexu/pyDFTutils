@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from ase_utils import symbol_number, symnum_to_sym
+from pyDFTutils.ase_utils import symbol_number, symnum_to_sym
 import numpy as np
 import re
 import os

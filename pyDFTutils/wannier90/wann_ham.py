@@ -8,11 +8,11 @@ from ase.io import read
 from ase.units import Bohr
 from pyDFTutils.ase_utils.ase_utils import symbol_number
 from pyDFTutils.ase_utils.kpoints import ir_kpts
-from wannier import read_basis
-import pythtb_forj as pythtb
+from .wannier import read_basis
+from pyDFTutils.wannier90 import pythtb_forj as pythtb
 from pyDFTutils.vasp.vasp_utils import read_efermi
 #import pythtb
-from wannier_band_plot import plot_band_weight
+from pyDFTutils.plot.wannier_band_plot import plot_band_weight
 
 
 class anatb():

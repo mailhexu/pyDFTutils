@@ -62,7 +62,7 @@ def zenobescript(
             'command'] = r'/home/acad/ulg-phythema/hexu/.local/abinit/abinit_git/bin/abinit <abinit.files >abinit.log'
     elif command == 'vasp':
         defaults[
-            'command'] = r'/home/acad/ulg-phythema/hexu/.local/bin/vasp_hexu'
+            'command'] = r'/home/acad/ulg-phythema/hexu/.local/bin/vasp_hexu544'
     else:
         defaults['command'] = command
     with open(os.path.expanduser('~/.ase/zenobe.tmpl')) as myfile:
@@ -180,7 +180,8 @@ def zenobe_vasp_large(queue_type='pbspro',
                       ngroup=4,
                       mpiprocs=24,
                       ompthreads=1,
-                      mem_per_cpu=2400):
+                      mem_per_cpu=2400,
+                      wait=True):
     mycommander = commander(
         queue_type=queue_type,
         command=command,
@@ -190,7 +191,8 @@ def zenobe_vasp_large(queue_type='pbspro',
         ngroup=ngroup,
         mpiprocs=mpiprocs,
         ompthreads=ompthreads,
-        mem_per_cpu=mem_per_cpu)
+        mem_per_cpu=mem_per_cpu,
+        wait=wait)
     return mycommander
 
 
@@ -202,7 +204,8 @@ def zenobe_vasp_main(queue_type='pbspro',
                      ngroup=1,
                      mpiprocs=12,
                      ompthreads=1,
-                     mem_per_cpu=1400):
+                     mem_per_cpu=1400,
+                     wait=True):
     mycommander = commander(
         queue_type=queue_type,
         command=command,
@@ -212,7 +215,8 @@ def zenobe_vasp_main(queue_type='pbspro',
         ngroup=ngroup,
         mpiprocs=mpiprocs,
         ompthreads=ompthreads,
-        mem_per_cpu=mem_per_cpu)
+        mem_per_cpu=mem_per_cpu,
+        wait=wait)
     return mycommander
 
 

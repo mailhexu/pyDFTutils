@@ -3,6 +3,7 @@ from __future__ import unicode_literals, division, print_function
 import numpy as np
 from abipy.abio.inputs import *
 from pymatgen.io.abinit.works import BecWork, PhononWork
+from pymatgen.io.abinit.tasks import ScfTask
 from pymatgen.io.abinit.flows import PhononFlow
 _TOLVARS = set([
     'toldfe',
@@ -45,7 +46,7 @@ class BecStrainWork(BecWork):
         bec_deps = {ddk_task: "DDK" for ddk_task in ddk_tasks}
         bec_deps.update({scf_task: "WFK"})
 
-        str_bec_inputs = scf_task.input.make_strain_and_bec_inputs() #tolerance=efile
+        str_bec_inputs = scf_task.input.make_strain_and_bec_perts_inputs() #tolerance=efile
         for bec_inp in str_bec_inputs:
              new.register_bec_task(bec_inp, deps=bec_deps)
 
@@ -65,6 +66,7 @@ class myPhononFlow(PhononFlow):
                        scf_input,
                        ph_ngqpt,
                        with_becs=True,
+                       with_strain=True,
                        tolerance=None,
                        manager=None,
                        allocate=True):
@@ -101,7 +103,7 @@ class myPhononFlow(PhononFlow):
 
         # Create a PhononWork for each q-point. Add DDK and E-field if q == Gamma and with_becs.
         for qpt in qpoints:
-            if np.allclose(qpt, 0) and with_becs:
+            if np.allclose(qpt, 0) and with_becs and with_strain:
                 ph_work = BecStrainWork.from_scf_task(scf_task)
             else:
                 ph_work = PhononWork.from_scf_task(
