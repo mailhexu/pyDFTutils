@@ -12,7 +12,6 @@ setup(
     install_requires=['numpy','matplotlib','scipy','ase', 'spglib', 'pythtb', 'phonopy','pathos'],
     scripts=['scripts/plotldos.py','scripts/plotpdos.py','scripts/AFM_parameter.py','scripts/view_pos_info.py',
         'scripts/run_wannier.py'
-        
         ],
     classifiers=[
         'Development Status :: 3 - Alpha',

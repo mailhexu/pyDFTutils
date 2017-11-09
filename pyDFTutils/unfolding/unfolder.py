@@ -81,17 +81,21 @@ class Unfolder():
         self._trans_indices = indices
         print(indices)
 
-    def get_weight(self, evec, qpt):
+    def get_weight(self, evec, qpt, G=None):
         """
         get the weight of a mode which has the wave vector of qpt and eigenvector of evec.
         W= sum_1^N < evec| T(r_i)exp(-I (K+G) * r_i| evec>, here G=0. T(r_i)exp(-I K r_i)| evec> = evec[indices[i]]
         """
+        if G is None:
+            G=np.zeros_like(qpt)
         weight = 0j
         N = len(self._trans_rs)
         for r_i, ind in zip(self._trans_rs, self._trans_indices):
-            weight += np.vdot(evec, evec[ind]) / N
+            weight += np.vdot(evec, evec[ind])*np.exp(2*np.pi*np.dot(G, r_i)) / N
 
         return weight.real
+
+    def get_weights_gamma_only(self):
 
     def get_weights(self):
         """
