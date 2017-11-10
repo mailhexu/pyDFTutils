@@ -91,11 +91,10 @@ class Unfolder():
         weight = 0j
         N = len(self._trans_rs)
         for r_i, ind in zip(self._trans_rs, self._trans_indices):
-            weight += np.vdot(evec, evec[ind])*np.exp(2*np.pi*np.dot(G, r_i)) / N
-
+            weight += np.vdot(evec, evec[ind])/N *np.exp(1j*2*np.pi*np.dot(G, r_i))
+        print('w: ', weight)
         return weight.real
 
-    def get_weights_gamma_only(self):
 
     def get_weights(self):
         """
