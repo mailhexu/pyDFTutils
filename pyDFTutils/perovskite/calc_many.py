@@ -4,7 +4,7 @@ from pyDFTutils.perovskite.frozen_mode import gen_P21c_perovskite
 from pyDFTutils.vasp.myvasp import myvasp, default_pps
 
 def test_distortion():
-    amp=np.random.random(6):
+    amp=np.random.random(6)
     atoms=gen_P21c_perovskite(
         'NdNiO3',
         cell=[3.785415]*3,
@@ -40,15 +40,15 @@ def test_distortion():
         )
         #vesta_view(atoms)
         #write("NNO_br%s.vasp"%br,atoms, vasp5=True)
-        return amp, atoms
+    return amp, atoms
 
-def calc_energy(atoms):
+def calc_energy():
     for i in range(100):
         dirname='calc_%s'%i
         os.mkdir(dirname)
         cwd=os.getcwd()
         os.chdir(dirname)
-        amp, atoms=text_distortion()
+        amp, atoms=test_distortion()
         mycalc = myvasp(
             xc='PBE',
             gga='PS',
@@ -67,11 +67,11 @@ def calc_energy(atoms):
         # electronic
         mycalc.set(ismear=-5, sigma=0.1, nelm=100, nelmdl=-6, ediff=1e-7)
         mycalc.set(ncore=1, kpar=3)
-        #mycalc.scf_calculation()
-        energy=atoms.get_energy()
+        mycalc.scf_calculation()
+        #energy=atoms.get_energy()
         os.chdir(cwd)
         with open('myfile.txt','a') as  myfile:
-            myfile.write("%s, %s\n"%(amp, energy))
+            myfile.write("%s, %s\n"%(amp))
 
 
-
+calc_energy()
