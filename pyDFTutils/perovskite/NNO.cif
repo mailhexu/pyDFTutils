@@ -1,0 +1,37 @@
+data_image0
+_cell_length_a       5.35339
+_cell_length_b       5.35339
+_cell_length_c       7.57083
+_cell_angle_alpha    90
+_cell_angle_beta     90
+_cell_angle_gamma    90
+
+loop_
+  _atom_site_label
+  _atom_site_occupancy
+  _atom_site_fract_x
+  _atom_site_fract_y
+  _atom_site_fract_z
+  _atom_site_thermal_displace_type
+  _atom_site_B_iso_or_equiv
+  _atom_site_type_symbol
+  Nd1      1.0000 0.04252  0.00000  0.00000  Biso   1.000  Nd
+  Nd2      1.0000 0.54252  0.50000  0.00000  Biso   1.000  Nd
+  Nd3      1.0000 0.95748  1.00000  0.50000  Biso   1.000  Nd
+  Nd4      1.0000 0.45748  0.50000  0.50000  Biso   1.000  Nd
+  Ni1      1.0000 0.50000  0.00000  0.25000  Biso   1.000  Ni
+  Ni2      1.0000 1.00000  0.50000  0.25000  Biso   1.000  Ni
+  Ni3      1.0000 0.50000  0.00000  0.75000  Biso   1.000  Ni
+  Ni4      1.0000 1.00000  0.50000  0.75000  Biso   1.000  Ni
+  O1       1.0000 0.56776  0.00000  0.00339  Biso   1.000  O
+  O2       1.0000 0.91560  0.50000  0.99661  Biso   1.000  O
+  O3       1.0000 0.43224  0.00000  0.49661  Biso   1.000  O
+  O4       1.0000 0.08440  0.50000  0.50339  Biso   1.000  O
+  O5       1.0000 0.28790  0.28112  0.21195  Biso   1.000  O
+  O6       1.0000 0.71210  0.71888  0.28805  Biso   1.000  O
+  O7       1.0000 0.28150  0.28752  0.78803  Biso   1.000  O
+  O8       1.0000 0.71850  0.71248  0.71197  Biso   1.000  O
+  O9       1.0000 0.21868  0.78771  0.21197  Biso   1.000  O
+  O10      1.0000 0.78132  0.21229  0.28803  Biso   1.000  O
+  O11      1.0000 0.21191  0.78093  0.78805  Biso   1.000  O
+  O12      1.0000 0.78809  0.21907  0.71195  Biso   1.000  O
