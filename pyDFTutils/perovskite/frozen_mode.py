@@ -447,7 +447,13 @@ def test():
     #atoms=gen_pnma('LaMnO3',out_of_phase_rotation=1.5)
     #atoms=gen_pnma('LaMnO3',JT_d=0.2)
     #atoms=gen_pnma('LaMnO3',in_phase_tilting=0.6)
-    atoms=gen_distorted_perovskite('LaMnO3',out_of_phase_rotation=1.0, JT_d=0.1, in_phase_tilting=0.9, breathing=0.0)
+    atoms=gen_distorted_perovskite('LaMnO3',
+                                   out_of_phase_rotation=1.0,
+                                   in_phase_rotation=0.9,
+                                   in_phase_tilting=0.8,
+                                   breathing=0.7,
+                                   JT_d=0.6,
+                                   JT_a=0.5)
     vesta_view(atoms)
 if __name__=='__main__':
     test()
