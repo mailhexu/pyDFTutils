@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from setuptools import setup, find_package
+from setuptools import setup, find_packages
 
 setup(
     name='pyDFTutils',
@@ -8,7 +8,7 @@ setup(
     author='Xu He',
     author_email='mailhexu@gmail.com',
     license='GPLv3',
-    packages=['pyDFTutils'],
+    packages=find_packages(),
     install_requires=['numpy','matplotlib','scipy','ase', 'spglib', 'pythtb', 'phonopy','pathos'],
     scripts=['scripts/plotldos.py','scripts/plotpdos.py','scripts/AFM_parameter.py','scripts/view_pos_info.py',
         'scripts/run_wannier.py'
