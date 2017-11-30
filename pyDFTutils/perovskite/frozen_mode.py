@@ -437,18 +437,16 @@ def gen_P21c_perovskite(
 
         #'X3_m_A1':perovskite_mode., # X3-[Nd1:a:dsp]T1u(a), What's this..
         #'X3_m_O1':perovskite_mode., # X3-[O1:c:dsp]A2u(a)
-        'X5_m_A1':
-        perovskite_mode.X5p_1,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
-         'X5_m_A2':
-        perovskite_mode.X5p_2,  # [Nd1:a:dsp]T1u(b), A , save as above
-       'Z5_m_A2':
-        perovskite_mode.X5p_2,  # [Nd1:a:dsp]T1u(b), A , save as above
-        'X5_m_O1':
-        perovskite_mode.X5p_3,  # [Nd1:a:dsp]T1u(a), O , Antiferro mode
-        'X5_m_O2':
-        perovskite_mode.X5p_4,  # [Nd1:a:dsp]T1u(b), O , same as above
+        'Z5_m_A1':
+        perovskite_mode.Z5p_1,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
+         'Z5_m_A2':
+        perovskite_mode.Z5p_2,  # [Nd1:a:dsp]T1u(b), A , save as above
+        'Z5_m_O1':
+        perovskite_mode.Z5p_3,  # [Nd1:a:dsp]T1u(a), O , Antiferro mode
         'Z5_m_O2':
-        perovskite_mode.X5p_4,  # [Nd1:a:dsp]T1u(b), O , same as above
+        perovskite_mode.Z5p_4,  # [Nd1:a:dsp]T1u(b), O , same as above
+        'Z5_m_O2':
+        perovskite_mode.Z5p_4,  # [Nd1:a:dsp]T1u(b), O , same as above
 
         'M2_p_O1':
         perovskite_mode.M3,  # M2+[O1:c:dsp]Eu(a), O, In phase rotation
@@ -459,7 +457,7 @@ def gen_P21c_perovskite(
     }
     mode_disps={}
     qdict={'G':[0,0,0],
-           'X':[0,0.0,0.5],
+           #'X':[0,0.0,0.5],
            'M':[0.5,0.5,0],
            'R':[0.5,0.5,0.5],
            'Z':[0.0,0.0,0.5]
