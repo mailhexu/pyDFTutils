@@ -518,7 +518,7 @@ def plot_band_weight(kslist,
     plt.ylabel('Frequency (cm$^{-1}$)')
     if axis is None:
         for ks, eks in zip(kslist, ekslist):
-            plt.plot(ks, eks, color='gray', linewidth=0.1)
+            plt.plot(ks, eks, color='gray', linewidth=0.001)
         a.set_xlim(0, xmax)
         a.set_ylim(yrange)
         if xticks is not None:

@@ -80,7 +80,7 @@ def DDB_unfolder(DDB_fname, kpath_bounds,sc_mat ):
     #print kpath_bounds
 
     phbst, phdos = DDB.anaget_phbst_and_phdos_files(
-        nqsmall=5,
+        nqsmall=2,
         asr=1,
         chneut=1,
         dipdip=0,

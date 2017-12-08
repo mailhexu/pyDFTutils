@@ -90,11 +90,11 @@ class phonon_unfolder:
         N = len(self._trans_rs)
         for r_i, ind in zip(self._trans_rs, self._trans_indices):
             if self._phase:
-                weight += np.vdot(evec, evec[ind]*np.exp(-1j * np.dot(qpt+G,r_i)) ) /N
+                #weight += np.vdot(evec, evec[ind]*np.exp(-1j * np.dot(qpt+G,r_i)) ) /N
                 #r_i =np.dot(self._scmat,r_i)
                 weight += np.vdot(evec, evec[ind])*np.exp(-1j *2 * np.pi * np.dot(qpt+G,r_i))  /N
             else:
-                weight += np.vdot(evec, evec[ind]) / N
+                weight += np.vdot(evec, evec[ind]) / N*np.exp(-1j *2 * np.pi * np.dot(G,r_i))  
 
         return weight.real
 

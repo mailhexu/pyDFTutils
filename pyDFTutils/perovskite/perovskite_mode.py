@@ -50,6 +50,15 @@ IR_dict['Gamma'] = {
     D5_10: '$\Delta_5$',
 }
 
+# Z (0,0,1/2) for generating distorted structures.
+Z2p_1 = zvec._replace(Az=1)
+Z2p_2 = zvec._replace(O1z=1)
+
+Z5p_1 = zvec._replace(Ax=1)
+Z5p_2 = zvec._replace(Ay=1)
+Z5p_3 = zvec._replace(O1x=1)
+Z5p_4 = zvec._replace(O1y=1)
+
 # X point
 X1_1 = zvec._replace(By=1)
 X1_2 = zvec._replace(O1y=1, O2y=1)

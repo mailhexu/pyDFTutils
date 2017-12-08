@@ -2,6 +2,7 @@ import numpy as np
 import sys
 #from phonopy.structure.cells import get_supercell
 from ase import Atoms
+from ase.io import write
 
 import numpy as np
 import copy
@@ -16,6 +17,7 @@ from pyDFTutils.ase_utils import vesta_view
 class distorted_cell():
     def __init__(self, atoms, supercell_matrix=np.eye(3)):
         self._primitive_cell = atoms
+        self._supercell_matrix = supercell_matrix
         self._supercell = get_supercell(atoms, supercell_matrix, symprec=1e-4)
         self._N = np.linalg.det(supercell_matrix)
 
@@ -37,7 +39,12 @@ class distorted_cell():
             cell.set_scaled_positions(scaled_positions)
         return cell
 
-    def _get_displacements(self, eigvec, q, amplitude, argument):
+    def _get_displacements(self,
+                           eigvec,
+                           q,
+                           amplitude,
+                           argument,
+                           use_isotropy_amplitue=True):
         """
         displacements from eigvec, q, amplitude
         """
@@ -47,8 +54,8 @@ class distorted_cell():
         s2uu_map = [u2u_map[x] for x in s2u_map]
         spos = self._supercell.get_scaled_positions()
         dim = self._supercell.get_supercell_matrix()
-        coefs = np.exp(2j * np.pi * np.dot(np.dot(spos, dim.T),
-                                           q)) / np.sqrt(m)
+        coefs = np.exp(2j * np.pi * np.dot(
+            np.dot(spos, dim.T), q))  # Here Do not use sqrt(m)/ np.sqrt(m)
         u = []
         for i, coef in enumerate(coefs):
             eig_index = s2uu_map[i] * 3
@@ -57,6 +64,9 @@ class distorted_cell():
         #u = np.array(u) / np.sqrt(len(m))
         u = np.array(u) / np.linalg.norm(u)  #/np.sqrt(self._N)
         phase_factor = self._get_phase_factor(u, argument)
+
+        if use_isotropy_amplitue:
+            amplitude = amplitude  #*self._N
         u *= phase_factor * amplitude
 
         return u
@@ -374,15 +384,110 @@ def determinant(m):
             m[1][0] * m[2][1] - m[0][2] * m[1][1] * m[2][0])
 
 
-def gen_distorted_perovskite(name,
-             cell=[3.9, 3.9, 3.9],
-             supercell_matrix=[[1, -1, 0], [1, 1, 0], [0, 0, 2]],
-             out_of_phase_rotation=0.0,
-             in_phase_rotation=0.0,
-             in_phase_tilting=0.0,
-             breathing=0.0,
-             JT_d=0.0,
-             JT_a=0.0):
+def gen_P21c_perovskite(
+        name,
+        cell=[3.9, 3.9, 3.9],
+        supercell_matrix=[[1, -1, 0], [1, 1, 0], [0, 0, 2]],
+        modes=dict(
+        R2_m_O1=0.0,  # R2-[O1:c:dsp]A2u(a), O, breathing
+        R3_m_O1=0.0,  # R3-[O1:c:dsp]A2u(a), O JT inplane-stagger, out-of-plane antiphase
+        R3_m_O2=0.0,  # R3-[O1:c:dsp]A2u(b), O, out-of-plane-stagger, inplane antiphase
+        R4_m_A1=0.0,  # R4-[Nd1:a:dsp]T1u(a), A
+        R4_m_A2=0.0,  # R4-[Nd1:a:dsp]T1u(b), A
+        R4_m_A3=0.0,  # R4-[Nd1:a:dsp]T1u(c), A
+        R4_m_O1=0.0,  # R4-[O1:c:dsp]Eu(a), O
+        R4_m_O2=0.0,  # R4-[O1:c:dsp]Eu(b), O
+        R4_m_O3=0.0,  # R4-[O1:c:dsp]Eu(c), O
+        R5_m_O1=0.0,  # R5-[O1:c:dsp]Eu(a), O
+        R5_m_O2=0.0,  # R5-[O1:c:dsp]Eu(b), O
+        R5_m_O3=0.0,  # R5-[O1:c:dsp]Eu(c), O
+        X3_m_A1=0.0,  # X3-[Nd1:a:dsp]T1u(a), What's this..
+        X3_m_O1=0.0,  # X3-[O1:c:dsp]A2u(a)
+        X5_m_A1=0.0,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
+        X5_m_A2=0.0,  # [Nd1:a:dsp]T1u(b), A , save as above
+        X5_m_O1=0.0,  # [Nd1:a:dsp]T1u(a), O , Antiferro mode
+        X5_m_O2=0.0,  # [Nd1:a:dsp]T1u(b), O , same as above
+        M2_p_O1=0.0,  # M2+[O1:c:dsp]Eu(a), O, In phase rotation
+        M3_p_O1=0.0,  # M3+[O1:c:dsp]A2u(a), O, D-type JT inplane stagger
+        M5_p_O1=0.0,  # M5+[O1:c:dsp]Eu(a), O, Out of phase tilting
+        M5_p_O2=0.0,  # M5+[O1:c:dsp]Eu(a), O, Out of phase tilting
+        M4_p_O1=0.0 , # M4+[O1:c:dsp]A2u(a), O, in-plane-breathing (not in P21/c)
+            )
+):
+    atoms = gen_primitive(name=name, mag_order='PM', latticeconstant=cell[0])
+    spos = atoms.get_scaled_positions()
+    atoms.set_cell(cell)
+    atoms.set_scaled_positions(spos)
+    dcell = distorted_cell(atoms, supercell_matrix=supercell_matrix)
+    eigvec = np.zeros(15)
+
+    mode_dict = {
+        'R2_m_O1': perovskite_mode.R2p,
+        'R3_m_O1': perovskite_mode.R12p_1,  # R3-[O1:c:dsp]A2u(a), O JT inplane-stagger, out-of-plane antiphase
+        'R3_m_O2': perovskite_mode.R12p_2,  # R3-[O1:c:dsp]A2u(b), O, out-of-plane-stagger, inplane antiphase
+        'R4_m_A1': perovskite_mode.R15_1,  # R4-[Nd1:a:dsp]T1u(a), A
+        'R4_m_A2': perovskite_mode.R15_2,  # R4-[Nd1:a:dsp]T1u(b), A
+        'R4_m_A3': perovskite_mode.R15_3,  # R4-[Nd1:a:dsp]T1u(c), A
+        'R4_m_O1': perovskite_mode.R15_4,  # R4-[O1:c:dsp]Eu(a), O
+        'R4_m_O2': perovskite_mode.R15_5,  # R4-[O1:c:dsp]Eu(b), O
+        'R4_m_O3': perovskite_mode.R15_6,  # R4-[O1:c:dsp]Eu(c), O
+        'R5_m_O1': perovskite_mode.R25_1,  # R5-[O1:c:dsp]Eu(a), O, out-of-phase rotation a-
+        'R5_m_O2': perovskite_mode.R25_2,  # R5-[O1:c:dsp]Eu(b), O, b-
+        'R5_m_O3': perovskite_mode.R25_3,  # R5-[O1:c:dsp]Eu(c), O, c-. For Pnma. Do not use.
+
+        #'X3_m_A1':perovskite_mode., # X3-[Nd1:a:dsp]T1u(a), What's this..
+        #'X3_m_O1':perovskite_mode., # X3-[O1:c:dsp]A2u(a)
+        'Z5_m_A1':
+        perovskite_mode.Z5p_1,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
+         'Z5_m_A2':
+        perovskite_mode.Z5p_2,  # [Nd1:a:dsp]T1u(b), A , save as above
+        'Z5_m_O1':
+        perovskite_mode.Z5p_3,  # [Nd1:a:dsp]T1u(a), O , Antiferro mode
+        'Z5_m_O2':
+        perovskite_mode.Z5p_4,  # [Nd1:a:dsp]T1u(b), O , same as above
+        'Z5_m_O2':
+        perovskite_mode.Z5p_4,  # [Nd1:a:dsp]T1u(b), O , same as above
+
+        'M2_p_O1':
+        perovskite_mode.M3,  # M2+[O1:c:dsp]Eu(a), O, In phase rotation
+        'M3_p_O1': perovskite_mode.M2,  # M3+[O1:c:dsp]A2u(a), O, D-type JT inplane stagger
+        'M5_p_O1':perovskite_mode.M5_1,  # M5+[O1:c:dsp]Eu(a), O, Out of phase tilting
+        'M5_p_O2':perovskite_mode.M5_2,  # M5+[O1:c:dsp]Eu(b), O, Out of phase tilting, -above
+        'M4_p_O1': perovskite_mode.M4,  # M4+[O1:c:dsp]A2u(a), O, in-plane-breathing (not in P21/c)
+    }
+    mode_disps={}
+    qdict={'G':[0,0,0],
+           #'X':[0,0.0,0.5],
+           'M':[0.5,0.5,0],
+           'R':[0.5,0.5,0.5],
+           'Z':[0.0,0.0,0.5]
+    }
+    disps=0.0 #np.zeros(3,dtype='complex128')
+    for name, amp in modes.items():
+        eigvec=np.array(mode_dict[name])
+        disp = dcell._get_displacements(
+            eigvec=eigvec,
+            q=qdict[name[0]],
+            amplitude=amp,
+            argument=0)
+        disps+=disp
+
+    newcell = dcell._get_cell_with_modulation(disps)
+    newcell = Atoms(newcell)
+    print(spglib.get_spacegroup(newcell))
+    #vesta_view(newcell)
+    return newcell
+
+def gen_distorted_perovskite(
+        name,
+        cell=[3.9, 3.9, 3.9],
+        supercell_matrix=[[1, -1, 0], [1, 1, 0], [0, 0, 2]],
+        out_of_phase_rotation=0.0,
+        in_phase_rotation=0.0,
+        in_phase_tilting=0.0,
+        breathing=0.0,
+        JT_d=0.0,
+        JT_a=0.0):
     atoms = gen_primitive(name=name, mag_order='PM', latticeconstant=3.9)
     spos = atoms.get_scaled_positions()
     #atoms.set_cell([3.5,3.5,3.9,90,90,90])
@@ -401,17 +506,23 @@ def gen_distorted_perovskite(name,
 
     eig_out_of_phase_rotation_x = np.array(perovskite_mode.R25_1)
     eig_out_of_phase_rotation_y = np.array(perovskite_mode.R25_2)
-    
+
     eig_in_phase_rotation_z = np.array(perovskite_mode.M3)
 
-
     disp_br = dcell._get_displacements(
-        eigvec=eig_breathing, q=[0.5, 0.5, 0.5], amplitude=breathing, argument=0)
+        eigvec=eig_breathing,
+        q=[0.5, 0.5, 0.5],
+        amplitude=breathing,
+        argument=0)
     #disp2=dcell._get_displacements(eigvec=out_of_phase_rotation,q=[0.5,0.5,0.5],amplitude=0.55,argument=0)
     disp_jt = dcell._get_displacements(
         eigvec=eig_JT_d, q=[0.5, 0.5, 0.0], amplitude=JT_d, argument=0)
 
-    disp_tilting=dcell._get_displacements(eigvec=eig_in_phase_tilting,q=[0.0,0.0,0.5],amplitude=in_phase_tilting,argument=0)
+    disp_tilting = dcell._get_displacements(
+        eigvec=eig_in_phase_tilting,
+        q=[0.0, 0.0, 0.5],
+        amplitude=in_phase_tilting,
+        argument=0)
 
     disp_rotx = dcell._get_displacements(
         eigvec=eig_out_of_phase_rotation_x,
@@ -435,19 +546,54 @@ def gen_distorted_perovskite(name,
 
     #print disp.shape
     newcell = dcell._get_cell_with_modulation(
-        disp_jt + disp_rotx + disp_roty +disp_rotz + disp_br +disp_tilting)
-    newcell=Atoms(newcell)
+        disp_jt + disp_rotx + disp_roty + disp_rotz + disp_br + disp_tilting)
+    newcell = Atoms(newcell)
     print(spglib.get_spacegroup(newcell))
     #vesta_view(newcell)
     return newcell
 
+
+def isotropy_normfactor(scell, sc_mat, disps):
+    """
+    pcell: primitive cell parameter. 3*3 matrix
+    sc_mat: primitive->supercell transform matrix. 3*3 matrix
+    disps: list of vectors defining displacements.
+    """
+    # Bs supercell
+    # Bs=np.dot(pcell, sc_mat)
+    # scell: supercell
+    sum = 0.0
+    for disp in disps:
+        sum += (np.linalg.norm(np.dot(scell, disp)))**2
+    norm_factor = 1.0 / np.sqrt(sum)
+    return norm_factor
 
 
 def test():
     #atoms=gen_pnma('LaMnO3',out_of_phase_rotation=1.5)
     #atoms=gen_pnma('LaMnO3',JT_d=0.2)
     #atoms=gen_pnma('LaMnO3',in_phase_tilting=0.6)
-    atoms=gen_distorted_perovskite('LaMnO3',out_of_phase_rotation=1.0, JT_d=0.1, in_phase_tilting=0.9, breathing=0.0)
+    atoms=gen_distorted_perovskite('LaMnO3',
+                                   out_of_phase_rotation=1.0,
+                                   in_phase_rotation=0.9,
+                                   in_phase_tilting=0.8,
+                                   breathing=0.7,
+                                   JT_d=0.6,
+                                   JT_a=0.5)
+    atoms = gen_primitive('LaMnO3', latticeconstant=3.9)
+    write('cubic.cif', atoms)
+    atoms = gen_distorted_perovskite(
+        'LaMnO3',
+        out_of_phase_rotation=0.0,
+        JT_d=0.1,
+        in_phase_tilting=1.0,
+        breathing=0.0)
     vesta_view(atoms)
-if __name__=='__main__':
-    test()
+    write('JT_d_0.1_inphasetilt_1.0.cif', atoms)
+
+
+
+#if __name__ == '__main__':
+#    test()
+
+#test()
