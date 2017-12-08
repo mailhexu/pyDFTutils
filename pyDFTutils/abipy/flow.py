@@ -52,6 +52,7 @@ class BecStrainWork(BecWork):
 
         return new
 
+
 class myPhononFlow(PhononFlow):
     """
         1) One workflow for the GS run.
@@ -105,12 +106,11 @@ class myPhononFlow(PhononFlow):
         for qpt in qpoints:
             if np.allclose(qpt, 0) and with_becs and with_strain:
                 ph_work = BecStrainWork.from_scf_task(scf_task)
+            elif np.allclose(qpt, 0) and with_becs and (not with_strain):
+                ph_work = BecWork.from_scf_task(scf_task)
             else:
-                ph_work = PhononWork.from_scf_task(
-                    scf_task, qpoints=qpt, tolerance=tolerance)
-
+                ph_work = PhononWork.from_scf_task(scf_task, qpoints=qpt, tolerance=tolerance)
             flow.register_work(ph_work)
-
         if allocate:
             flow.allocate()
 
