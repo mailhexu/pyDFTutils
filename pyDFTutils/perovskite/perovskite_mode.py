@@ -50,15 +50,21 @@ IR_dict['Gamma'] = {
     D5_10: '$\Delta_5$',
 }
 
+# Z (0,0,1/2) for generating distorted structures.
+Z2p_1 = zvec._replace(Az=1)
+Z2p_2 = zvec._replace(O1z=1)
+
+Z5p_1 = zvec._replace(Ax=1)
+Z5p_2 = zvec._replace(Ay=1)
+Z5p_3 = zvec._replace(O1x=1)
+Z5p_4 = zvec._replace(O1y=1)
+
 # X point
 X1_1 = zvec._replace(By=1)
 X1_2 = zvec._replace(O1y=1, O2y=1)
 
-# TODO check if these are really X5p_2, X5p_4
-# X2p_1 = zvec._replace(Ay=1)
-# X2p_2 = zvec._replace(O3y=1)
-X2p_1 = zvec._replace(Az=1)
-X2p_2 = zvec._replace(O3z=1)
+X2p_1 = zvec._replace(Ay=1)
+X2p_2 = zvec._replace(O3y=1)
 
 X3 = zvec._replace(O1y=1, O2y=-1)
 
@@ -70,18 +76,9 @@ X5_5 = zvec._replace(O2x=1)
 X5_6 = zvec._replace(O2z=1)
 
 X5p_1 = zvec._replace(Ax=1)
-#X5p_2 = zvec._replace(Az=1)
-X5p_2 = zvec._replace(Ay=1)
-
-
-# X5p_3 = zvec._replace(O3x=1)
-# X5p_4 = zvec._replace(O3z=1)
-# X5p_4 = zvec._replace(O3y=1)
-
-X5p_3 = zvec._replace(O1x=1)
-# X5p_4 = zvec._replace(O3z=1)
-X5p_4 = zvec._replace(O1y=1)
-
+X5p_2 = zvec._replace(Az=1)
+X5p_3 = zvec._replace(O3x=1)
+X5p_4 = zvec._replace(O3z=1)
 
 IR_dict['X'] = {
     X1_1: '$M_1$',

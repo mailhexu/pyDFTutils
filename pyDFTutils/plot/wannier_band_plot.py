@@ -102,7 +102,6 @@ def plot_band_weight(kslist,
                      wkslist=None,
                      efermi=None,
                      yrange=None,
-                     output=None,
                      style='alpha',
                      color='blue',
                      axis=None,
@@ -110,12 +109,13 @@ def plot_band_weight(kslist,
                      xticks=None,
                      cmap=mpl.cm.coolwarm,
                      weight_min=-4,
-                     weight_max=4):
+                     weight_max=4,
+                     shift_fermi=True):
     if axis is None:
         fig, a = plt.subplots()
     else:
         a = axis
-    if efermi is not None:
+    if efermi is not None and shift_fermi:
         ekslist = np.array(ekslist) - efermi
 
     xmax = max(kslist[0])
@@ -144,8 +144,8 @@ def plot_band_weight(kslist,
                         for lwidth in lwidths
                     ])
             elif style == 'color' or style == 'colormap':
-                lwidths = np.array(wkslist[i]) * 1
                 norm = mpl.colors.Normalize(vmin=weight_min, vmax=weight_max)
+                lwidths = np.array(wkslist[i]) * 10
                 #norm = mpl.colors.SymLogNorm(linthresh=0.03,vmin=weight_min, vmax=weight_max)
                 m = mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
                 #lc = LineCollection(segments,linewidths=np.abs(norm(lwidths)-0.5)*1, colors=[m.to_rgba(lwidth) for lwidth in lwidths])
@@ -162,8 +162,14 @@ def plot_band_weight(kslist,
         a.set_ylim(yrange)
         if xticks is not None:
             plt.xticks(xticks[1], xticks[0])
+            for t in xticks[1]:
+                plt.axvline(t, linewidth=0.8)
         if efermi is not None:
-            plt.axhline(linestyle='--', color='black')
+            if shift_fermi:
+                plt.axhline(linestyle='--', color='black')
+            else:
+                plt.axhline(efermi,linestyle='--', color='black')
+
     return a
 
 
