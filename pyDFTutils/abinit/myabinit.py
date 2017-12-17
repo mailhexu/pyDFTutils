@@ -388,6 +388,7 @@ class Abinit(FileIOCalculator):
         # efield / strain Then dataset2: ddk, dataset3: efield/strain and Gamma phonon
         # else: dataset2: Gamma phonon
         if efield or strain:
+            # DDK
             self.add_dataset(
                 iscf=-3,
                 getwfk=1,
@@ -398,6 +399,7 @@ class Abinit(FileIOCalculator):
                 tolvrs=0,
                 tolwfr=tolwfr * 10,
                 qpt='0 0 0')
+            # Gamma, efield and/or strain and phonon
             self.add_dataset(
                 getwfk=1,
                 getddk=self.ndtset,
@@ -421,6 +423,8 @@ class Abinit(FileIOCalculator):
             qpoints = qpts
         list2str = lambda l: " ".join(map(str, l))
         for q in qpoints:
+
+            # phonon at Gamma
             if np.isclose(np.array(q), np.array([0, 0, 0])).all():
                 if not (efield or strain):
                     self.add_dataset(
@@ -436,6 +440,7 @@ class Abinit(FileIOCalculator):
                         iscf=7,
                         rfasr=rfasr,
                         prtwf=prtwf)
+            # phonon
             else:
                 self.add_dataset(
                     getwfk=1,
@@ -1558,7 +1563,7 @@ class DDB_reader():
                     ]
                     for i in range(1, self.natom):
                         line = myfile.next()
-                        print line
+                        print(line)
                         spos[i] = [
                             float(s.replace('D', 'E'))
                             for s in line.strip().split()[-3:]
@@ -1567,7 +1572,7 @@ class DDB_reader():
             self.symbols = [chemical_symbols[i] for i in numbers]
             self.masses = [atomic_masses[i] for i in numbers]
             self.cell = [rprim0, rprim1, rprim2]
-            print self.symbols
+            print(self.symbols)
             self.atoms = Atoms(self.symbols, positions=spos, cell=self.cell)
             return self.atoms
 
