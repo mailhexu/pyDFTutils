@@ -209,6 +209,8 @@ class myvasp(Vasp):
         nelmdl = self.int_params['nelmdl']
         ibrion = self.int_params['ibrion']
         sigma = self.float_params['sigma']
+        smass = self.float_params['smass']
+        #potim = self.float_params['potim']
         if sigma is None:
             sigma = 0.1
         ediff = self.exp_params['ediff']
@@ -224,16 +226,30 @@ class myvasp(Vasp):
         nsw = self.int_params['nsw']
 
         #first do this
-        if pre_relax:
+        if pre_relax and pre_relax_method=='cg':
             self.set(
                 nelmdl=6,
                 nelmin=-9,
-                ediff=5e-3,
+                ediff=3e-3,
                 ediffg=-0.3,
                 nsw=30,
-                ibrion=2,
+                ibrion=1,
                 sigma=sigma * 3,
                 ldipol=False,
+                maxmix=-20)
+
+        if pre_relax and pre_relax_method=='dampedmd':
+            self.set(
+                nelmdl=6,
+                nelmin=-9,
+                ediff=3e-3,
+                ediffg=-0.3,
+                nsw=30,
+                ibrion=3,
+                sigma=sigma * 3,
+                ldipol=False,
+                potim=0.1,
+                smass=1.1,
                 maxmix=-20)
             if do_nospin:
                 print("----------------------------------------------------")
@@ -271,6 +287,7 @@ class myvasp(Vasp):
             ldipol=ldipol,
             nsw=nsw,
             maxmix=40,
+            smass=smass,
             nfree=15)
 
         #self.read_contcar(filename='CONTCAR')
@@ -305,12 +322,12 @@ class myvasp(Vasp):
                 copyfile(f, os.path.join('BAND', f))
         self.plot_bands()
 
-    def scf_calculation(self, ismear=-5, sigma=0.05):
+    def scf_calculation(self, ismear=-5, sigma=0.1, istart=1):
         """
         scf calculation
         """
         self.set(
-            nsw=0, ibrion=1, ismear=ismear, nedos=501, sigma=sigma, nelmdl=-10)
+            nsw=0, ibrion=1, ismear=ismear, nedos=501, sigma=sigma, nelmdl=-10, istart=istart)
 
         self.calculate(self.atoms)
 
