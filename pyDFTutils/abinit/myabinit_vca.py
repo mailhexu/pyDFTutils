@@ -315,7 +315,7 @@ class Abinit(FileIOCalculator):
         pass
 
     def relax_calculation(self, atoms, pre_relax=False, **kwargs):
-        self.set(ionmov=2, ecutsm=0.5, dilatmx=1.1, optcell=2, ntime=50)
+        self.set(ionmov=22, ecutsm=0.5, dilatmx=1.1, optcell=2, ntime=100)
         if kwargs:
             self.set(**kwargs)
         self.calculate(atoms=atoms, properties=[])
@@ -795,16 +795,10 @@ class Abinit(FileIOCalculator):
 
         fh.write('#Definition of the unit cell\n')
         fh.write('acell\n')
-        a,b,c,_,_,_=atoms.get_cell_lengths_and_angles()
-        #fh.write('%.14f %.14f %.14f Angstrom\n' % (1.0, 1.0, 1.0))
-        fh.write('%.14f %.14f %.14f Angstrom\n' % (a, b, c))
+        fh.write('%.14f %.14f %.14f Angstrom\n' % (1.0, 1.0, 1.0))
         fh.write('rprim\n')
-        #for v in atoms.cell:
-        cell=atoms.cell
-        fh.write('%.14f %.14f %.14f\n' % tuple(cell[0]/a))
-        fh.write('%.14f %.14f %.14f\n' % tuple(cell[1]/b))
-        fh.write('%.14f %.14f %.14f\n' % tuple(cell[2]/c))
-
+        for v in atoms.cell:
+            fh.write('%.14f %.14f %.14f\n' % tuple(v))
 
         fh.write('chkprim 0 # Allow non-primitive cells\n')
 
@@ -944,7 +938,7 @@ class Abinit(FileIOCalculator):
             ) > -1:
                 stress = np.empty(6)
                 for i in range(3):
-                    entries = lines.next().split()
+                    entries = next(lines).split()
                     stress[i] = float(entries[2])
                     stress[i + 3] = float(entries[5])
                 self.results['stress'] = stress * Hartree / Bohr**3
@@ -993,7 +987,7 @@ class Abinit(FileIOCalculator):
                 forces = []
                 for i in range(natoms):
                     forces.append(
-                        np.array([float(f) for f in lines.next().split()[1:]]))
+                        np.array([float(f) for f in next(lines).split()[1:]]))
                 self.results['forces'] = np.array(forces)
                 break
         else:
@@ -1104,8 +1098,10 @@ class Abinit(FileIOCalculator):
             elif pps in ['ONCV']:
                 xcdict = {'LDA': 'PW', 'PBE': 'PBE', 'PBEsol': 'PBEsol'}
                 #print '*/%s_%s_%s*'%(number,symbol,xcdict[xcname])
+                print(os.path.join(pppaths[-1], 'ONCVPSP-%s-PDv0.4/%s/%s*.psp8') %
+                                 (xcdict[xcname], symbol, symbol))
                 name = glob(
-                    os.path.join(pppaths[-1], 'ONCVPSP-%s-PDv0.3/%s/%s*.psp8' %
+                    os.path.join(pppaths[-1], 'ONCVPSP-%s-PDv0.4/%s/%s*.psp8' %
                                  (xcdict[xcname], symbol, symbol)))[-1]
             elif pps in ['GPAW']:
                 xcdict = {'LDA': 'LDA', 'PBE': 'PBE', 'PBEsol': 'PBEsol'}
@@ -1579,7 +1575,6 @@ def read_output(fname='abinit.txt', afterend=True):
     atoms = Atoms(numbers=numbers, scaled_positions=poses, cell=cell, pbc=True)
     return atoms
 
-
 def default_abinit_calculator(ecut=35 * Ha,
                               xc='LDA',
                               nk=8,
@@ -1617,7 +1612,7 @@ def default_abinit_calculator(ecut=35 * Ha,
         kpts=[nk, nk, nk],  # warning - used to speedup the test
         gamma=False,
         #chksymbreak=0,
-        pppaths=['/home/hexu/.local/pp/abinit/'],
+        #pppaths=['/home/hexu/.local/pp/abinit/'],
         pps=pps,
         chksymbreak=0,
         pawecutdg=ecut * 1.8 * eV,
@@ -1677,12 +1672,12 @@ class DDB_reader():
                         float(s.replace('D', 'E')) * acell[0]
                         for s in line.strip().split()[1:4]
                     ]
-                    line = myfile.next()
+                    line = next(myfile)
                     rprim1 = [
                         float(s.replace('D', 'E')) * acell[1]
                         for s in line.strip().split()
                     ]
-                    line = myfile.next()
+                    line = next(myfile)
                     rprim2 = [
                         float(s.replace('D', 'E')) * acell[2]
                         for s in line.strip().split()
@@ -1697,7 +1692,7 @@ class DDB_reader():
                         for s in line.strip().split()[-3:]
                     ]
                     for i in range(1, self.natom):
-                        line = myfile.next()
+                        line = next(myfile)
                         print(line)
                         spos[i] = [
                             float(s.replace('D', 'E'))
@@ -1736,14 +1731,14 @@ class DDB_reader():
             for line in myfile:
                 if line.find('**** Database of total energy derivatives ****'
                              ) != -1:
-                    l = myfile.next()
+                    l = next(myfile)
                     nblock = int(l.strip().split()[-1])
                     #print "Nblock:",nblock
-                    myfile.next()
-                    l = myfile.next()
+                    next(myfile)
+                    l = next(myfile)
                     nelem = int(l.strip().split()[-1])
                     #print nelem
-                    l = myfile.next()
+                    l = next(myfile)
                     self.qpt = [
                         float(x.replace('D', 'E'))
                         for x in l.strip().split()[1:4]
@@ -1751,7 +1746,7 @@ class DDB_reader():
                     #print qpts
                     for i in range(nelem):
                         try:
-                            l = myfile.next()
+                            l = next(myfile)
                             idir1, ipert1, idir2, ipert2 = [
                                 int(x) for x in l.strip().split()[0:4]
                             ]
