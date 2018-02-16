@@ -16,7 +16,7 @@ class phonon_unfolder:
                  supercell_matrix,
                  eigenvectors,
                  qpoints,
-                 tol_r=0.04,
+                 tol_r=0.03,
                  ndim=3,
                  labels=None,
                  compare=None,
@@ -44,22 +44,24 @@ class phonon_unfolder:
         self._labels = labels
         self._trans_rs = None
         self._trans_indices = None
-        self._make_translate_maps()
-        self._phase = phase
+
         if ghost_atoms is not None:
+            print("adding ghosts")
             symbols = atoms.get_chemical_symbols()
             positions = list(atoms.get_scaled_positions())
             cell = atoms.get_cell()
             for gatom in ghost_atoms:
                 # sorry Rn, you are the chosen one to be the ghost. unlikely to appear in a phonon calculation.
-                symbols.append('Rn')
+                symbols.append('C')
                 positions.append(gatom)
             self._atoms = Atoms(symbols, scaled_positions=positions, cell=cell)
-        # set the eigenvectors to zeros for the ghosts.
-        nkpt, nbranch, neigdim = self._evecs.shape
-        evecs = np.zeros(nkpt, nbranch, neigdim + 3 * len(ghost_atoms), dtype=self._evecs.dtype)
-        evecs[:,:, :neigdim]=self._evecs
-        self._evecs=evecs
+            # set the eigenvectors to zeros for the ghosts.
+            nkpt, nbranch, neigdim = self._evecs.shape
+            evecs = np.zeros((nkpt, nbranch+ 3 * len(ghost_atoms), neigdim + 3 * len(ghost_atoms)), dtype=self._evecs.dtype)
+            evecs[:,:neigdim, :neigdim]=self._evecs
+            self._evecs=evecs
+        self._make_translate_maps()
+        self._phase = phase
 
     def _translate(self, evec, r):
         """
@@ -97,16 +99,30 @@ class phonon_unfolder:
             Tpositions = positions + np.array(ri)
             close_to_int = lambda x: np.all(np.abs(x - np.round(x)) < self._tol_r)
             for i_atom, pos in enumerate(positions):
+                jatoms=None
+                d=100000
                 for j_atom, Tpos in enumerate(Tpositions):
                     dpos = Tpos - pos
-                    if close_to_int(dpos):
-                        indices[i, j_atom * self._ndim:j_atom * self._ndim +
+                    dj=np.linalg.norm(dpos - np.round(dpos))
+                    if dj<d:
+                        d=dj
+                        jatom=j_atom
+                    #if close_to_int(dpos):
+                #indices[i, j_atom * self._ndim:j_atom * self._ndim +
+                #                self._ndim] = np.arange(
+                #                    i_atom * self._ndim,
+                #                    i_atom * self._ndim + self._ndim)
+                indices[i, jatom * self._ndim:jatom * self._ndim +
                                 self._ndim] = np.arange(
                                     i_atom * self._ndim,
                                     i_atom * self._ndim + self._ndim)
 
+
         self._trans_rs = rs
         self._trans_indices = indices
+        print(indices)
+        for ind in indices:
+            print(len(ind), len(set(ind)))
 
     def get_weight(self, evec, qpt, G=np.array([0, 0, 0])):
         """
@@ -122,7 +138,7 @@ class phonon_unfolder:
                 weight += np.vdot(evec, evec[ind]) * np.exp(
                     -1j * 2 * np.pi * np.dot(qpt + G, r_i)) / N
             else:
-                weight += np.vdot(evec, evec[ind]) / N * np.exp(
+                weight += (np.vdot(evec, evec[ind]) ) / N * np.exp(
                     -1j * 2 * np.pi * np.dot(G, r_i))
 
         return weight.real

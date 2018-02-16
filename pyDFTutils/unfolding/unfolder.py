@@ -9,7 +9,7 @@ import numpy as np
 
 class Unfolder():
     """ phonon unfolding class"""
-    def __init__(self, cell, basis, positions , supercell_matrix, eigenvectors, qpoints, tol_r=0.04, compare=None):
+    def __init__(self, cell, basis, positions , supercell_matrix, eigenvectors, qpoints, tol_r=0.1, compare=None):
         """
         Params:
         ===================

@@ -476,7 +476,7 @@ def plot_band_weight(kslist,
                      style='alpha',
                      color='blue',
                      axis=None,
-                     width=10,
+                     width=2,
                      xticks=None,
                      title=None):
     if axis is None:
@@ -510,7 +510,7 @@ def plot_band_weight(kslist,
                     linewidths=[2] * len(x),
                     colors=[
                         colorConverter.to_rgba(
-                            color, alpha=lwidth / (width + 0.001))
+                            color, alpha=np.abs(lwidth / (width + 0.001)))
                         for lwidth in lwidths
                     ])
 
