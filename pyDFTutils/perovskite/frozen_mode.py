@@ -403,11 +403,19 @@ def gen_P21c_perovskite(
         R5_m_O3=0.0,  # R5-[O1:c:dsp]Eu(c), O  c-
         X3_m_A1=0.0,  # X3-[Nd1:a:dsp]T1u(a), What's this..
         X3_m_O1=0.0,  # X3-[O1:c:dsp]A2u(a)
-        X5_m_A1=0.0,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
-        X5_m_A2=0.0,  # [Nd1:a:dsp]T1u(b), A , save as above
-        X5_m_O1=0.0,  # [Nd1:a:dsp]T1u(a), O , Antiferro mode
-        X5_m_O2=0.0,  # [Nd1:a:dsp]T1u(b), O , same as above
-        M2_p_O1=0.0,  # M2+[O1:c:dsp]Eu(a), O, In phase rotation c+
+
+        #X5_m_A1=0.0,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
+        #X5_m_A2=0.0,  # [Nd1:a:dsp]T1u(b), A , save as above
+        #X5_m_O1=0.0,  # [Nd1:a:dsp]T1u(a), O , Antiferro mode
+        #X5_m_O2=0.0,  # [Nd1:a:dsp]T1u(b), O , same as above
+        #M2_p_O1=0.0,  # M2+[O1:c:dsp]Eu(a), O, In phase rotation c+
+
+        Z5_m_A1=0.0,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
+        Z5_m_A2=0.0,  # [Nd1:a:dsp]T1u(b), A , save as above
+        Z5_m_O1=0.0,  # [Nd1:a:dsp]T1u(a), O , Antiferro mode
+        Z5_m_O2=0.0,  # [Nd1:a:dsp]T1u(b), O , same as above
+        M2_p_O1=0.0,  # M2+[O1:c:dsp]Eu(a), O, In phase rotation
+
         M3_p_O1=0.0,  # M3+[O1:c:dsp]A2u(a), O, D-type JT inplane stagger
         M5_p_O1=0.0,  # M5+[O1:c:dsp]Eu(a), O, Out of phase tilting
         M5_p_O2=0.0,  # M5+[O1:c:dsp]Eu(a), O, Out of phase tilting
@@ -439,12 +447,10 @@ def gen_P21c_perovskite(
         #'X3_m_O1':perovskite_mode., # X3-[O1:c:dsp]A2u(a)
         'Z5_m_A1':
         perovskite_mode.Z5p_1,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
-         'Z5_m_A2':
+       'Z5_m_A2':
         perovskite_mode.Z5p_2,  # [Nd1:a:dsp]T1u(b), A , save as above
         'Z5_m_O1':
-        perovskite_mode.Z5p_3,  # [Nd1:a:dsp]T1u(a), O , Antiferro mode
-        'Z5_m_O2':
-        perovskite_mode.Z5p_4,  # [Nd1:a:dsp]T1u(b), O , same as above
+        perovskite_mode.Z5p_3,  # [Nd1:a:dsp]T1u(b), O , same as above
         'Z5_m_O2':
         perovskite_mode.Z5p_4,  # [Nd1:a:dsp]T1u(b), O , same as above
 

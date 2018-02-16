@@ -100,7 +100,7 @@ class anatb():
         # raise NotImplementedError('COHP density has not been implemented yet.')
         pass
 
-    def plot_COHP_fatband(self,kpts=None,k_x=None,iblock=None,jblock=None,show=True,**kwargs):
+    def plot_COHP_fatband(self,kpts=None,k_x=None,iblock=None,jblock=None,show=False,efermi=None, axis=None,**kwargs):
         self.calc_cohp_allk(kpts=kpts)
         if iblock is None:
             wks = self.get_cohp_all_pair()
@@ -113,16 +113,17 @@ class anatb():
             kslist,
             ekslist,
             wkslist=wks,
-            efermi=5.2773,
+            efermi=efermi,
             yrange=None,
-            output=None,
             style='color',
             color='blue',
-            axis=None,
             width=10,
+            axis=axis,
             **kwargs)
+        axis.set_ylabel('Energy (eV)')
         if show:
             plt.show()
+        return axis
 
 
 class wann_ham():
