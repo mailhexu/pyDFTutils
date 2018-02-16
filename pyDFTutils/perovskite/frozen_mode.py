@@ -391,23 +391,23 @@ def gen_P21c_perovskite(
         modes=dict(
         R2_m_O1=0.0,  # R2-[O1:c:dsp]A2u(a), O, breathing
         R3_m_O1=0.0,  # R3-[O1:c:dsp]A2u(a), O JT inplane-stagger, out-of-plane antiphase
-        R3_m_O2=0.0,  # R3-[O1:c:dsp]A2u(b), O, out-of-plane-stagger, inplane antiphase
-        R4_m_A1=0.0,  # R4-[Nd1:a:dsp]T1u(a), A
-        R4_m_A2=0.0,  # R4-[Nd1:a:dsp]T1u(b), A
-        R4_m_A3=0.0,  # R4-[Nd1:a:dsp]T1u(c), A
-        R4_m_O1=0.0,  # R4-[O1:c:dsp]Eu(a), O
-        R4_m_O2=0.0,  # R4-[O1:c:dsp]Eu(b), O
-        R4_m_O3=0.0,  # R4-[O1:c:dsp]Eu(c), O
-        R5_m_O1=0.0,  # R5-[O1:c:dsp]Eu(a), O
-        R5_m_O2=0.0,  # R5-[O1:c:dsp]Eu(b), O
-        R5_m_O3=0.0,  # R5-[O1:c:dsp]Eu(c), O
+            R3_m_O2=0.0,  # R3-[O1:c:dsp]A2u(b), O, out-of-plane-stagger, inplane antiphase, Unusual.
+            R4_m_A1=0.0,  # R4-[Nd1:a:dsp]T1u(a), A , Unusual
+            R4_m_A2=0.0,  # R4-[Nd1:a:dsp]T1u(b), A, Unusual
+            R4_m_A3=0.0,  # R4-[Nd1:a:dsp]T1u(c), A, Unusual
+            R4_m_O1=0.0,  # R4-[O1:c:dsp]Eu(a), O, Unusual
+            R4_m_O2=0.0,  # R4-[O1:c:dsp]Eu(b), O, Unusual
+            R4_m_O3=0.0,  # R4-[O1:c:dsp]Eu(c), O, Unusual
+        R5_m_O1=0.0,  # R5-[O1:c:dsp]Eu(a), O  a-
+        R5_m_O2=0.0,  # R5-[O1:c:dsp]Eu(b), O  b-
+        R5_m_O3=0.0,  # R5-[O1:c:dsp]Eu(c), O  c-
         X3_m_A1=0.0,  # X3-[Nd1:a:dsp]T1u(a), What's this..
         X3_m_O1=0.0,  # X3-[O1:c:dsp]A2u(a)
         X5_m_A1=0.0,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
         X5_m_A2=0.0,  # [Nd1:a:dsp]T1u(b), A , save as above
         X5_m_O1=0.0,  # [Nd1:a:dsp]T1u(a), O , Antiferro mode
         X5_m_O2=0.0,  # [Nd1:a:dsp]T1u(b), O , same as above
-        M2_p_O1=0.0,  # M2+[O1:c:dsp]Eu(a), O, In phase rotation
+        M2_p_O1=0.0,  # M2+[O1:c:dsp]Eu(a), O, In phase rotation c+
         M3_p_O1=0.0,  # M3+[O1:c:dsp]A2u(a), O, D-type JT inplane stagger
         M5_p_O1=0.0,  # M5+[O1:c:dsp]Eu(a), O, Out of phase tilting
         M5_p_O2=0.0,  # M5+[O1:c:dsp]Eu(a), O, Out of phase tilting
@@ -568,32 +568,31 @@ def isotropy_normfactor(scell, sc_mat, disps):
     norm_factor = 1.0 / np.sqrt(sum)
     return norm_factor
 
-
 def test():
-    #atoms=gen_pnma('LaMnO3',out_of_phase_rotation=1.5)
-    #atoms=gen_pnma('LaMnO3',JT_d=0.2)
-    #atoms=gen_pnma('LaMnO3',in_phase_tilting=0.6)
-    atoms=gen_distorted_perovskite('LaMnO3',
-                                   out_of_phase_rotation=1.0,
-                                   in_phase_rotation=0.9,
-                                   in_phase_tilting=0.8,
-                                   breathing=0.7,
-                                   JT_d=0.6,
-                                   JT_a=0.5)
-    atoms = gen_primitive('LaMnO3', latticeconstant=3.9)
-    write('cubic.cif', atoms)
-    atoms = gen_distorted_perovskite(
-        'LaMnO3',
-        out_of_phase_rotation=0.0,
-        JT_d=0.1,
-        in_phase_tilting=1.0,
-        breathing=0.0)
+    atoms=gen_P21c_perovskite(name='HoNiO3', cell=[3.7,3.7,3.7],
+    modes=dict(
+        R2_m_O1=1.0, #breathing
+        #R3_m_O1=1.0,
+        #R3_m_O2=1.0,  # R3-[O1:c:dsp]A2u(b), O, out-of-plane-stagger, inplane antiphase
+        
+        #R5_m_O1=1.0,  # R5-[O1:c:dsp]Eu(a), O a-
+        #R5_m_O2=1.0,  # R5-[O1:c:dsp]Eu(a), O b-
+        #R5_m_O3=1.0,  # R5-[O1:c:dsp]Eu(c), O  c-
+        #X5_m_A1=1.0,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
+
+        #M2_p_O1=1.0,  # M2+[O1:c:dsp]Eu(a), O, In phase rotation c+
+
+        #M3_p_O1=1.0,  # M3+[O1:c:dsp]A2u(a), O, D-type JT inplane stagger
+
+        #M5_p_O1=1.0,  # M5+[O1:c:dsp]Eu(a), O, Out of phase tilting
+
+        #M4_p_O1=1.0 , # M4+[O1:c:dsp]A2u(a), O, in-plane-breathing (not in P21/c)
+    )
+    )
     vesta_view(atoms)
-    write('JT_d_0.1_inphasetilt_1.0.cif', atoms)
 
 
 
-#if __name__ == '__main__':
-#    test()
+if __name__ == '__main__':
+    test()
 
-#test()

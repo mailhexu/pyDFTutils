@@ -79,7 +79,6 @@ class phonon_unfolder:
 
         self._trans_rs = rs
         self._trans_indices = indices
-        print indices
 
     def get_weight(self, evec, qpt, G=np.array([0,0,0]) ):
         """
