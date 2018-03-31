@@ -56,7 +56,7 @@ def find_pp(symbol, xc, family, label='',pp_path=pp_path):
     find pseudo potential.
     """
     if family.lower() == 'jth':
-        xcdict = {'LDA': 'LDA_PW', 'PBE': 'GGA_PBE'}
+        xcdict = {'LDA': 'LDA_PW', 'PBE': 'GGA_PBE', 'PBEsol':'GGA-PBESOL'}
         name = os.path.join('JTH-%s*' % xc,
                             '%s.%s-JTH%s.xml' % (symbol, xcdict[xc], label))
     elif family.lower() == 'gbrv':
