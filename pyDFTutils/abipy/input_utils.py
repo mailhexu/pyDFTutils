@@ -9,6 +9,7 @@ from collections import OrderedDict
 import collections
 import abipy.abilab as abilab
 from abipy.abilab import Structure
+from abipy.flowtk.abiobjects import LdauParams
 
 
 def set_Hubbard_U(abi_inp, ldau_dict={}, ldau_type=1, unit='eV'):
@@ -17,7 +18,7 @@ def set_Hubbard_U(abi_inp, ldau_dict={}, ldau_type=1, unit='eV'):
     """
     structure = abi_inp.structure
     symbols = structure.symbol_set
-    luj_params = abilab.LdauParams(ldau_type, structure)
+    luj_params = LdauParams(ldau_type, structure)
     for symbol in ldau_dict:
         if symbol in symbols:
             luj_params.luj_for_symbol(
