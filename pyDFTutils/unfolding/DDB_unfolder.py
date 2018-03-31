@@ -32,7 +32,6 @@ def kpath():
     #struct = DDB.structure
     #atoms = DDB.structure.to_ase_atoms()
     atoms = bulk('Cu','fcc')
-    print atoms.cell
     points = get_special_points('fcc', atoms.cell, eps=0.01)
     GXW = [points[k] for k in 'GXWGL']
     kpts, x, X = bandpath(GXW, atoms.cell, 700)
@@ -61,7 +60,7 @@ def displacement_cart_to_evec(displ_cart, masses, scaled_positions, qpoint=None,
 
 
 
-def DDB_unfolder(DDB_fname, kpath_bounds,sc_mat ):
+def DDB_unfolder(DDB_fname, kpath_bounds,sc_mat):
     DDB = abilab.abiopen(DDB_fname)
     struct = DDB.structure
     atoms = DDB.structure.to_ase_atoms()
@@ -90,7 +89,6 @@ def DDB_unfolder(DDB_fname, kpath_bounds,sc_mat ):
         )
     #phbst.plot_phbands()
     qpoints = phbst.qpoints.frac_coords
-    print qpoints
     nqpts = len(qpoints)
     nbranch = 3 * len(numbers)
     evals = np.zeros([nqpts, nbranch])
@@ -113,7 +111,6 @@ def DDB_unfolder(DDB_fname, kpath_bounds,sc_mat ):
             
     uf = phonon_unfolder(atoms,sc_mat,evecs,qpoints,phase=False)
     weights = uf.get_weights()
-    print weights.min(), weights.max()
     x=np.arange(nqpts)
     freqs=evals
     names = ['$\Gamma$', 'X', 'W', '$\Gamma$', 'L']
@@ -122,6 +119,60 @@ def DDB_unfolder(DDB_fname, kpath_bounds,sc_mat ):
 
     plt.show()
 
+def nc_unfolder(fname, sc_mat, kx=None, knames=None ,ghost_atoms=None):
+    ncfile=abilab.abiopen(fname)
+    struct = ncfile.structure
+    atoms = ncfile.structure.to_ase_atoms()
+    scaled_positions = struct.frac_coords
+
+    cell = struct.lattice_vectors()
+    numbers = struct.atomic_numbers
+    masses = [atomic_masses[i] for i in numbers]
+
+    #print numbers
+    #print cell
+    #print scaled_positions
+
+
+
+    #print kpath_bounds
+
+    phbst = ncfile.phbands
+    #phbst.plot_phbands()
+    qpoints = phbst.qpoints.frac_coords
+    nqpts = len(qpoints)
+    nbranch = 3 * len(numbers)
+    evals = np.zeros([nqpts, nbranch])
+    evecs = np.zeros([nqpts, nbranch, nbranch], dtype='complex128')
+
+    m = np.sqrt(np.kron(masses,[1,1,1]))
+    #positions=np.kron(scaled_positions,[1,1,1])
+    freqs=phbst.phfreqs
+    displ_carts=phbst.phdispl_cart
+    
+    for iqpt, qpt in enumerate(qpoints):
+        print(iqpt, qpt)
+        for ibranch in range(nbranch):
+            #phmode = ncfile.get_phmode(qpt, ibranch)
+            #print(2)
+            evals[iqpt, ibranch] = freqs[iqpt, ibranch]
+            #evec=phmode.displ_cart *m
+            #phase = [np.exp(-2j*np.pi*np.dot(pos,qpt)) for pos in scaled_positions]
+            #phase = np.kron(phase,[1,1,1])
+            #evec*=phase
+            #evec /= np.linalg.norm(evec)
+            evec=displacement_cart_to_evec(displ_carts[iqpt, ibranch,: ], masses, scaled_positions, qpoint=qpt, add_phase=True)
+            evecs[iqpt,:,ibranch] = evec
+            
+    uf = phonon_unfolder(atoms,sc_mat,evecs,qpoints,phase=False, ghost_atoms=ghost_atoms)
+    weights = uf.get_weights()
+    x=np.arange(nqpts)
+    freqs=evals
+    #names = ['$\Gamma$', 'X', 'W', '$\Gamma$', 'L']
+    #ax=plot_band_weight([list(x)]*freqs.shape[1],freqs.T*33.356,weights[:,:].T*0.98+0.01,xticks=[names,X],axis=ax)
+    ax=plot_band_weight([list(x)]*freqs.shape[1],freqs.T*8065.6,weights[:,:].T*0.98+0.01,xticks=[knames, kx],style='alpha')
+    #plt.show()
+    return ax
 
 def main():
     #sc_mat = np.linalg.inv((np.array([[0, 1, 1], [1, 0, 1], [1, 1, 0]]) / 2.0))

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import numpy as np
 from glob import glob
 import json
 from ase.data import chemical_symbols
@@ -105,6 +106,24 @@ def to_abi_structure(obj,magmoms=False):
     elif isinstance(obj, Structure):
         structure = obj
     elif isinstance(obj, Atoms):
+        #cell=obj.get_cell()
+        #acell0=np.linalg.norm(cell[0])
+        #acell1=np.linalg.norm(cell[1])
+        #acell2=np.linalg.norm(cell[2])
+        #cell0=cell[0]/acell0
+        #cell1=cell[1]/acell1
+        #cell2=cell[2]/acell2
+        #acell=[acell0, acell1, acell2]
+        #rprim=[cell0, cell1, cell2]
+        #xred=obj.get_scaled_positions()
+        #znucl=list(set(obj.get_atomic_numbers()))
+        #ntypat=len(znucl)
+        #typat=[]
+        #for z in obj.get_atomic_numbers():
+        #    for i,n in enumerate(znucl):
+        #        if z==n:
+        #            typat.append(i)
+        #structure = Structure.from_abivars(acell=acell, rprim=rprim, typat=typat, xred=xred, ntypat=ntypat, znucl=znucl)
         structure = Structure.from_ase_atoms(obj)
         if magmoms:
             ms=obj.get_initial_magnetic_moments()

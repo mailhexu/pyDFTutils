@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#/usr/bin/env python
 from __future__ import print_function
 import string
 import os
@@ -30,7 +30,11 @@ def nic4script(command='abinit', **kwargs):
 
 def zenobescript(
         command='abinit',
+        infile='abinit.files',
+        outfile='abinit.txt',
+        workdir='./',
         #queue_type='pbspro',
+        jobname='unamed',
         queue='large',
         group='spinphon',
         time="23:00:00",
@@ -48,6 +52,7 @@ def zenobescript(
     else:
         mpirun = 'mpirun'
     defaults = dict(
+        jobname=jobname,
         queue=queue,
         time=time,
         ngroup=ngroup,
@@ -58,22 +63,36 @@ def zenobescript(
         ompthreads=ompthreads,
         mpirun=mpirun)
     if command == 'abinit':
+        infile=os.path.abspath(os.path.join(workdir, 'abinit.files'))
+        outfile=os.path.abspath(os.path.join(workdir, 'abinit.log'))
         defaults[
-            'command'] = r'/home/acad/ulg-phythema/hexu/.local/abinit/abinit_git/bin/abinit <abinit.files >abinit.log'
+            'command'] = r'/home/acad/ulg-phythema/hexu/.local/abinit/abinit_8.6.1/bin/abinit' # + infile + ' >' + outfile
+        defaults[
+            'fullcommand'] = r'mpirun /home/acad/ulg-phythema/hexu/.local/abinit/abinit_8.6.1/bin/abinit <%s >%s'%(infile, outfile) 
+
+        defaults['infile']=infile
+        defaults['outfile']=outfile
     elif command == 'vasp':
         defaults[
-            'command'] = r'/home/acad/ulg-phythema/hexu/.local/bin/vasp_hexu544'
+            'command'] = r'/home/acad/ulg-phythema/hexu/.local/bin/vasp_fire >log'
+        defaults[
+                'fullcommand'] = r'mpirun /home/acad/ulg-phythema/hexu/.local/bin/vasp_fire>log'
+        defaults['infile']=''
+        defaults['outfile']=''
     else:
         defaults['command'] = command
+        defaults['fullcommand'] = command
     with open(os.path.expanduser('~/.ase/zenobe.tmpl')) as myfile:
         tmpl = string.Template(myfile.read())
         text = tmpl.substitute(defaults)
     return text
 
 
-class commander():
-    def __init__(self, job_fname='job.sh', **kwargs):
-        self.job_fname = job_fname
+class commander(object):
+    def __init__(self, job_fname='job.sh', workdir='./', jobname='unamed', **kwargs):
+        self.workdir = workdir
+        self.jobname=jobname
+        self.job_fname = os.path.join(workdir, job_fname)
         self.queue_type = None
         self.set_parameter(**kwargs)
 
@@ -95,7 +114,7 @@ class commander():
         if queue_type == 'slurm':
             self.jobfile_text = nic4script(command, **kwargs)
         elif queue_type == 'pbspro':
-            self.jobfile_text = zenobescript(command, **kwargs)
+            self.jobfile_text = zenobescript(command, jobname=self.jobname, workdir=self.workdir, **kwargs)
         self.max_time = max_time
         self.wait = wait
 
@@ -130,6 +149,8 @@ class commander():
 
 def zenobe_abinit_large(queue_type='pbspro',
                         command='abinit',
+                        workdir='./',
+                        jobname='unamed',
                         queue='large',
                         group='spinphon',
                         time="23:00:00",
@@ -140,6 +161,8 @@ def zenobe_abinit_large(queue_type='pbspro',
     mycommander = commander(
         queue_type=queue_type,
         command=command,
+        jobname=jobname,
+        workdir=workdir,
         queue=queue,
         group=group,
         time=time,
@@ -152,16 +175,20 @@ def zenobe_abinit_large(queue_type='pbspro',
 
 def zenobe_abinit_main(queue_type='pbspro',
                        command='abinit',
+                       jobname='unamed',
+                       workdir='./',
                        queue='main',
                        group='spinphon',
-                       time="10:00:00",
+                       time="23:00:00",
                        ngroup=12,
                        mpiprocs=1,
                        ompthreads=1,
-                       mem_per_cpu=1800):
+                       mem_per_cpu=1900):
     mycommander = commander(
         queue_type=queue_type,
         command=command,
+        jobname=jobname,
+        workdir=workdir,
         queue=queue,
         group=group,
         time=time,
@@ -174,6 +201,7 @@ def zenobe_abinit_main(queue_type='pbspro',
 
 def zenobe_vasp_large(queue_type='pbspro',
                       command='vasp',
+                      jobname='unamed',
                       queue='large',
                       group='spinphon',
                       time="23:00:00",
@@ -185,6 +213,7 @@ def zenobe_vasp_large(queue_type='pbspro',
     mycommander = commander(
         queue_type=queue_type,
         command=command,
+        jobname=jobname,
         queue=queue,
         group=group,
         time=time,
@@ -198,7 +227,8 @@ def zenobe_vasp_large(queue_type='pbspro',
 
 def zenobe_vasp_main(queue_type='pbspro',
                      command='vasp',
-                     queue='large',
+                     jobname='unamed',
+                     queue='main',
                      group='spinphon',
                      time="23:00:00",
                      ngroup=1,
@@ -209,6 +239,7 @@ def zenobe_vasp_main(queue_type='pbspro',
     mycommander = commander(
         queue_type=queue_type,
         command=command,
+        jobname=jobname,
         queue=queue,
         group=group,
         time=time,
