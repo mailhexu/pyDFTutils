@@ -576,17 +576,19 @@ def isotropy_normfactor(scell, sc_mat, disps):
 
 def test():
     atoms=gen_P21c_perovskite(name='HoNiO3', cell=[3.7,3.7,3.7],
+
+    supercell_matrix=[[2, 0, -2], [0, 2, 0], [2, 0, 2]],
     modes=dict(
-        R2_m_O1=1.0, #breathing
+        #R2_m_O1=0.1, #breathing
         #R3_m_O1=1.0,
         #R3_m_O2=1.0,  # R3-[O1:c:dsp]A2u(b), O, out-of-plane-stagger, inplane antiphase
         
-        #R5_m_O1=1.0,  # R5-[O1:c:dsp]Eu(a), O a-
-        #R5_m_O2=1.0,  # R5-[O1:c:dsp]Eu(a), O b-
+        R5_m_O1=2.0,  # R5-[O1:c:dsp]Eu(a), O a-
+        R5_m_O2=2.0,  # R5-[O1:c:dsp]Eu(a), O b-
         #R5_m_O3=1.0,  # R5-[O1:c:dsp]Eu(c), O  c-
         #X5_m_A1=1.0,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
 
-        #M2_p_O1=1.0,  # M2+[O1:c:dsp]Eu(a), O, In phase rotation c+
+        M2_p_O1=2.0,  # M2+[O1:c:dsp]Eu(a), O, In phase rotation c+
 
         #M3_p_O1=1.0,  # M3+[O1:c:dsp]A2u(a), O, D-type JT inplane stagger
 
