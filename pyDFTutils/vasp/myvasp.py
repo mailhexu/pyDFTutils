@@ -561,7 +561,7 @@ class myvasp(Vasp):
                    output_filename=None,
                    show=False,
                    spin=0,
-                   yrange=[-3, 2],
+                   yrange=[-8, 5],
                    efermi=None):
         """
         plot the bands.

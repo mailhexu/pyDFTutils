@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from .lattice_factory import PerovskiteCubic
+from pyDFTutils.perovskite.lattice_factory import PerovskiteCubic
 from pyDFTutils.ase_utils import my_write_vasp,normalize, vesta_view, set_element_mag
 from ase.io.vasp import read_vasp
 from ase.atoms import string2symbols
@@ -73,5 +73,5 @@ def gen_primitive(name=None,A=None,B=None,O=None, latticeconstant=3.9, mag_order
 
 
 if __name__ == '__main__':
-    atoms = gen_primitive(name='LaMnO3',mag_order='C')
+    atoms = gen_primitive(name='LaMnO3',mag_order='G')
     vesta_view(atoms)

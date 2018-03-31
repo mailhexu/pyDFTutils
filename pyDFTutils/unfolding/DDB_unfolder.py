@@ -6,6 +6,7 @@ from ase.dft.kpoints import get_special_points, bandpath
 from pyDFTutils.unfolding.phonon_unfolder import phonon_unfolder
 from pyDFTutils.phonon.plotphon import plot_band_weight
 import matplotlib.pyplot as plt
+import sys
 
 atomic_masses = np.array([
     1., 1.008, 4.002602, 6.94, 9.0121831, 10.81, 12.011, 14.007, 15.999,
@@ -60,7 +61,7 @@ def displacement_cart_to_evec(displ_cart, masses, scaled_positions, qpoint=None,
 
 
 
-def DDB_unfolder(DDB_fname, kpath_bounds,sc_mat):
+def DDB_unfolder(DDB_fname, kpath_bounds,sc_mat, kx=None, knames=None ):
     DDB = abilab.abiopen(DDB_fname)
     struct = DDB.structure
     atoms = DDB.structure.to_ase_atoms()
@@ -115,11 +116,13 @@ def DDB_unfolder(DDB_fname, kpath_bounds,sc_mat):
     freqs=evals
     names = ['$\Gamma$', 'X', 'W', '$\Gamma$', 'L']
     #ax=plot_band_weight([list(x)]*freqs.shape[1],freqs.T*33.356,weights[:,:].T*0.98+0.01,xticks=[names,X],axis=ax)
-    ax=plot_band_weight([list(x)]*freqs.shape[1],freqs.T*27*33.356,weights[:,:].T*0.98+0.01,xticks=[names,[1,2,3,4,5]],style='alpha')
+    ax=plot_band_weight([list(x)]*freqs.shape[1],freqs.T*8065.6,weights[:,:].T*0.98+0.01,xticks=[names,[1,2,3,4,5]],style='alpha')
+    #ax=plot_band_weight([list(x)]*freqs.shape[1],freqs.T*8065.6,weights[:,:].T*0.98+0.000001,xticks=[knames, kx],style='alpha' )
 
-    plt.show()
+    #plt.show()
+    return ax
 
-def nc_unfolder(fname, sc_mat, kx=None, knames=None ,ghost_atoms=None):
+def nc_unfolder(fname, sc_mat, kx=None, knames=None ,ghost_atoms=None, plot_width=False, weight_multiplied_by=None):
     ncfile=abilab.abiopen(fname)
     struct = ncfile.structure
     atoms = ncfile.structure.to_ase_atoms()
@@ -166,11 +169,15 @@ def nc_unfolder(fname, sc_mat, kx=None, knames=None ,ghost_atoms=None):
             
     uf = phonon_unfolder(atoms,sc_mat,evecs,qpoints,phase=False, ghost_atoms=ghost_atoms)
     weights = uf.get_weights()
+    if plot_width:
+        weights=(weights*(1.0-weights))**(0.5)
+    if weight_multiplied_by is not None:
+        weights=weights*weight_multiplied_by
     x=np.arange(nqpts)
     freqs=evals
     #names = ['$\Gamma$', 'X', 'W', '$\Gamma$', 'L']
     #ax=plot_band_weight([list(x)]*freqs.shape[1],freqs.T*33.356,weights[:,:].T*0.98+0.01,xticks=[names,X],axis=ax)
-    ax=plot_band_weight([list(x)]*freqs.shape[1],freqs.T*8065.6,weights[:,:].T*0.98+0.01,xticks=[knames, kx],style='alpha')
+    ax=plot_band_weight([list(x)]*freqs.shape[1],freqs.T*8065.6,weights[:,:].T*0.98+0.000001,xticks=[knames, kx],style='alpha' )
     #plt.show()
     return ax
 
@@ -183,4 +190,3 @@ def main():
     DDB_unfolder(DDB_fname='out_DDB', kpath_bounds = [np.dot(k, sc_mat) for k in points],sc_mat=sc_mat)
 
 
-#main()
