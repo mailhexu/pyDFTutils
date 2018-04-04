@@ -632,7 +632,7 @@ def set_substrate(atoms,
                   angle_ab=90.0,
                   all_angle_90=False,
                   m=1,
-                  fix_volume=True):
+                  fix_volume=False):
     """
     set atoms cellpars to fit the substrate cellpars.
     a,b , angle_ab are the  the inplane cellpars of the substrate
