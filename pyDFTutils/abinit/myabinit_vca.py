@@ -230,13 +230,14 @@ class Abinit(FileIOCalculator):
         if not os.path.exists(self.workdir):
             os.makedirs(self.workdir)
 
-    def set_VCA(self, vca):
+    def set_VCA(self, vca=None):
         """
         vca: dict {iatom: {'elem1':occupation1, 'elem2':occupation2}}
         """
-        self.use_vca = True
-        self.vca = vca
-        self.vca_text_dict= gen_vca_input(self.atoms, vca)
+        if vca is not None:
+            self.use_vca = True
+            self.vca = vca
+            self.vca_text_dict= gen_vca_input(self.atoms, vca)
 
     def check_state(self, atoms):
         system_changes = FileIOCalculator.check_state(self, atoms)
@@ -315,7 +316,7 @@ class Abinit(FileIOCalculator):
         pass
 
     def relax_calculation(self, atoms, pre_relax=False, **kwargs):
-        self.set(ionmov=22, ecutsm=0.5, dilatmx=1.1, optcell=2, ntime=100)
+        self.set(ionmov=22, ecutsm=0.5, dilatmx=1.1, optcell=2)
         if kwargs:
             self.set(**kwargs)
         self.calculate(atoms=atoms, properties=[])
@@ -795,10 +796,15 @@ class Abinit(FileIOCalculator):
 
         fh.write('#Definition of the unit cell\n')
         fh.write('acell\n')
-        fh.write('%.14f %.14f %.14f Angstrom\n' % (1.0, 1.0, 1.0))
+        a,b,c,_,_,_=atoms.get_cell_lengths_and_angles()
+        #fh.write('%.14f %.14f %.14f Angstrom\n' % (1.0, 1.0, 1.0))
+        fh.write('%.14f %.14f %.14f Angstrom\n' % (a, b, c))
         fh.write('rprim\n')
-        for v in atoms.cell:
-            fh.write('%.14f %.14f %.14f\n' % tuple(v))
+        #for v in atoms.cell:
+        cell=atoms.cell
+        fh.write('%.14f %.14f %.14f\n' % tuple(cell[0]/a))
+        fh.write('%.14f %.14f %.14f\n' % tuple(cell[1]/b))
+        fh.write('%.14f %.14f %.14f\n' % tuple(cell[2]/c))
 
         fh.write('chkprim 0 # Allow non-primitive cells\n')
 

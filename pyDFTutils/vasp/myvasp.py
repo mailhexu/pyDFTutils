@@ -202,7 +202,7 @@ class myvasp(Vasp):
                 except OSError:
                     pass
 
-    def myrelax_calculation(self, do_nospin=False, pre_relax=True):
+    def myrelax_calculation(self, do_nospin=False, pre_relax=True, pre_relax_method='dampedmd'):
         """
         a optimized stratigey to do the relax.
         do_nospin: if do_nospin is True, a non-spin-polarized relaxation is done first.
