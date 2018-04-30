@@ -34,7 +34,7 @@ bool_keys = (
     "wannier_plot",
     "bands_plot",
     "fermi_surface_plot",
-    "hr_plot", )
+    "write_hr", )
 
 string_keys = (
     "spin",
