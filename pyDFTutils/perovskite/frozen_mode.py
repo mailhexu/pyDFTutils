@@ -590,13 +590,14 @@ def test():
 
         M2_p_O1=2.0,  # M2+[O1:c:dsp]Eu(a), O, In phase rotation c+
 
-        #M3_p_O1=1.0,  # M3+[O1:c:dsp]A2u(a), O, D-type JT inplane stagger
+        M3_p_O1=0.1,  # M3+[O1:c:dsp]A2u(a), O, D-type JT inplane stagger
 
         #M5_p_O1=1.0,  # M5+[O1:c:dsp]Eu(a), O, Out of phase tilting
 
         #M4_p_O1=1.0 , # M4+[O1:c:dsp]A2u(a), O, in-plane-breathing (not in P21/c)
     )
     )
+    write('Pnma_JT.vasp', atoms, vasp5=True)
     vesta_view(atoms)
 
 
