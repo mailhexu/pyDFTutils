@@ -292,12 +292,17 @@ def label_Gamma(phdisp=None, masses=None, evec=None):
     return mode
 
 
-def mass_to_Gamma_basis(masses, eigen_type='eigen_vector'):
+def mass_to_Gamma_basis(masses=None, symbols=None, eigen_type='eigen_vector'):
     """
     return the slater-last-axe basis.
     type: eigenvector |eigendisplacement
     Notice that the sequence of the atoms are A, B, O_inplane, O_inplane, O_out_of_plane.
     """
+
+    if masses is None and symbols is None:
+        raise ValueError("Either masses or symbols of A, B, C should be given")
+    if symbols is not None:
+        masses = [atomic_masses[atomic_numbers[elem]] for elem in symbols]
     masses = np.sqrt(masses)
     A, B, O = masses[0], masses[1], masses[2]
 
@@ -344,8 +349,13 @@ def mass_to_Gamma_basis(masses, eigen_type='eigen_vector'):
     }
 
 
-def mass_to_Gamma_basis_3d(masses, eigen_type='eigen_vector'):
-    evecs = mass_to_Gamma_basis(masses, eigen_type=eigen_type)
+def mass_to_Gamma_basis_3d(masses=None, symbols=None, eigen_type='eigen_vector'):
+    """
+    in 3 directions.
+    """
+    if masses is None and symbols is None:
+        raise ValueError("Either masses or symbols of A, B, C should be given")
+    evecs = mass_to_Gamma_basis(masses=masses, symbols=symbols, eigen_type=eigen_type)
     M = nmode._make([0.0] * 15)
 
     a = evecs['acoustic']
@@ -424,6 +434,9 @@ def mass_to_Gamma_basis_3d(masses, eigen_type='eigen_vector'):
     }
     return mode_dict
 
+def Gamma_modes(elems):
+    mdict=mass_to_Gamma_basis_3d(masses=None, symbols=elems, eigen_type='eigen_vector')
+    return dict(zip(['G_'+x for x in mdict.values()], mdict.keys()))
 
 def elem_to_Gamma_basis(elems, eigen_type='eigen_displacement'):
     """

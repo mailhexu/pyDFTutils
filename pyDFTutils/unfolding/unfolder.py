@@ -17,7 +17,7 @@ class Unfolder():
         basis: name of the basis. It's used to decide if two basis can be identical by translation. eg. for phonons, the basis can be ['x','y','z']*natoms, for electrons, it can be ['Ni|dxy','Mn|dxy'] if the two dxy are seen as different, or ['dxy','dxy'] if they are seen as the same.
         positions: positions(->basis).
         supercell matrix: The matrix that convert the primitive cell to supercell.
-        eigenvectors: The phonon eigenvectors. format np.array() index=[ikpts, ifreq, 3*iatoms+j]. j=0..2
+        eigenvectors: The phonon eigenvectors. format np.array() index=[ikpts, ifreq, 3*iatoms+j]. j=0..2 
         qpoints: list of q-points.
         tol_r: tolerance. If abs(a-b) <r, they are seen as the same atom.
         #ndim: number of dimensions. For 3D phonons, use ndim=3. For electrons(no spin), ndim=1. For spinors, use ndim=2 (TODO: spinor not tested. is it correct?).
@@ -92,7 +92,6 @@ class Unfolder():
         N = len(self._trans_rs)
         for r_i, ind in zip(self._trans_rs, self._trans_indices):
             weight += np.vdot(evec, evec[ind])/N *np.exp(1j*2*np.pi*np.dot(G, r_i))
-        print('w: ', weight)
         return weight.real
 
 

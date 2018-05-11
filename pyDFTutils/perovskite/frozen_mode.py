@@ -7,6 +7,7 @@ from ase.io import write
 import numpy as np
 import copy
 import pyDFTutils.perovskite.perovskite_mode as perovskite_mode
+from pyDFTutils.perovskite.perovskite_mode import Gamma_modes
 
 import spglib.spglib
 #from phonopy.structure.atoms import PhonopyAtoms as Atoms
@@ -391,13 +392,13 @@ def gen_P21c_perovskite(
         modes=dict(
         R2_m_O1=0.0,  # R2-[O1:c:dsp]A2u(a), O, breathing
         R3_m_O1=0.0,  # R3-[O1:c:dsp]A2u(a), O JT inplane-stagger, out-of-plane antiphase
-            R3_m_O2=0.0,  # R3-[O1:c:dsp]A2u(b), O, out-of-plane-stagger, inplane antiphase, Unusual.
-            R4_m_A1=0.0,  # R4-[Nd1:a:dsp]T1u(a), A , Unusual
-            R4_m_A2=0.0,  # R4-[Nd1:a:dsp]T1u(b), A, Unusual
-            R4_m_A3=0.0,  # R4-[Nd1:a:dsp]T1u(c), A, Unusual
-            R4_m_O1=0.0,  # R4-[O1:c:dsp]Eu(a), O, Unusual
-            R4_m_O2=0.0,  # R4-[O1:c:dsp]Eu(b), O, Unusual
-            R4_m_O3=0.0,  # R4-[O1:c:dsp]Eu(c), O, Unusual
+        R3_m_O2=0.0,  # R3-[O1:c:dsp]A2u(b), O, out-of-plane-stagger, inplane antiphase, Unusual.
+        R4_m_A1=0.0,  # R4-[Nd1:a:dsp]T1u(a), A , Unusual
+        R4_m_A2=0.0,  # R4-[Nd1:a:dsp]T1u(b), A, Unusual
+        R4_m_A3=0.0,  # R4-[Nd1:a:dsp]T1u(c), A, Unusual
+        R4_m_O1=0.0,  # R4-[O1:c:dsp]Eu(a), O, Unusual
+        R4_m_O2=0.0,  # R4-[O1:c:dsp]Eu(b), O, Unusual
+        R4_m_O3=0.0,  # R4-[O1:c:dsp]Eu(c), O, Unusual
         R5_m_O1=0.0,  # R5-[O1:c:dsp]Eu(a), O  a-
         R5_m_O2=0.0,  # R5-[O1:c:dsp]Eu(b), O  b-
         R5_m_O3=0.0,  # R5-[O1:c:dsp]Eu(c), O  c-
@@ -420,6 +421,22 @@ def gen_P21c_perovskite(
         M5_p_O1=0.0,  # M5+[O1:c:dsp]Eu(a), O, Out of phase tilting
         M5_p_O2=0.0,  # M5+[O1:c:dsp]Eu(a), O, Out of phase tilting
         M4_p_O1=0.0 , # M4+[O1:c:dsp]A2u(a), O, in-plane-breathing (not in P21/c)
+
+        G_Ax=0.0,
+        G_Ay=0.0,
+        G_Az=0.0,
+        G_Sx=0.0,
+        G_Sy=0.0,
+        G_Sz=0.0,
+        G_Axex=0.0,
+        G_Axey=0.0,
+        G_Axez=0.0,
+        G_Lx=0.0,
+        G_Ly=0.0,
+        G_Lz=0.0,
+        G_G4x=0.0,
+        G_G4y=0.0,
+        G_G4z=0.0,
             )
 ):
     atoms = gen_primitive(name=name, mag_order='PM', latticeconstant=cell[0])
@@ -447,7 +464,7 @@ def gen_P21c_perovskite(
         #'X3_m_O1':perovskite_mode., # X3-[O1:c:dsp]A2u(a)
         'Z5_m_A1':
         perovskite_mode.Z5p_1,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
-       'Z5_m_A2':
+        'Z5_m_A2':
         perovskite_mode.Z5p_2,  # [Nd1:a:dsp]T1u(b), A , save as above
         'Z5_m_O1':
         perovskite_mode.Z5p_3,  # [Nd1:a:dsp]T1u(b), O , same as above
@@ -461,6 +478,12 @@ def gen_P21c_perovskite(
         'M5_p_O2':perovskite_mode.M5_2,  # M5+[O1:c:dsp]Eu(b), O, Out of phase tilting, -above
         'M4_p_O1': perovskite_mode.M4,  # M4+[O1:c:dsp]A2u(a), O, in-plane-breathing (not in P21/c)
     }
+
+    # add Gamma modes to mode_dict
+    Gamma_mode_dict=Gamma_modes(atoms.get_chemical_symbols())
+    mode_dict.update(Gamma_mode_dict)
+
+
     mode_disps={}
     qdict={'G':[0,0,0],
            #'X':[0,0.0,0.5],
@@ -577,27 +600,42 @@ def isotropy_normfactor(scell, sc_mat, disps):
 def test():
     atoms=gen_P21c_perovskite(name='HoNiO3', cell=[3.7,3.7,3.7],
 
-    supercell_matrix=[[2, 0, -2], [0, 2, 0], [2, 0, 2]],
+    supercell_matrix=[[1, 0, 0], [0, 1, 0], [0, 0, 1]],
     modes=dict(
         #R2_m_O1=0.1, #breathing
         #R3_m_O1=1.0,
         #R3_m_O2=1.0,  # R3-[O1:c:dsp]A2u(b), O, out-of-plane-stagger, inplane antiphase
         
-        R5_m_O1=2.0,  # R5-[O1:c:dsp]Eu(a), O a-
-        R5_m_O2=2.0,  # R5-[O1:c:dsp]Eu(a), O b-
+        #R5_m_O1=2.0,  # R5-[O1:c:dsp]Eu(a), O a-
+        #R5_m_O2=2.0,  # R5-[O1:c:dsp]Eu(a), O b-
         #R5_m_O3=1.0,  # R5-[O1:c:dsp]Eu(c), O  c-
         #X5_m_A1=1.0,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
 
-        M2_p_O1=2.0,  # M2+[O1:c:dsp]Eu(a), O, In phase rotation c+
+        #M2_p_O1=2.0,  # M2+[O1:c:dsp]Eu(a), O, In phase rotation c+
 
-        M3_p_O1=0.1,  # M3+[O1:c:dsp]A2u(a), O, D-type JT inplane stagger
+        #M3_p_O1=0.1,  # M3+[O1:c:dsp]A2u(a), O, D-type JT inplane stagger
 
         #M5_p_O1=1.0,  # M5+[O1:c:dsp]Eu(a), O, Out of phase tilting
 
         #M4_p_O1=1.0 , # M4+[O1:c:dsp]A2u(a), O, in-plane-breathing (not in P21/c)
+        G_Ax=0.0,
+        G_Ay=0.0,
+        G_Az=0.0,
+        G_Sx=0.0,
+        G_Sy=0.0,
+        G_Sz=0.0,
+        G_Axex=0.0,
+        G_Axey=0.0,
+        G_Axez=0.0,
+        G_Lx=0.0,
+        G_Ly=0.0,
+        G_Lz=0.0,
+        G_G4x=0.1,
+        G_G4y=0.1,
+        G_G4z=0.1,
     )
     )
-    write('Pnma_JT.vasp', atoms, vasp5=True)
+    write('P4mm.vasp', atoms, vasp5=True)
     vesta_view(atoms)
 
 
