@@ -17,6 +17,8 @@ def read_sort(sort_file='ase-sort.dat'):
     if not os.path.exists(sort_file):
         raise IOError("file %s not exisits"%sort_file)
     a=np.loadtxt(sort_file,dtype=int)
+    if len(a.shape)==1:
+        return np.array([1])
     return a[:,1]
 
 def get_unsorted(arr,sort_list=None,sort_file='./ase-sort.dat'):

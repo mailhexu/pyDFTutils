@@ -315,15 +315,29 @@ class Abinit(FileIOCalculator):
         self.set(iscf=-3)
         pass
 
-    def relax_calculation(self, atoms, pre_relax=False, **kwargs):
-        self.set(ionmov=22, ecutsm=0.5, dilatmx=1.1, optcell=2)
+    def relax_calculation(self, atoms, pre_relax=False, ionmov=22, optcell=2, restart=0, **kwargs):
+        self.set(ionmov=ionmov, ecutsm=0.5, dilatmx=1.1, optcell=optcell)
         if kwargs:
             self.set(**kwargs)
         self.calculate(atoms=atoms, properties=[])
+        # restart relaxation if not converged.
+        for i in range(restart):
+            ofile = join(self.workdir, 'abinit.txt')
+            if calculation_finished(ofile) and relaxation_finished(ofile):
+                break
+            else:
+                newatoms = read_output(fname=join(self.workdir,'abinit.txt'), afterend=False)
+                scaled_positions = newatoms.get_scaled_positions()
+                cell = newatoms.get_cell()
+                atoms.set_cell(cell)
+                atoms.set_scaled_positions(scaled_positions)
+                self.calculate(atoms=atoms, properties=[])
+
+        
         self.set(ntime=0, toldfe=0.0)
         newatoms = read_output(fname=join(self.workdir,'abinit.txt'), afterend=True)
         write_vasp('CONTCAR', newatoms, vasp5=True)
-        print(newatoms)
+        #print(newatoms)
         scaled_positions = newatoms.get_scaled_positions()
         cell = newatoms.get_cell()
         atoms.set_cell(cell)
@@ -879,6 +893,14 @@ class Abinit(FileIOCalculator):
                   system_changes=all_changes):
         if not os.path.exists(self.workdir):
             os.makedirs(self.workdir)
+        inp_file="%s.in"%self.prefix
+        if os.path.exists(inp_file):
+            i_file=0
+            bak_inp_file=join(inp_file+"_"+str(i_file))
+            while(os.path.exists(bak_inp_file)):
+                i_file=i_file+1
+                bak_inp_file=join(inp_file+"_"+str(i_file))
+            os.system('cp %s %s'%(inp_file, bak_inp_file))
         Calculator.calculate(self, atoms, properties, system_changes)
         self.write_input(self.atoms, properties, system_changes)
         if self.command is None and self.commander is None:
@@ -1520,7 +1542,7 @@ def read_nband(fname='abinit.txt'):
     return None
 
 
-def read_output(fname='abinit.txt', afterend=True):
+def read_output(fname='abinit.txt', afterend=True, original_atom=None):
     inside_outvar = False
     cell = []
     with open(fname) as myfile:
@@ -1578,7 +1600,10 @@ def read_output(fname='abinit.txt', afterend=True):
     if cell == []:
         cell = np.diag(acell)
     numbers = [znucl[i - 1] for i in typat]
-    atoms = Atoms(numbers=numbers, scaled_positions=poses, cell=cell, pbc=True)
+    if original_atom is None:
+        atoms = Atoms(numbers=numbers, scaled_positions=poses, cell=cell, pbc=True)
+    else:
+        atoms = Atoms(symbols=original_atom.get_chemical_symbols(), scaled_positions=poses, cell=cell, pbc=True)
     return atoms
 
 def default_abinit_calculator(ecut=35 * Ha,
@@ -1618,7 +1643,7 @@ def default_abinit_calculator(ecut=35 * Ha,
         kpts=[nk, nk, nk],  # warning - used to speedup the test
         gamma=False,
         #chksymbreak=0,
-        #pppaths=['/home/hexu/.local/pp/abinit/'],
+        pppaths=['/home/hexu/.local/pp/abinit/'],
         pps=pps,
         chksymbreak=0,
         pawecutdg=ecut * 1.8 * eV,
@@ -1788,6 +1813,23 @@ class DDB_reader():
                                                                   idir2 + 1,
                                                                   ipert2 + 1)]
         return dynmat
+
+
+#!/usr/bin/env python
+
+def calculation_finished(fname):
+    with open(fname) as myfile:
+        for line in myfile:
+            if line.strip().startswith('Calculation completed.'):
+                return True
+    return False
+
+def relaxation_finished(fname):
+    with open(fname) as myfile:
+        for line in myfile:
+            if line.strip().startswith('At Broyd'):# and line.strip().endswith('gradients are converged'):
+                return True
+    return False
 
 
 #myreader = DDB_reader("../test/BaTiO3_bak/abinito_DS2_DDB")
