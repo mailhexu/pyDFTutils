@@ -230,6 +230,29 @@ class Abinit(FileIOCalculator):
         if not os.path.exists(self.workdir):
             os.makedirs(self.workdir)
 
+    def get_nkpt_and_nband(self, abinit_command='abinit', atoms=None):
+        #infile=os.path.join(self.workdir, 'abinit.files')
+        outfile=os.path.join(self.workdir, 'abinit.txt')
+        #os.system('%s -d < %s > %s'%(abinit_command, infile, outfile))
+        self.calculate(atoms=atoms)
+        nkpt=None
+        nband=None
+        with open(outfile) as myfile:
+            for line in myfile:
+                if line.strip().startswith('nkpt  '):
+                    try:
+                        nkpt=int(line.strip().split()[1])
+                    except:
+                        pass
+                if line.strip().startswith('nband  '):
+                    try:
+                        nband=int(line.strip().split()[1])
+                    except:
+                        pass
+        if nkpt is None or nband is None:
+            raise("nkpt or nband is not found in abinit-d.tmp")
+        return nkpt, nband
+
     def set_VCA(self, vca=None):
         """
         vca: dict {iatom: {'elem1':occupation1, 'elem2':occupation2}}
