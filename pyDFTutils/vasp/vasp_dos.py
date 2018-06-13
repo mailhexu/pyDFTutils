@@ -631,7 +631,7 @@ def plot_group(xs,yss,labels,ymin=0,ymax=2,xmin=-15,xmax=5):
     plt.legend()
     plt.show()
 
-def plot_all_ldos(filename='DOSCAR',ispin=2,ymin=-2.0,ymax=2.0,xmin=-15.0,xmax=5.0,element_types=None):
+def plot_all_ldos(filename='DOSCAR',ispin=2,ymin=-2.0,ymax=2.0,xmin=-15.0,xmax=5.0,element_types=None, has_f=True):
     """
     plot the local dos of all atoms.
     """
@@ -643,9 +643,15 @@ def plot_all_ldos(filename='DOSCAR',ispin=2,ymin=-2.0,ymax=2.0,xmin=-15.0,xmax=5
         atom_nums=list(symdict.keys())
 
     if ispin==2:
-        sites=['s+','p+','d+','s-','p-','d-']
+        if has_f:
+            sites=['s+','p+','d+','s-','p-','d-', 'f+', 'f-']
+        else:
+            sites=['s+','p+','d+','s-','p-','d-']
     else:
-        sites=['s','p','d']
+        if has_f:
+            sites=['s','p','d','f']
+        else:
+            sites=['s','p','d']
 
     if not os.path.exists('LDOS'):
         os.mkdir('LDOS')

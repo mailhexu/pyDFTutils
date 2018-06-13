@@ -22,8 +22,8 @@ loop_
   _atom_site_thermal_displace_type
   _atom_site_B_iso_or_equiv
   _atom_site_type_symbol
-  La1      1.0000 0.00000  0.00000  0.00000  Biso   1.000  La
-  Mn1      1.0000 0.50000  0.50000  0.50000  Biso   1.000  Mn
+  Ho1      1.0000 0.00000  0.00000  0.00000  Biso   1.000 Ho 
+  Ni1      1.0000 0.50000  0.50000  0.50000  Biso   1.000 Ni 
   O1       1.0000 0.50000  0.50000  0.00000  Biso   1.000  O
   O2       1.0000 0.00000  0.50000  0.50000  Biso   1.000  O
   O3       1.0000 0.50000  0.00000  0.50000  Biso   1.000  O

@@ -9,13 +9,14 @@ def gen():
         name='NdNiO3',
         cell=[3.79, 3.79, 3.79],
         #supercell_matrix=[[1, -1, 0], [1, 1, -2], [1, 1, 1]],
+        #supercell_matrix=[[1, 1, 1.0], [-1, 1, 1.0], [0, -2, 1.0]],
         supercell_matrix=[[1, 1, 2.0], [-1, 1, 2.0], [0, -2, 2.0]],
-        out_of_phase_rotation=1.8,
-        in_phase_rotation=1.2,
+        out_of_phase_rotation=0.4,
+        in_phase_rotation=0.3,
         #in_phase_tilting=0.3,
         #JT_a=1.35,
         #JT_d=1.05,
-        breathing=0.5
+        #breathing=0.5
     )
     #atom=substitute_atoms(atoms,['Ni5','Ni10'],['Ga','Ga'])
     return atoms
