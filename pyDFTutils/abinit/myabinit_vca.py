@@ -6,6 +6,7 @@ import os
 from glob import glob
 from os.path import join, isfile, islink
 import shutil
+import copy
 
 from ase.atoms import Atoms
 import numpy as np
@@ -20,6 +21,7 @@ from ase.calculators.calculator import FileIOCalculator, Parameters, kpts2mp, \
 import subprocess
 from pyDFTutils.ase_utils.kpoints import get_ir_kpts, cubic_kpath
 from string import Template
+from pyDFTutils.abinit.abinit_io import get_efermi, GSR, get_kpoints
 
 keys_with_units = {
     'toldfe': 'eV',
@@ -158,6 +160,8 @@ class Abinit(FileIOCalculator):
     #command = 'mpirun -np 6 abinit < PREFIX.files |tee PREFIX.log'
     if 'ASE_ABINIT_SCRIPT' in os.environ:
         command = os.environ['ASE_ABINIT_SCRIPT']
+    elif 'ASE_ABINIT_COMMAND' in os.environ:
+        command = os.environ['ASE_ABINIT_COMMAND']
     else:
         print("Please set environment variable $ASE_ABINIT_SCRIPT")
         raise ValueError('env $ASE_ABINIT_SCRIPT not set.')
@@ -209,6 +213,8 @@ class Abinit(FileIOCalculator):
         self.commander = None
         self.use_vca=False
         self.workdir='./abinit'
+        self.workdir=os.path.abspath(self.workdir)
+        self.prefix=os.path.join(self.workdir, self.label)
 
     def set_command(self, command=None, commander=None):
         """
@@ -221,6 +227,7 @@ class Abinit(FileIOCalculator):
         """
         if command is not None:
             self.command = command
+            self.commander = None
         if commander is not None:
             self.command = None
             self.commander = commander
@@ -229,10 +236,11 @@ class Abinit(FileIOCalculator):
         self.workdir=os.path.abspath(workdir)
         if not os.path.exists(self.workdir):
             os.makedirs(self.workdir)
+        self.prefix=os.path.join(self.workdir, self.label)
 
     def get_nkpt_and_nband(self, abinit_command='abinit', atoms=None):
         #infile=os.path.join(self.workdir, 'abinit.files')
-        outfile=os.path.join(self.workdir, 'abinit.txt')
+        outfile=("%s.txt"%self.prefix)
         #os.system('%s -d < %s > %s'%(abinit_command, infile, outfile))
         self.calculate(atoms=atoms)
         nkpt=None
@@ -298,6 +306,14 @@ class Abinit(FileIOCalculator):
             kw[keyn] = kwargs[key]
         self.set(**kw)
 
+    def dry_run(self, atoms):
+        command=copy.copy(self.command)
+        commander=copy.copy(self.commander)
+        print("======Dry run ========")
+        self.set_command(command='abinit -d -i PREFIX.files > PREFIX.log', commander=None)
+        self.calculate(atoms=atoms)
+        self.set_command(command=command, commander=commander)
+
     def ldos_calculation(self, atoms, pdos=True):
         if os.path.exists('abinito_DEN'):
             if os.path.exists('abiniti_DEN'):
@@ -345,7 +361,8 @@ class Abinit(FileIOCalculator):
         self.calculate(atoms=atoms, properties=[])
         # restart relaxation if not converged.
         for i in range(restart):
-            ofile = join(self.workdir, 'abinit.txt')
+            #ofile = join(self.workdir, 'abinit.txt')
+            ofile="%s.txt"%(self.prefix)
             if calculation_finished(ofile) and relaxation_finished(ofile):
                 break
             else:
@@ -377,10 +394,10 @@ class Abinit(FileIOCalculator):
 
         return atoms
 
-    def scf_calculation(self, atoms, dos=True, **kwargs):
-        self.set(ntime=0, toldfe=0.0)
+    def scf_calculation(self, atoms, dos=True, dry_run=False, **kwargs):
+        #self.set(ntime=0, toldfe=0.0)
         if dos:
-            self.set(prtdos=2)
+            self.set(prtdos=3)
         self.calculate(atoms=atoms, )
         scf_dir=os.path.join(self.workdir, 'SCF')
         if not os.path.exists(scf_dir):
@@ -488,8 +505,16 @@ class Abinit(FileIOCalculator):
             kptopt=3,
             istwfk="%s*1" % nkpts)
         self.set(**kwargs)
-        wannier_input.write_input()
-        self.calculate(atoms=atoms, )
+        self.dry_run(atoms=atoms)
+        kpts=self.get_kpoints()
+        wannier_input.set_kpoints(kpts)
+
+        if 'nspden' in self.parameters and self.parameters['nspden']==2:
+            wannier_input.write_input(prefix=self.prefix, spin=True)
+        else:
+            wannier_input.write_input(prefix=self.prefix, spin=False)
+
+        self.calculate(atoms=atoms)
         wann_dir=join(self.workdir, 'Wannier')
         if not os.path.exists(wann_dir):
             os.mkdir(wann_dir)
@@ -619,18 +644,19 @@ class Abinit(FileIOCalculator):
 
         if postproc:
             if efield or strain:
-                text = gen_mrgddb_input( join(self.workdir,self.prefix),
+                text = gen_mrgddb_input( self.prefix,
                                         list(range(3, self.ndtset + 1)))
             else:
-                text = gen_mrgddb_input( join(self.workdir,self.prefix),
+                text = gen_mrgddb_input( self.prefix,
                                         list(range(2, self.ndtset + 1)))
-            with open( join(self.workdir,'%s.mrgddb.in' % self.prefix), 'w') as myfile:
+            with open( '%s.mrgddb.in' % self.prefix, 'w') as myfile:
                 myfile.write(text)
             os.system("mrgddb <%s.mrgddb.in |tee %s.mrgddb.log" %
-                      ( join(self.workdir,self.prefix),  join(self.workdir,self.prefix)))
+                      ( self.prefix,  self.prefix))
 
-            with open( join(self.workdir,'%s_ifc.files' % self.prefix), 'w') as myfile:
-                myfile.write(gen_ifc_files(prefix= join(self.workdir,self.prefix)))
+            ifc_file='%s_ifc.files' % self.prefix
+            with open( ifc_file, 'w') as myfile:
+                myfile.write(gen_ifc_files(prefix= self.prefix))
             if efield:
                 dipdip = 1
             else:
@@ -650,11 +676,11 @@ class Abinit(FileIOCalculator):
                         chneut=1,
                         dipdip=dipdip,
                         kpath=kpath))
-            os.system("anaddb < %s_ifc.files" % self.prefix)
+
+            os.system("anaddb < %s" % ifc_file)
 
     def postproc_phonon(self,
                         atoms,
-                        prefix='abinit',
                         ndtset=None,
                         efield=True,
                         qpts=[2, 2, 2],
@@ -663,6 +689,7 @@ class Abinit(FileIOCalculator):
                         postproc=True,
                         ifcout=1024,
                         rfasr=1):
+        prefix=self.prefix
         if True:
             ndtset = self.ndtset
             if efield:
@@ -707,10 +734,10 @@ class Abinit(FileIOCalculator):
 
         fh = open(join(self.workdir, self.label + '.files'), 'w')
 
-        fh.write('%s\n' % (join(self.workdir, self.prefix + '.in')))  # input
-        fh.write('%s\n' % (join(self.workdir, self.prefix + '.txt')))  # output
-        fh.write('%s\n' % (join(self.workdir, self.prefix + 'i')))  # input
-        fh.write('%s\n' % (join(self.workdir, self.prefix + 'o')))  # output
+        fh.write('%s\n' % ( self.prefix + '.in'))  # input
+        fh.write('%s\n' % (self.prefix + '.txt'))  # output
+        fh.write('%s\n' % ( self.prefix + 'i'))  # input
+        fh.write('%s\n' % ( self.prefix + 'o'))  # output
 
         # XXX:
         # scratch files
@@ -720,7 +747,7 @@ class Abinit(FileIOCalculator):
         #if not os.path.exists(scratch):
         #    os.makedirs(scratch)
         #fh.write('%s\n' % (os.path.join(scratch, prefix + '.abinit')))
-        fh.write('%s\n' % (join(self.workdir, self.prefix + '.abinit')))
+        fh.write('%s\n' % (self.prefix + '.abinit'))
         # Provide the psp files
         psp_dir=os.path.join(self.workdir, 'psp')
         for ppp in self.ppp_list:
@@ -937,6 +964,7 @@ class Abinit(FileIOCalculator):
         try:
             os.chdir(self.directory)
             if self.commander is None:
+                print(command)
                 errorcode = subprocess.call(command, shell=True)
             else:
                 errorcode = self.commander.run()
@@ -1114,7 +1142,7 @@ class Abinit(FileIOCalculator):
                 # then pick the correct one afterwards.
                 name = hghtemplate % (number, symbol.lower(), '*')
             elif pps in ['jth', 'jth_sp', 'jth_fincore']:
-                xcdict = {'LDA': 'LDA', 'PBE': 'GGA_PBE'}
+                xcdict = {'LDA': 'LDA', 'PBE': 'GGA_PBE', 'PBEsol':'GGA-PBESOL'}
                 #hghtemplate = '%s.%s-JTH.xml'
                 #name = hghtemplate%(symbol, xcdict[xcname.upper()])
                 print((os.path.join(pppaths[-1], '*/%s.%s*JTH*.xml' %
@@ -1123,6 +1151,7 @@ class Abinit(FileIOCalculator):
                     name = glob(
                         os.path.join(pppaths[-1], '*/%s.%s*JTH.xml' % (
                             symbol, xcdict[xcname])))[0]
+                    print(name)
                 elif pps == 'jth_sp' or pps == 'jth_fincore':
                     names = None
                     names = glob(
@@ -1322,6 +1351,16 @@ class Abinit(FileIOCalculator):
             if line.rfind('fermi (or homo) energy (hartree) =') > -1:
                 E_f = float(line.split('=')[1].strip().split()[0])
         return E_f * Hartree
+
+    
+    def get_efermi(self):
+        gsr_fname=self.prefix+'o_GSR.nc'
+        return get_efermi(gsr_fname)
+
+    def get_kpoints(self):
+        fname=self.prefix+'.txt'
+        kpoints=get_kpoints(fname)
+        return kpoints
 
     def read_nkpt(self):
         nkpt = None
@@ -1836,7 +1875,6 @@ class DDB_reader():
                                                                   idir2 + 1,
                                                                   ipert2 + 1)]
         return dynmat
-
 
 #!/usr/bin/env python
 

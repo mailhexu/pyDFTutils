@@ -34,7 +34,9 @@ bool_keys = (
     "wannier_plot",
     "bands_plot",
     "fermi_surface_plot",
-    "write_hr", )
+    "write_hr",
+    "hr_plot"
+)
 
 string_keys = (
     "spin",
@@ -424,19 +426,35 @@ class wannier_input(object):
         return self.input_text
 
     def write_input(self,
-                    fname="wannier90.win",
+                    prefix="wannier90",
                     basis_fname='basis.txt',
-                    save_dict=True):
+                    save_dict=True,
+                    spin=False,
+                    ):
         """
         write wannier input file.
         """
         #if not self.input_text:
         self.gen_input()
-        with open(fname, 'w') as infile:
-            infile.write(self.input_text)
-        self.write_basis(fname=basis_fname)
+        if spin:
+            fname_up=prefix+'o_w90_up.win'
+            fname_dn=prefix+'o_w90_down.win'
+            with open(fname_up, 'w') as infile:
+                infile.write(self.input_text)
+                self.write_basis(fname=basis_fname)
+            with open(fname_dn, 'w') as infile:
+                infile.write(self.input_text)
+                self.write_basis(fname=basis_fname)
+        else:
+            #fname=os.path.join(workdir, 'wannier90.win')
+            fname=prefix+'.win'
+            with open(fname, 'w') as infile:
+                infile.write(self.input_text)
+                self.write_basis(fname=basis_fname)
         if save_dict:
-            with open('%s.pickle' % fname, 'wb') as pfile:
+            #fname_pickle=os.path.join(workdir, '%s.pickle'%fname)
+            fname_pickle=prefix+'_wannier'
+            with open('%s.pickle' % fname_pickle, 'wb') as pfile:
                 pickle.dump(self, pfile)
 
     def get_nwann(self):
