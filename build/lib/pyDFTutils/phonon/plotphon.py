@@ -7,7 +7,7 @@ from matplotlib.collections import LineCollection
 from matplotlib.colors import colorConverter
 from ase.units import Bohr
 import os.path
-from ase_utils.kpoints import cubic_kpath
+from pyDFTutils.ase_utils.kpoints import cubic_kpath
 from collections import namedtuple
 
 
@@ -20,15 +20,18 @@ def plot_phon_from_nc(fname, title='BaT', output_filename='phonon.png'):
     #ds.variables[u'space_group'][:]
     #print ds.variables[u'primitive_vectors'][:]
     #print ds.variables.keys()
-    qpoints = ds.variables[u'qpoints'][:]
-    phfreqs = ds.variables[u'phfreqs'][:] * 8065.6
-    phdisps = ds.variables[u'phdispl_cart'][:]
-    masses = ds.variables[u'atomic_mass_units'][:]
+    qpoints = ds.variables['qpoints'][:]
+    phfreqs = ds.variables['phfreqs'][:] * 8065.6
+    phdisps = ds.variables['phdispl_cart'][:]
+    masses = ds.variables['atomic_mass_units'][:]
     masses = list(masses) + [masses[-1]] * 2
 
     IR_modes = label_all(qpoints, phfreqs, phdisps, masses)
     #return
 
+    print((phdisps[0, 0, :, :] / Bohr))
+    print((phdisps[0, 0, :, 0] / Bohr))
+    print((get_weight(phdisps[0, 0, :, :], masses)))
     phfreqs = fix_gamma(qpoints, phfreqs)
 
     weights_A = np.empty_like(phfreqs)
@@ -82,6 +85,7 @@ def plot_phon_from_nc(fname, title='BaT', output_filename='phonon.png'):
     tick_mode = {'R': -2, 'X': -1, 'M': 2,'Gamma':0}
     for qname in IR_modes:
         for mode in IR_modes[qname]:
+            #print(mode)
             shiftx = lambda x: x-0.2 if x>0.2 else x+0.01
             axis.annotate(
                 mode[1], (shiftx(xticks[1][tick_mode[qname]]) , mode[0] + 5),
@@ -413,18 +417,23 @@ def label(qname, phdisp, masses, notation='IR'):
         #print m
         mvec = np.real(m)
         mvec = mvec / np.linalg.norm(mvec)
+        #print mvec
         p = np.abs(np.dot(np.real(evec), mvec))
+        #print p
         if p > 0.5:  #1.0 / np.sqrt(2):
+            print("-------------")
+            print("Found! p= %s" % p)
+            print("eigen vector: ", nmode._make(mvec))
             if notation == 'Cowley':
                 mode = IR_dict[qname][m]
             else:
                 print(IR_translation[qname])
                 mode = IR_translation[qname][IR_dict[qname][m]]
-            print "mode: ", mode, m
+            print("mode: ", mode, m)
         #return IR_dict[m]
     if mode is None:
-        print "=============="
-        print "eigen vector: ", nmode._make(evec)
+        print("==============")
+        print("eigen vector: ", nmode._make(evec))
     #return None
     return mode
 
@@ -432,7 +441,7 @@ def label(qname, phdisp, masses, notation='IR'):
 def fix_gamma(qpoints, phfreqs):
     for i, qpt in enumerate(qpoints):
         if np.isclose(qpt, [0.0, 0.0, 0.0], rtol=1e-5, atol=1e-3).all():
-            print "Fix"
+            print("Fix")
             if i == 0:
                 phfreqs[i] = phfreqs[i + 1]
             else:
@@ -467,7 +476,7 @@ def plot_band_weight(kslist,
                      style='alpha',
                      color='blue',
                      axis=None,
-                     width=10,
+                     width=2,
                      xticks=None,
                      title=None):
     if axis is None:
@@ -501,7 +510,7 @@ def plot_band_weight(kslist,
                     linewidths=[2] * len(x),
                     colors=[
                         colorConverter.to_rgba(
-                            color, alpha=lwidth / (width + 0.001))
+                            color, alpha=np.abs(lwidth / (width + 0.001)))
                         for lwidth in lwidths
                     ])
 
@@ -509,7 +518,7 @@ def plot_band_weight(kslist,
     plt.ylabel('Frequency (cm$^{-1}$)')
     if axis is None:
         for ks, eks in zip(kslist, ekslist):
-            plt.plot(ks, eks, color='gray', linewidth=0.1)
+            plt.plot(ks, eks, color='gray', linewidth=0.001)
         a.set_xlim(0, xmax)
         a.set_ylim(yrange)
         if xticks is not None:
