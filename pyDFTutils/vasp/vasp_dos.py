@@ -372,6 +372,13 @@ class MyVaspDos(VaspDos):
                     'd+':5, 'd-up':5, 'd-':6, 'd-down':6,
                     'f+':7, 'f-up':7, 'f-':8, 'f-down':8
                     }
+        elif n == 16:
+            norb = {'s+':1, 's-up':1, 's-':2, 's-down':2,
+                    'p+':3, 'p-up':3, 'p-':4, 'p-down':4,
+                    'd+':5, 'd-up':5, 'd-':6, 'd-down':6,
+                    'f+':7, 'f-up':7, 'f-':8, 'f-down':8
+                    }
+
         elif n == 10:
             norb = {'s':1, 'py':2, 'pz':3, 'px':4,
                     'dxy':5, 'dyz':6, 'dz2':7, 'dxz':8,
@@ -631,7 +638,7 @@ def plot_group(xs,yss,labels,ymin=0,ymax=2,xmin=-15,xmax=5):
     plt.legend()
     plt.show()
 
-def plot_all_ldos(filename='DOSCAR',ispin=2,ymin=-2.0,ymax=2.0,xmin=-15.0,xmax=5.0,element_types=None):
+def plot_all_ldos(filename='DOSCAR',ispin=2,ymin=-2.0,ymax=2.0,xmin=-15.0,xmax=5.0,element_types=None, has_f=False):
     """
     plot the local dos of all atoms.
     """
@@ -643,9 +650,15 @@ def plot_all_ldos(filename='DOSCAR',ispin=2,ymin=-2.0,ymax=2.0,xmin=-15.0,xmax=5
         atom_nums=list(symdict.keys())
 
     if ispin==2:
-        sites=['s+','p+','d+','s-','p-','d-']
+        if has_f:
+            sites=['s+','p+','d+','s-','p-','d-', 'f+', 'f-']
+        else:
+            sites=['s+','p+','d+','s-','p-','d-']
     else:
-        sites=['s','p','d']
+        if has_f:
+            sites=['s','p','d','f']
+        else:
+            sites=['s','p','d']
 
     if not os.path.exists('LDOS'):
         os.mkdir('LDOS')
