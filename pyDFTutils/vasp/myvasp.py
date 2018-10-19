@@ -1,6 +1,9 @@
 #! /usr/bin/env python
 
 from pyDFTutils.vasp.vasp_utils import read_poscar_and_unsort
+import ase.calculators.vasp.create_input
+if 'maskcell' not in ase.calculators.vasp.create_input.int_keys:
+    ase.calculators.vasp.create_input.int_keys.append('maskcell')
 from ase.calculators.vasp import Vasp
 from ase.dft.kpoints import get_bandpath
 import matplotlib.pyplot as plt
@@ -743,168 +746,9 @@ class myvasp(Vasp):
         return converged
 
     def write_incar(self, atoms, directory='./', **kwargs):
-        """Writes the INCAR file."""
-        # jrk 1/23/2015 I added this flag because this function has
-        # two places where magmoms get written. There is some
-        # complication when restarting that often leads to magmom
-        # getting written twice. this flag prevents that issue.
-        magmom_written = False
+        Vasp.write_incar(self, atoms,directory=directory,  **kwargs)
+        incar = open(join(directory, 'INCAR'), 'a')
         vca_written=False
-        incar = open(join(directory, 'INCAR'), 'w')
-        incar.write('INCAR created by Atomic Simulation Environment\n')
-        for key, val in self.float_params.items():
-            if val is not None:
-                incar.write(' %s = %5.6f\n' % (key.upper(), val))
-        for key, val in self.exp_params.items():
-            if val is not None:
-                incar.write(' %s = %5.2e\n' % (key.upper(), val))
-        for key, val in self.string_params.items():
-            if val is not None:
-                incar.write(' %s = %s\n' % (key.upper(), val))
-        for key, val in self.int_params.items():
-            if val is not None:
-                incar.write(' %s = %d\n' % (key.upper(), val))
-                if key == 'ichain' and val > 0:
-                    incar.write(' IBRION = 3\n POTIM = 0.0\n')
-                    for key, val in self.int_params.items():
-                        if key == 'iopt' and val is None:
-                            print('WARNING: optimization is '
-                                  'set to LFBGS (IOPT = 1)')
-                            incar.write(' IOPT = 1\n')
-                    for key, val in self.exp_params.items():
-                        if key == 'ediffg' and val is None:
-                            RuntimeError('Please set EDIFFG < 0')
-
-        for key, val in self.list_bool_params.items():
-            if val is None:
-                pass
-            else:
-                incar.write(' %s = ' % key.upper())
-                [incar.write('%s ' % _to_vasp_bool(x)) for x in val]
-                incar.write('\n')
-
-        for key, val in self.list_int_params.items():
-            if val is None:
-                pass
-            elif key == 'ldaul' and (self.dict_params['ldau_luj'] is not None):
-                pass
-            else:
-                incar.write(' %s = ' % key.upper())
-                [incar.write('%d ' % x) for x in val]
-                incar.write('\n')
-
-        for key, val in self.list_float_params.items():
-            if val is None:
-                pass
-            elif ((key in ('ldauu', 'ldauj')) and
-                  (self.dict_params['ldau_luj'] is not None)):
-                pass
-            elif key == 'magmom':
-                incar.write(' %s = ' % key.upper())
-                magmom_written = True
-                # Work out compact a*x b*y notation and write in this form
-                list = [[1, val[0]]]
-                for n in range(1, len(val)):
-                    if val[n] == val[n - 1]:
-                        list[-1][0] += 1
-                    else:
-                        list.append([1, val[n]])
-                    [incar.write('%i*%.4f ' % (mom[0], mom[1]))
-                     for mom in list]
-                    incar.write('\n')
-            else:
-                    incar.write(' %s = ' % key.upper())
-                    [incar.write('%.4f ' % x) for x in val]
-                    incar.write('\n')
-
-
-                
-        # for key, val in self.list_params.items():
-        #     if val is not None:
-        #         if key in ('dipol', 'eint', 'ropt', 'rwigs', 'langevin_gamma'):
-        #             incar.write(' %s = ' % key.upper())
-        #             [incar.write('%.4f ' % x) for x in val]
-        #         # ldau_luj is a dictionary that encodes all the
-        #         # data. It is not a vasp keyword. An alternative to
-        #         # the dictionary is to to use 'ldauu', 'ldauj',
-        #         # 'ldaul', which are vasp keywords.
-        #         elif (key in ('ldauu', 'ldauj') and
-        #               self.dict_params['ldau_luj'] is None):
-        #             incar.write(' %s = ' % key.upper())
-        #             [incar.write('%.4f ' % x) for x in val]
-        #         elif (key in ('ldaul') and
-        #               self.dict_params['ldau_luj'] is None):
-        #             incar.write(' %s = ' % key.upper())
-        #             [incar.write('%d ' % x) for x in val]
-        #         elif key in ('ferwe', 'ferdo'):
-        #             incar.write(' %s = ' % key.upper())
-        #             [incar.write('%.1f ' % x) for x in val]
-        #         elif key in ('iband', 'kpuse', 'random_seed'):
-        #             incar.write(' %s = ' % key.upper())
-        #             [incar.write('%i ' % x) for x in val]
-        #         elif key == 'magmom':
-        #             incar.write(' %s = ' % key.upper())
-        #             magmom_written = True
-        #             list = [[1, val[0]]]
-        #             for n in range(1, len(val)):
-        #                 if val[n] == val[n - 1]:
-        #                     list[-1][0] += 1
-        #                 else:
-        #                     list.append([1, val[n]])
-        #             [incar.write('%i*%.4f ' % (mom[0],
-        #                                        mom[1]))
-        #              for mom in list]
-        #         incar.write('\n')
-        for key, val in self.bool_params.items():
-            if val is not None:
-                incar.write(' %s = ' % key.upper())
-                if val:
-                    incar.write('.TRUE.\n')
-                else:
-                    incar.write('.FALSE.\n')
-        for key, val in self.special_params.items():
-            if val is not None:
-                incar.write(' %s = ' % key.upper())
-                if key == 'lreal':
-                    if isinstance(val, basestring):
-                        incar.write(val + '\n')
-                    elif isinstance(val, bool):
-                        if val:
-                            incar.write('.TRUE.\n')
-                        else:
-                            incar.write('.FALSE.\n')
-        for key, val in self.dict_params.items():
-            if val is not None:
-                if key == 'ldau_luj':
-                    llist = ulist = jlist = ''
-                    for symbol in self.symbol_count:
-                        #  default: No +U
-                        luj = val.get(symbol[0], {'L': -1, 'U': 0.0, 'J': 0.0})
-                        llist += ' %i' % luj['L']
-                        ulist += ' %.3f' % luj['U']
-                        jlist += ' %.3f' % luj['J']
-                    incar.write(' LDAUL =%s\n' % llist)
-                    incar.write(' LDAUU =%s\n' % ulist)
-                    incar.write(' LDAUJ =%s\n' % jlist)
-
-        if self.spinpol and not magmom_written:
-            if not self.int_params['ispin']:
-                incar.write(' ispin = 2\n'.upper())
-            # Write out initial magnetic moments
-            magmom = atoms.get_initial_magnetic_moments()[self.sort]
-            # unpack magmom array if three components specified
-            if magmom.ndim > 1:
-                magmom = [item for sublist in magmom for item in sublist]
-            list = [[1, magmom[0]]]
-            for n in range(1, len(magmom)):
-                if magmom[n] == magmom[n - 1]:
-                    list[-1][0] += 1
-                else:
-                    list.append([1, magmom[n]])
-            incar.write(' magmom = '.upper())
-            [incar.write('%i*%.4f ' % (mom[0], mom[1])) for mom in list]
-            incar.write('\n')
-
         if self.vca is not None and not vca_written:
             vcalist=''
             for symbol in self.symbol_count:
