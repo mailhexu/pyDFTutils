@@ -73,14 +73,14 @@ def calculate_phonon(atoms,
             os.mkdir(dir_name)
         os.chdir(dir_name)
         forces = cell.get_forces()
-        print "[Phonopy] Forces: %s" % forces
+        #print "[Phonopy] Forces: %s" % forces
         # Do something other than calculating the forces with func.
         # func: func(atoms, calc, func_args)
         if func is not None:
             func(cell, calc, **func_args)
         os.chdir(cur_dir)
         drift_force = forces.sum(axis=0)
-        print "[Phonopy] Drift force:", "%11.5f" * 3 % tuple(drift_force)
+        #print "[Phonopy] Drift force:", "%11.5f" * 3 % tuple(drift_force)
         # Simple translational invariance
         for force in forces:
             force -= drift_force / forces.shape[0]

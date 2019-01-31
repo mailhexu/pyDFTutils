@@ -21,7 +21,6 @@ def plot_phon_from_nc(fname, title='BaT', output_filename='phonon.png'):
     #print ds.variables[u'primitive_vectors'][:]
     #print ds.variables.keys()
     qpoints = ds.variables[u'qpoints'][:]
-    print qpoints
     phfreqs = ds.variables[u'phfreqs'][:] * 8065.6
     phdisps = ds.variables[u'phdispl_cart'][:]
     masses = ds.variables[u'atomic_mass_units'][:]
@@ -30,9 +29,6 @@ def plot_phon_from_nc(fname, title='BaT', output_filename='phonon.png'):
     IR_modes = label_all(qpoints, phfreqs, phdisps, masses)
     #return
 
-    print phdisps[0, 0, :, :] / Bohr
-    print phdisps[0, 0, :, 0] / Bohr
-    print get_weight(phdisps[0, 0, :, :], masses)
     phfreqs = fix_gamma(qpoints, phfreqs)
 
     weights_A = np.empty_like(phfreqs)
@@ -40,8 +36,6 @@ def plot_phon_from_nc(fname, title='BaT', output_filename='phonon.png'):
     weights_C = np.empty_like(phfreqs)
 
     nk, nm = phfreqs.shape
-    print phdisps.shape
-    print nk, nm
 
     for i in range(nk):
         for j in range(nm):
@@ -57,7 +51,6 @@ def plot_phon_from_nc(fname, title='BaT', output_filename='phonon.png'):
     kpath = cubic_kpath()
     kslist = [kpath[1]] * 15
     xticks = [['$\Gamma$', 'X', 'M', '$\Gamma$', 'R', 'X'], kpath[2]]
-    print len(kslist)
     axis = plot_band_weight(
         kslist,
         phfreqs.T,
@@ -89,7 +82,6 @@ def plot_phon_from_nc(fname, title='BaT', output_filename='phonon.png'):
     tick_mode = {'R': -2, 'X': -1, 'M': 2,'Gamma':0}
     for qname in IR_modes:
         for mode in IR_modes[qname]:
-            print mode
             shiftx = lambda x: x-0.2 if x>0.2 else x+0.01
             axis.annotate(
                 mode[1], (shiftx(xticks[1][tick_mode[qname]]) , mode[0] + 5),
@@ -122,15 +114,15 @@ def label_all(qpoints, phfreqs, phdisps, masses):
             if np.isclose(
                     qpt, special_qpoints[qname], rtol=1e-5, atol=1e-3).all():
                 mode_dict[qname] = []
-                print "===================================="
-                print qname
+                print("====================================")
+                print(qname)
                 phdisps_q = phdisps[i]
                 for j, disp in enumerate(phdisps_q):
                     disp = disp[:, 0] + 1.0j * disp[:, 1]
                     mode = label(qname, disp, masses)
                     freq = phfreqs[i][j]
                     mode_dict[qname].append([freq, mode])
-    print mode_dict
+    print(mode_dict)
     return mode_dict
 
 
@@ -421,17 +413,12 @@ def label(qname, phdisp, masses, notation='IR'):
         #print m
         mvec = np.real(m)
         mvec = mvec / np.linalg.norm(mvec)
-        #print mvec
         p = np.abs(np.dot(np.real(evec), mvec))
-        #print p
         if p > 0.5:  #1.0 / np.sqrt(2):
-            print "-------------"
-            print "Found! p= %s" % p
-            print "eigen vector: ", nmode._make(mvec)
             if notation == 'Cowley':
                 mode = IR_dict[qname][m]
             else:
-                print IR_translation[qname]
+                print(IR_translation[qname])
                 mode = IR_translation[qname][IR_dict[qname][m]]
             print "mode: ", mode, m
         #return IR_dict[m]

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from ase.lattice.cubic import FaceCenteredCubic
-from asap3 import EMT
+from ase.calculators.emt import EMT
 from ase.units import Bohr
 from frozenphonon import calculate_phonon
 import numpy as np
@@ -9,14 +9,13 @@ from ase.build import bulk
 import matplotlib.pyplot as plt
 
 from pyDFTutils.unfolding.phonon_unfolder import phonon_unfolder
-from plotphon import plot_band_weight
-from ase_utils import vesta_view
+from pyDFTutils.phonon.plotphon import plot_band_weight
+#from ase_utils import vesta_view
 
 
 def kpath():
     #atoms = FaceCenteredCubic(size=(1,1,1), symbol="Cu", pbc=True)
     atoms = bulk('Cu', 'fcc', a=3.61)
-    print atoms.cell
     points = get_special_points('fcc', atoms.cell, eps=0.01)
     GXW = [points[k] for k in 'GXWGL']
     kpts, x, X = bandpath(GXW, atoms.cell, 700)
@@ -50,7 +49,6 @@ def phonon_unfold():
     symbols = atoms.get_chemical_symbols()
     symbols[-1] = 'Ag'
     atoms.set_chemical_symbols(symbols)
-    print atoms
     calc = EMT()
     atoms.set_calculator(calc)
     phonon = calculate_phonon(
@@ -73,7 +71,6 @@ def phonon_unfold():
     uf = phonon_unfolder(atoms,sc_mat,eigvecs,kpts)
     weights = uf.get_weights()
 
-    print weights[0]
     ax=None
     ax=plot_band_weight([list(x)]*freqs.shape[1],freqs.T*33.356,weights[:,:].T*0.98+0.01,xticks=[names,X],axis=ax)
     

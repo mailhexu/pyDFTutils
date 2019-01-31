@@ -279,7 +279,6 @@ class MyVaspDos(VaspDos):
         if efermi=='auto':
             self.auto_set_fermi()
 
-
         dos_text=open(doscar,'r').readlines()
         line7=dos_text[7]
         nn7=len([fstr for fstr in line7.split()])
@@ -456,7 +455,10 @@ class MyVaspDos(VaspDos):
         """
         Return the efermi
         """
-        return self._get_efermi()
+        line6 = open(self.doscar,'r').readlines()[5]
+        emax,emin,nbands,efermi,x= [float(fstr) for fstr in line6.split()]
+        #return self._get_efermi()
+        return efermi
 
     def get_energy(self):
         """
@@ -551,7 +553,7 @@ class MyVaspDos(VaspDos):
         return self.dos
 
 
-def getldos(iatom,sites,location='./',doscar='DOSCAR',efermi='auto',is_up_major=False):
+def getldos(iatom,sites,location='./',doscar='DOSCAR',efermi='auto',is_up_major=False ,return_efermi=False):
     """
     read DOSCAR in location . return PDOS of iatom ,site is a list of 's+','s-',etc.
     iatom can be also sym_num, in this case there should be a POSCAR in the specified location.
@@ -566,6 +568,7 @@ def getldos(iatom,sites,location='./',doscar='DOSCAR',efermi='auto',is_up_major=
 
     mydos=MyVaspDos(doscar=join(location,doscar),efermi=efermi)
     energy=mydos.get_energy()
+    efermi=mydos.get_efermi()
     dos=[]
     for s in sites:
         if s.endswith('-'):
@@ -578,7 +581,10 @@ def getldos(iatom,sites,location='./',doscar='DOSCAR',efermi='auto',is_up_major=
                 dos.append(mydos.get_site_dos_major_up(iatom,s))
             else:
                 dos.append(mydos.site_dos(iatom,s))
-    return energy,dos
+    if return_efermi:
+        return energy, dos, efermi
+    else:
+        return energy,dos
 
 def read_sumdos(filename='sum_dos.csv'):
     """

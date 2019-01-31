@@ -614,13 +614,14 @@ def test():
 
         #R4_m_A1=0.5,  # R4-[Nd1:a:dsp]T1u(a), A , Antipolar mode in Pnma  
         #R4_m_A2=0.5,  # R4-[Nd1:a:dsp]T1u(b), A,  Antipolar mode in Pnma
+        R4_m_A3=0.0,  # R4-[Nd1:a:dsp]T1u(c), A, Unusual 
         #R4_m_A3=0.0,  # R4-[Nd1:a:dsp]T1u(c), A, Unusual 
         #R4_m_O1=0.0,  # R4-[O1:c:dsp]Eu(a), O, Unusual
         #R4_m_O2=0.0,  # R4-[O1:c:dsp]Eu(b), O, Unusual
         #R4_m_O3=0.0,  # R4-[O1:c:dsp]Eu(c), O, Unusual
 
 
-        M2_p_O1=1.0,  # M2+[O1:c:dsp]Eu(a), O, In phase rotation c+
+        #M2_p_O1=1.2,  # M2+[O1:c:dsp]Eu(a), O, In phase rotation c+
 
         #M3_p_O1=0.1,  # M3+[O1:c:dsp]A2u(a), O, D-type JT inplane stagger
 
