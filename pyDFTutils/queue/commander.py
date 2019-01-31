@@ -74,9 +74,9 @@ def zenobescript(
         defaults['outfile']=outfile
     elif command == 'vasp':
         defaults[
-            'command'] = r'/home/acad/ulg-phythema/hexu/.local/bin/vasp_fire >log'
+            'command'] = r'/home/acad/ulg-phythema/hexu/.local/bin/vasp_hexu544 >log'
         defaults[
-                'fullcommand'] = r'mpirun /home/acad/ulg-phythema/hexu/.local/bin/vasp_fire>log'
+                'fullcommand'] = r'mpirun /home/acad/ulg-phythema/hexu/.local/bin/vasp_hexu544>log'
         defaults['infile']=''
         defaults['outfile']=''
     else:

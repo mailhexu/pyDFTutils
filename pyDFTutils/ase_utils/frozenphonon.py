@@ -23,6 +23,7 @@ def calculate_phonon(atoms,
                      primitive_matrix=np.eye(3),
                      distance=0.01,
                      factor=VaspToTHz,
+                     is_plusminus='auto',
                      is_symmetry=True,
                      symprec=1e-5,
                      func=None,
@@ -32,10 +33,11 @@ def calculate_phonon(atoms,
                      **func_args):
     """
     """
-    if 'magmoms' in atoms.arrays:
+    if 'magmoms' in atoms.arrays or 'initial_magmoms' in atoms.arrays:
         is_mag = True
     else:
         is_mag = False
+    print("is_mag: ", is_mag)
     # 1. get displacements and supercells
     if calc is not None:
         atoms.set_calculator(calc)
@@ -45,7 +47,7 @@ def calculate_phonon(atoms,
             symbols=atoms.get_chemical_symbols(),
             scaled_positions=atoms.get_scaled_positions(),
             cell=atoms.get_cell(),
-            magmoms=atoms.arrays['magmoms'], )
+            magmoms=atoms.arrays['initial_magmoms'], )
     else:
         bulk = PhonopyAtoms(
             symbols=atoms.get_chemical_symbols(),
@@ -58,7 +60,7 @@ def calculate_phonon(atoms,
         primitive_matrix=primitive_matrix,
         factor=factor,
         symprec=symprec)
-    phonon.generate_displacements(distance=distance)
+    phonon.generate_displacements(distance=distance, is_plusminus=is_plusminus)
     disps = phonon.get_displacements()
     for d in disps:
         print(("[phonopy] %d %s" % (d[0], d[1:])))
