@@ -211,7 +211,7 @@ class myvasp(Vasp):
         nelmdl = self.int_params['nelmdl']
         ibrion = self.int_params['ibrion']
         sigma = self.float_params['sigma']
-        smass = self.float_params['smass']
+        #smass = self.float_params['smass']
         #potim = self.float_params['potim']
         if sigma is None:
             sigma = 0.1
@@ -289,7 +289,7 @@ class myvasp(Vasp):
             ldipol=ldipol,
             nsw=nsw,
             maxmix=40,
-            smass=smass,
+            #smass=smass,
             nfree=15)
 
         #self.read_contcar(filename='CONTCAR')
