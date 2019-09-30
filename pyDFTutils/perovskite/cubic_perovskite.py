@@ -12,6 +12,7 @@ def gen222(name=None,
            O='O',
            latticeconstant=3.9,
            mag_order='FM',
+           mag_atom=None,
            m=5,
            sort=True):
     if name is not None:
@@ -33,11 +34,14 @@ def gen222(name=None,
     if mag_order != 'PM':
         mag = np.ones(8)
         mag[np.array(spin_dn[mag_order], int)] = -1.0
-        atoms = set_element_mag(atoms, B, mag * m)
+        if mag_atom is None:
+            atoms = set_element_mag(atoms, B, mag * m)
+        else:
+            atoms = set_element_mag(atoms, mag_atom, mag * m)
     return atoms
 
 
-def gen_primitive(name=None,A=None,B=None,O=None, latticeconstant=3.9, mag_order='FM', m=5):
+def gen_primitive(name=None,A=None,B=None,O=None, latticeconstant=3.9, mag_order='FM',mag_atom=None, m=5):
     """
     generate primitive cell with magnetic order.
 
@@ -62,13 +66,19 @@ def gen_primitive(name=None,A=None,B=None,O=None, latticeconstant=3.9, mag_order
         atoms = atoms
     elif mag_order == 'FM':
         atoms = atoms
-        atoms = set_element_mag(atoms, B, [m])
+        if mag_atom is None:
+            atoms = set_element_mag(atoms, B, [m])
+        else:
+            atoms = set_element_mag(atoms, mag_atom, [m])
     else:
         atoms.translate([0.045] * 3)
         atoms = normalize(atoms)
         atoms = make_supercell(atoms, direction_dict[mag_order])
         atoms.translate([-0.045] * 3)
-        atoms = set_element_mag(atoms, B, [m, -m])
+        if mag_atom is None:
+            atoms = set_element_mag(atoms, B, [m])
+        else:
+            atoms = set_element_mag(atoms, mag_atom, [m])
     return atoms
 
 
