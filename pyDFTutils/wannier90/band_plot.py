@@ -181,6 +181,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    #plot_band()
-    #plot_band_weight(efermi=9.05)
-    #print read_xtics()
