@@ -127,9 +127,6 @@ def peakdet(v, delta, x = None):
 
 def test(step=None, ):
     pos,pot=get_potential()
-
-
-
     p=array(peakdetect(pot,lookahead=5,delta=0.01))
     zero=p[0][0,1]
     pot=pot-zero

@@ -14,7 +14,7 @@ def plot_ldos():
 
     args=parser.parse_args()
 
-    plot_all_ldos(filename=args.filename,ispin=args.ispin,ymin=args.ymin,ymax=args.ymax,xmin=args.xmin,xmax=args.xmax)
+    plot_all_ldos(filename=args.filename,ispin=args.ispin,ymin=args.ymin,ymax=args.ymax,xmin=args.xmin,xmax=args.xmax, has_f=True)
 
 if __name__=='__main__':
     plot_ldos()

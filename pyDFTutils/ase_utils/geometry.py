@@ -84,7 +84,6 @@ def find_primitive(atoms, symprec=1e-4):
     """
     #atoms_mag,sym_dict=ref_atoms_mag(atoms)
     cell, scaled_pos, chem_nums = spglib.find_primitive(atoms, symprec=symprec)
-    print(chem_nums)
     chem_sym = 'H%d' % (len(chem_nums))
     new_atoms = Atoms(chem_sym)
 
@@ -239,11 +238,6 @@ def plot_bands(atoms,
     """
     kpts, xcords, sp_xcords = get_bandpath(sp_kpts, atoms.get_cell(), nkpts)
     kpoints, eigenvalues, efermi = calc_bands(atoms, kpts)
-    print(len(atoms.calc.get_ibz_k_points()))
-    print(atoms.calc.get_number_of_bands())
-
-    print(eigenvalues)
-    print(np.shape(eigenvalues))
     mycalc = atoms.calc
     if output_filename is None:
         output_filename = 'band.png'
@@ -393,15 +387,12 @@ def set_element_mag(atoms, element, magmoms):
     """
     set the magetic moments of specific element in the atoms.
     """
-    print(magmoms)
     try:
         mags = atoms.get_initial_magnetic_moments()
     except Exception as exp:
-        print(exp)
         mags = np.zeros(len(atoms))
     sym_dict = symbol_number(atoms)
     for i, mag in enumerate(magmoms):
-        print(i, mag)
         mags[sym_dict['%s%d' % (element, i + 1)]] = mag
 
     atoms.set_initial_magnetic_moments(mags)

@@ -1,6 +1,6 @@
 #!/usr/bin/env  python
 from ase.io import read
-from pyDFTutils.ase_utils import cell_to_cellpar
+from ase.geometry.cell import cell_to_cellpar
 import spglib.spglib as spglib
 import sys
 

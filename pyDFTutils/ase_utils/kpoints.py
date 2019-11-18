@@ -1,6 +1,6 @@
 import numpy as np
 import spglib
-from ase.dft.kpoints import special_paths, special_points, parse_path_string, bandpath
+from ase.dft.kpoints import special_paths,  parse_path_string, bandpath
 import numpy as np
 from collections import Counter
 

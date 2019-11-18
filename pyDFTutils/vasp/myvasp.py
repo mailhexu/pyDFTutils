@@ -126,9 +126,13 @@ class myvasp(Vasp):
             track_output=False,
             **kwargs)
         self.commander = None
+        self.command=None
 
     def set_commander(self, commander):
         self.commander = commander
+
+    def set_command(self, command):
+        self.command=command
     def set_vca(self, vca):
         self.vca=vca
     def run(self):
@@ -150,6 +154,8 @@ class myvasp(Vasp):
 
         if self.commander is not None:
             exitcode = self.commander.run()
+        elif self.command is not None:
+            exitcode=os.system(self.command)
         elif 'VASP_COMMAND' in os.environ:
             vasp = os.environ['VASP_COMMAND']
             exitcode = os.system('%s > %s' % (vasp, self.out))
@@ -367,7 +373,7 @@ class myvasp(Vasp):
             nsw=0,
             ibrion=-1,
             ismear=ismear,
-            nedos=1001,
+            nedos=501,
             sigma=sigma,
             nelmdl=1)
 
@@ -390,7 +396,7 @@ class myvasp(Vasp):
             icharg=10,
             nsw=0,
             ismear=ismear,
-            nedos=1001,
+            nedos=501,
             lorbit=10,
             sigma=sigma)
 
@@ -411,7 +417,7 @@ class myvasp(Vasp):
             icharg=11,
             nsw=0,
             ismear=ismear,
-            nedos=1001,
+            nedos=501,
             lorbit=11,
             sigma=sigma)
         self.calculate(self.atoms)
@@ -464,7 +470,7 @@ class myvasp(Vasp):
             lwrite_unk=lwrite_unk,
             lwrite_mmn_amn=True,
             npar=None)
-        self.set(icharg=11, nsw=0, nedos=1001, lorbit=10)
+        self.set(icharg=11, nsw=0, nedos=501, lorbit=10)
         self.calculate(self.atoms)
 
         self.set(lwannier90=False, npar=npar)

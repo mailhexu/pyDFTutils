@@ -956,4 +956,5 @@ if __name__=='__main__':
     #plotldos_group(['Fe1','Fe2','Fe3','Fe4'],['s-','p-','d-'],ymin=-12,ymax=0)
     # plotldos_group(['Ti1','Ti2','Ti3','Ti4'],['s-','p-','d-'],ymin=-12,ymax=0)
     names=['Bi1','Fe1','O1','O3']
-    plotldos_group(names,['s+','p+','d+','s-','p-','d-'],ymin=[-0.7,-6,-0.7,-0.7],ymax=[0.7,6,0.7,0.7])
+    #plotldos_group(names,['s+','p+','d+','s-','p-','d-'],ymin=[-0.7,-6,-0.7,-0.7],ymax=[0.7,6,0.7,0.7])
+    plotldos_group(names,['s+','p+','d+','f+', 's-','p-','d-', 'f-'],ymin=[-0.7,-6,-0.7,-0.7],ymax=[0.7,6,0.7,0.7])

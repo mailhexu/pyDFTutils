@@ -108,6 +108,8 @@ class wannier_input(object):
                  bands=None,
                  spin=0,
                  kpoints=None,
+                 spinor=False,
+                 write_info=True,
                  **kwargs):
         """
         The wannier.win generator.
@@ -119,6 +121,12 @@ class wannier_input(object):
         self.seed = seed
         self.bands = bands
         self.spin = spin
+        self.spinor = spinor
+        self.write_info=write_info
+        if self.spinor:
+            self.nspinor=2
+        else:
+            self.nspinor=1
 
         self.projection_dict = None
         self.kpoints = kpoints
@@ -146,6 +154,7 @@ class wannier_input(object):
         self.projection_dict_by_site = {}
         self.initial_basis = []
         self.axis = {}
+
 
     def set_kpoints(self, kpoints):
         self.kpoints=kpoints
@@ -327,7 +336,7 @@ class wannier_input(object):
 
     def gen_input(self):
         if self.int_params['num_wann'] is None:
-            self.int_params['num_wann'] = len(self.initial_basis)
+            self.int_params['num_wann'] = len(self.initial_basis)*self.nspinor
         print(self.int_params)
         print(self.float_params)
         input_text = ""
@@ -385,34 +394,35 @@ class wannier_input(object):
                 symnum, reversed_w90_orb_dict[(m, l)], r, spin)
         input_text += 'end projections\n\n'
 
-        #unit cell block
-        if self.unit_cell is not None:
-            input_text += 'begin unit_cell_cart\n'
-            for vec in self.unit_cell:
-                input_text += '\t' + '\t'.join(map(str, vec)) + '\n'
-            input_text += 'end unit_cell_cart\n\n'
-
-        # atom cordinates
-        if self.atoms is not None:
-            input_text += '\nbegin atoms_cart\n'
-            for sym, pos in list(
-                    zip(self.atoms.get_chemical_symbols(),
-                        self.atoms.get_positions())):
-                input_text += '{0}\t{1}\n'.format(sym,
-                                                  '\t'.join(map(str, pos)))
-            input_text += 'end atoms_cart\n\n'
-
-        # kpoints
-
-        if 'mp_grid' in self.list_params:
-            input_text += 'mp_grid = \t{0}\n'.format(
-                '\t'.join(map(str, self.list_params['mp_grid'])))
-        if self.kpoints is not None:
-            input_text += 'begin kpoints\n'
-            for kpt in self.kpoints:
-                input_text += '\t' + '\t'.join(map(str, kpt)) + '\n'
-            input_text += 'end kpoints\n\n'
-
+        if self.write_info:
+            #unit cell block
+            if self.unit_cell is not None:
+                input_text += 'begin unit_cell_cart\n'
+                for vec in self.unit_cell:
+                    input_text += '\t' + '\t'.join(map(str, vec)) + '\n'
+                input_text += 'end unit_cell_cart\n\n'
+    
+            # atom cordinates
+            if self.atoms is not None:
+                input_text += '\nbegin atoms_cart\n'
+                for sym, pos in list(
+                        zip(self.atoms.get_chemical_symbols(),
+                            self.atoms.get_positions())):
+                    input_text += '{0}\t{1}\n'.format(sym,
+                                                      '\t'.join(map(str, pos)))
+                input_text += 'end atoms_cart\n\n'
+    
+            # kpoints
+    
+            if 'mp_grid' in self.list_params:
+                input_text += 'mp_grid = \t{0}\n'.format(
+                    '\t'.join(map(str, self.list_params['mp_grid'])))
+            if self.kpoints is not None:
+                input_text += 'begin kpoints\n'
+                for kpt in self.kpoints:
+                    input_text += '\t' + '\t'.join(map(str, kpt)) + '\n'
+                input_text += 'end kpoints\n\n'
+    
         # k path
         if self.kpath is not None:
             input_text += 'begin kpoint_path\n'
@@ -462,7 +472,7 @@ class wannier_input(object):
         get number of wannier functions
         """
         if self.int_params['num_wann'] is None:
-            self.int_params['num_wann'] = len(self.initial_basis)
+            self.int_params['num_wann'] = len(self.initial_basis)*self.nspinor
         return self.int_params['num_wann']
 
 
@@ -667,13 +677,17 @@ def replace_value(text, valdict, position='start'):
     return ''.join(newlines)
 
 
-def replace_value_file(fname, valdict, position='start'):
+def replace_value_file(fname, valdict, position='start', rewrite=True):
     """
     same as replace_value, but replace text from file instead of replacing a text
     """
     with open(fname) as myfile:
         text = myfile.read()
-    return replace_value(text, valdict, position=position)
+    new_text=replace_value(text, valdict, position=position)
+    if rewrite:
+        with open(fname, 'w') as myfile:
+            myfile.write(new_text)
+    return new_text
 
 
 def occupation(fname, efermi):
