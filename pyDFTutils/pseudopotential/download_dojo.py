@@ -40,3 +40,5 @@ def download_dojo():
     download_dojo_04()
     download_dojo_3plus()
 
+if __name__=='__main__':
+    download_dojo()
