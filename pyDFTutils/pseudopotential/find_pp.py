@@ -11,7 +11,7 @@ class PPFinder():
 class DojoFinder():
     def __init__(self, path=None):
         if path is None:
-            self.path = os.environ['Dojo_path']
+            self.path = os.environ['DOJO_PATH']
         else:
             self.path = path
 
@@ -24,12 +24,12 @@ class DojoFinder():
                     fmt='psml'):
         typ=typ.lower()
         xc=xc.lower()
-        dirname = f"{typ}-{rel}-{version}_{xc}_{accuracy}_{fmt}"
+        dirname = os.path.join(self.path, f"{typ}-{rel}-{version}_{xc}_{accuracy}_{fmt}")
         if not os.path.exists(dirname):
-            raise FileNotFoundError(f"File Not found: {fname}")
-        return fname
+            raise FileNotFoundError(f"File Not found: {dirname}")
+        return dirname
 
-    def get_pp_path(self,
+    def get_pp_fname(self,
                     element,
                     xc : str,
                     typ='NC',
