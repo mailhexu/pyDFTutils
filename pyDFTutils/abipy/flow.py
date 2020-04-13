@@ -67,6 +67,7 @@ class myScfTask(AbinitInput):
                              nqpt=1,               # One wavevector is to be considered
                              qpt=(0, 0, 0),        # q-wavevector.
                              kptopt=kptopt_gamma,             # No symmetries
+                             )
 
 class BecStrainWork(BecWork):
     """

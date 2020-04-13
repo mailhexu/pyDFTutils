@@ -1,7 +1,7 @@
 from ase.calculators.siesta import *
 from ase.calculators.calculator import FileIOCalculator, ReadError
 from ase.calculators.siesta.parameters import format_fdf
-
+import copy
 
 
 class MySiesta(Siesta):
@@ -55,7 +55,8 @@ class MySiesta(Siesta):
     ):
         pbc=atoms.get_pbc()
         initial_magnetic_moments=atoms.get_initial_magnetic_moments()
-        self.set_fdf_arguments({
+        fdf=self['fdf_arguments']
+        fdf.update({
             'MD.TypeOfRun': TypeOfRun,
             'MD.VariableCell': VariableCell,
             'MD.ConstantVolume': ConstantVolume,
@@ -64,6 +65,7 @@ class MySiesta(Siesta):
             'MD.MaxStressTol': "%s GPa"%MaxStressTol,
             'MD.NumCGSteps': NumCGSteps,
         })
+        self.set_fdf_arguments(fdf)
         self.calculate(atoms)
         self.read(self.label+'.XV')
         self.atoms.set_pbc(pbc)
