@@ -15,7 +15,7 @@ class MySiesta(Siesta):
                   linear_after_weight=0.1):
         pass
 
-    def add_Hubbard_U(self, specy, n=None, l=2, U=0, J=0, rc=0.0, Fermi_cut=0.0):
+    def add_Hubbard_U(self, specy, n=3, l=2, U=0, J=0, rc=0.0, Fermi_cut=0.0):
         if not 'Udict' in self.__dict__:
             self.Udict=dict()
         self.Udict[specy]={'n':n, 'l':l, 'U':U, 'J':J, 'rc':rc,'Fermi_cut':Fermi_cut  }
@@ -29,7 +29,7 @@ class MySiesta(Siesta):
 
 
     def write_Hubbard_block(self, f):
-        text="block LDAU.Proj\n" 
+        text="%block LDAU.Proj\n" 
         for key, val in self.Udict.items():
             text += '  %s %s \n'%(key, 1)
             if val['n'] is None:
@@ -38,7 +38,7 @@ class MySiesta(Siesta):
                 text += '%s\n'%(l)
             text += '  %s  %s\n'%(val['U'], val['J'])
             text += '  %s  %s\n'%(val['rc'], val['Fermi_cut'])
-        text="endblock LDAU.Proj\n" 
+        text="%endblock LDAU.Proj\n" 
         f.write(text)
 
 
