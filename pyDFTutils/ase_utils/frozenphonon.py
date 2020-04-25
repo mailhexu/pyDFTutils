@@ -30,6 +30,7 @@ def calculate_phonon(atoms,
                      prepare_initial_wavecar=False,
                      skip=None,
                      parallel=True,
+                     sc_mag=None,
                      **func_args):
     """
     """
@@ -89,7 +90,7 @@ def calculate_phonon(atoms,
                 pbc=True)
             if is_mag:
                 cell.set_initial_magnetic_moments(
-                    atoms.get_initial_magnetic_moments())
+                    sc_mag)
             mcalc = copy.deepcopy(calc)
             mcalc.set(lwave=True, lcharg=True)
             cell.set_calculator(mcalc)
@@ -110,7 +111,7 @@ def calculate_phonon(atoms,
                 pbc=True)
             if is_mag:
                 cell.set_initial_magnetic_moments(
-                    atoms.get_initial_magnetic_moments())
+                    sc_mag)
             cell.set_calculator(copy.deepcopy(calc))
             dir_name = "PHON_CELL%s" % iscell
             cur_dir = os.getcwd()
