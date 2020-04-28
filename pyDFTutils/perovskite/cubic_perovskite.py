@@ -2,7 +2,10 @@
 from pyDFTutils.perovskite.lattice_factory import PerovskiteCubic
 from pyDFTutils.ase_utils import my_write_vasp,normalize, vesta_view, set_element_mag
 from ase.io.vasp import read_vasp
-from ase.atoms import string2symbols
+try:
+    from ase.atoms import string2symbols
+except:
+    from ase.symbols import string2symbols
 import numpy as np
 from ase.build import make_supercell
 

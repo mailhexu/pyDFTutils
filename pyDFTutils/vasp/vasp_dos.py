@@ -23,8 +23,7 @@ orb_p_label=['$p_x$+','$p_y$+','$p_z$+','$p_x$-','$p_y$-','$p_z$-']
 
 orb_all_local=['s+','p+','d+','s-','p-','d-']
 orb_all_local_label=['s+','p+','d+','s-','p-','d-']
-
-
+ 
 
 def getline(file,line_num):
     num_l=0
@@ -732,6 +731,12 @@ def plot_all_pdos_eg(element_types=None,filename='DOSCAR',ispin=2,ymin=-2.0,ymax
         copyfile(filename,'PDOS/DOSCAR')
         plotldos_group([atom_num],sites,ymin=ymin,ymax=ymax,xmin=xmin,xmax=xmax,special_location=None,output='PDOS/%s_eg_dos.png'%atom_num)
 
+def get_xld_d(iatom):
+    inplane=['dxy+', 'dx2+', 'dxy-', 'dx2-']
+    outplane=['dyz+', 'dxz+', 'dz2+', 'dyz-', 'dxz-', 'dz2-']
+
+
+
 
 
 def plot_all_pdos_t2g(element_types=None,filename='DOSCAR',ispin=2,ymin=-2.0,ymax=2.0,xmin=-15.0,xmax=5.0):
@@ -926,6 +931,7 @@ def plotldos_group(atom_num,sites,ymin=0.0,ymax=2.0,xmin=-15.0,xmax=5.0,special_
     plt.close()
 
 
+
 def plotldos(iatom,sites,xmin=-15.0,xmax=5.0,ymin=None,ymax=None):
     mydos=MyVaspDos()
     mydos.auto_set_fermi()
@@ -956,4 +962,5 @@ if __name__=='__main__':
     #plotldos_group(['Fe1','Fe2','Fe3','Fe4'],['s-','p-','d-'],ymin=-12,ymax=0)
     # plotldos_group(['Ti1','Ti2','Ti3','Ti4'],['s-','p-','d-'],ymin=-12,ymax=0)
     names=['Bi1','Fe1','O1','O3']
-    plotldos_group(names,['s+','p+','d+','s-','p-','d-'],ymin=[-0.7,-6,-0.7,-0.7],ymax=[0.7,6,0.7,0.7])
+    #plotldos_group(names,['s+','p+','d+','s-','p-','d-'],ymin=[-0.7,-6,-0.7,-0.7],ymax=[0.7,6,0.7,0.7])
+    plotldos_group(names,['s+','p+','d+','f+', 's-','p-','d-', 'f-'],ymin=[-0.7,-6,-0.7,-0.7],ymax=[0.7,6,0.7,0.7])
