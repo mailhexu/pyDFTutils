@@ -99,7 +99,7 @@ def calculate_phonon(atoms,
             if not os.path.exists(dir_name):
                 os.mkdir(dir_name)
             os.chdir(dir_name)
-            mcalc.scf_calculation()
+            mcalc.scf_calculation(cell)
             os.chdir(cur_dir)
 
         def calc_force(iscell):
