@@ -212,8 +212,8 @@ class Abinit(FileIOCalculator):
                                   label, atoms, **kwargs)
         self.commander = None
         self.use_vca=False
-        self.workdir='./abinit'
-        self.workdir=os.path.abspath(self.workdir)
+        self.workdir='./'
+        #self.workdir=os.path.abspath(self.workdir)
         self.prefix=os.path.join(self.workdir, self.label)
 
     def set_command(self, command=None, commander=None):
@@ -233,9 +233,9 @@ class Abinit(FileIOCalculator):
             self.commander = commander
 
     def set_workdir(self, workdir):
-        self.workdir=os.path.abspath(workdir)
-        if not os.path.exists(self.workdir):
-            os.makedirs(self.workdir)
+        #self.workdir=os.path.abspath(workdir)
+        if not os.path.exists(os.path.abspath(workdir)):
+            os.makedirs(os.path.abspath(workdir))
         self.prefix=os.path.join(self.workdir, self.label)
 
     def get_nkpt_and_nband(self, abinit_command='abinit', atoms=None):
@@ -313,6 +313,8 @@ class Abinit(FileIOCalculator):
         self.set_command(command='abinit -d -i PREFIX.files > PREFIX.log', commander=None)
         self.calculate(atoms=atoms)
         self.set_command(command=command, commander=commander)
+        print("setting the command to")
+        print(self.command)
 
     def ldos_calculation(self, atoms, pdos=True):
         if os.path.exists('abinito_DEN'):
@@ -373,7 +375,7 @@ class Abinit(FileIOCalculator):
                 atoms.set_scaled_positions(scaled_positions)
                 self.calculate(atoms=atoms, properties=[])
 
-        
+
         self.set(ntime=0, toldfe=0.0)
         newatoms = read_output(fname=join(self.workdir,'abinit.txt'), afterend=True)
         write_vasp('CONTCAR', newatoms, vasp5=True)
@@ -941,7 +943,7 @@ class Abinit(FileIOCalculator):
                   atoms,
                   properties=['energy'],
                   system_changes=all_changes):
-        if not os.path.exists(self.workdir):
+        if self.workdir!='' and not os.path.exists(self.workdir):
             os.makedirs(self.workdir)
         inp_file="%s.in"%self.prefix
         if os.path.exists(inp_file):
@@ -1352,7 +1354,7 @@ class Abinit(FileIOCalculator):
                 E_f = float(line.split('=')[1].strip().split()[0])
         return E_f * Hartree
 
-    
+
     def get_efermi(self):
         gsr_fname=self.prefix+'o_GSR.nc'
         return get_efermi(gsr_fname)
