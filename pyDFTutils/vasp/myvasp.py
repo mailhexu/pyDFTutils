@@ -4,7 +4,7 @@ from pyDFTutils.vasp.vasp_utils import read_poscar_and_unsort
 import ase.calculators.vasp.create_input
 if 'maskcell' not in ase.calculators.vasp.create_input.int_keys:
     ase.calculators.vasp.create_input.int_keys.append('maskcell')
-from ase.calculators.vasp import Vasp
+from ase.calculators.vasp import Vasp, Vasp2
 from ase.dft.kpoints import get_bandpath
 import matplotlib.pyplot as plt
 import os
@@ -107,23 +107,22 @@ for p in default_pps_1:
     default_pps[p] = v[len(p):]
 
 
-class myvasp(Vasp):
+class myvasp(Vasp2):
     def __init__(self,
                  restart=None,
                  output_template='vasp',
                  track_output=False,
+		         tempdir=None,
                  **kwargs):
 
         self.force_no_calc = False
         self.vca=None
 
-        self.tempdir = None
+        self.tempdir = tempdir
 
-        Vasp.__init__(
+        Vasp2.__init__(
             self,
             restart=None,
-            output_template='vasp',
-            track_output=False,
             **kwargs)
         self.commander = None
         self.command=None
@@ -138,11 +137,6 @@ class myvasp(Vasp):
     def run(self):
         """Method which explicitely runs VASP."""
 
-        if self.track_output:
-            self.out = self.output_template + str(self.run_counts) + '.out'
-            self.run_counts += 1
-        else:
-            self.out = self.output_template + '.out'
         stderr = sys.stderr
         p = self.input_params
         if p['txt'] is None:
@@ -158,7 +152,7 @@ class myvasp(Vasp):
             exitcode=os.system(self.command)
         elif 'VASP_COMMAND' in os.environ:
             vasp = os.environ['VASP_COMMAND']
-            exitcode = os.system('%s > %s' % (vasp, self.out))
+            exitcode = os.system('%s > %s' % (vasp, 'log'))
         elif 'VASP_SCRIPT' in os.environ:
             vasp = os.environ['VASP_SCRIPT']
             locals = {}
@@ -171,9 +165,9 @@ class myvasp(Vasp):
         if exitcode != 0:
             raise RuntimeError('Vasp exited with exit code: %d.  ' % exitcode)
 
-    def magnetic_calculation(self, do_nospin=True):
+    def magnetic_calculation(self, atoms, do_nospin=True):
         self.set(ispin=1, istart=0)
-        self.calculate(self.atoms)
+        self.calculate(atoms)
         self.set(
             ispin=2,
             istart=0,
@@ -184,7 +178,7 @@ class myvasp(Vasp):
             bmix=0.0001,
             bmix_mag=0.0001,
             maxmix=20)
-        self.calculate(self.atoms)
+        self.calculate(atoms)
 
     def clean(self):
         """Method which cleans up after a calculation.
@@ -211,7 +205,7 @@ class myvasp(Vasp):
                 except OSError:
                     pass
 
-    def myrelax_calculation(self, do_nospin=False, pre_relax=True, pre_relax_method='dampedmd'):
+    def myrelax_calculation(self, atoms, do_nospin=False, pre_relax=True, pre_relax_method='dampedmd'):
         """
         a optimized stratigey to do the relax.
         do_nospin: if do_nospin is True, a non-spin-polarized relaxation is done first.
@@ -265,8 +259,8 @@ class myvasp(Vasp):
             if do_nospin:
                 print("----------------------------------------------------")
                 self.set(ispin=1)
-            self.calculate(self.atoms)
-            self.read_contcar(filename='CONTCAR')
+            self.calculate(atoms)
+            atoms = self.read_contcar(atoms, filename='CONTCAR')
 
         # if do_nospin
         if do_nospin:
@@ -281,10 +275,9 @@ class myvasp(Vasp):
                 ldipol=ldipol,
                 nsw=30,
                 maxmix=40)
-            #self.read_contcar(filename='CONTCAR')
             self.set(istart=1)
-            self.calculate(self.atoms)
-            self.read_contcar(filename='CONTCAR')
+            self.calculate(atoms)
+            atoms=self.read_contcar(atoms, filename='CONTCAR')
 
         # then increase the accuracy.
         self.set(
@@ -303,49 +296,74 @@ class myvasp(Vasp):
 
         #self.read_contcar(filename='CONTCAR')
         self.set(istart=1)
-        self.calculate(self.atoms)
-        self.read_contcar(filename='CONTCAR')
+        self.calculate(atoms)
+        atoms=self.read_contcar(atoms, filename='CONTCAR')
 
         if not os.path.exists('RELAX'):
             os.mkdir('RELAX')
         for f in ['POSCAR', 'OUTCAR', 'EIGENVAL', 'CONTCAR', 'INCAR', 'log']:
-            copyfile(f, os.path.join('RELAX', f))
-        return self.atoms
+            if os.path.exists(f):
+                copyfile(f, os.path.join('RELAX', f))
+        return atoms
 
-    def band_calculation(self, special_kpoints, names, npoints=60):
-        """
-        calculate the band structure.
-        """
-        self.set(icharg=11, nsw=0, ibrion=-1, ismear=0)
-        cell = self.atoms.get_cell()
-        kpts, xcords, sp_xcords = get_bandpath(
-            special_kpoints, cell, npoints=npoints)
-
-        self.band_xs = xcords
-        self.band_special_xs = sp_xcords
-        self.special_kpts_names = names
-        self.set(kpts=kpts, reciprocal=True)
-        self.calculate(self.atoms)
+    def myband_calculation(self, atoms, kpath, npoints):
+        # Non-SC calculation along band path
+        kpts = {'path': kpath,     # The BS path
+                'npoints': npoints}     # Number of points along the path
+        self.set(isym=0,           # Turn off kpoint symmetry reduction
+                 icharg=11,        # Non-SC calculation
+                 lwave=False,
+                 kpts=kpts)
+        # Run the calculation
+        self.calculate(atoms)
         if not os.path.exists('BAND'):
             os.mkdir('BAND')
         for f in ['POSCAR', 'OUTCAR', 'EIGENVAL', 'PROCAR', 'INCAR', 'log']:
             if os.path.exists(f):
                 copyfile(f, os.path.join('BAND', f))
-        self.plot_bands()
+        #self.plot_bands()
 
-    def scf_calculation(self, ismear=-5, sigma=0.1, istart=1):
+>>>>>>> 2c47c688109a700f6d8f5ddc9434130b8425a4df
+
+
+    def band_calculation(self, atoms, special_kpoints, names, npoints=60):
+        """
+        calculate the band structure.
+        """
+        self.set(icharg=11, nsw=0, ibrion=-1, ismear=0, isym=0)
+        cell = atoms.get_cell()
+        kpts, xcords, sp_xcords = get_bandpath(
+            special_kpoints, cell, npoints=npoints)
+
+        print("-----------")
+        print(xcords, sp_xcords)
+        self.band_xs = xcords
+        self.band_special_xs = sp_xcords
+        self.special_kpts_names = names
+        self.set(kpts=kpts, reciprocal=True)
+        self.calculate(atoms)
+        if not os.path.exists('BAND'):
+            os.mkdir('BAND')
+        for f in ['POSCAR', 'OUTCAR', 'EIGENVAL', 'PROCAR', 'INCAR', 'log']:
+            if os.path.exists(f):
+                copyfile(f, os.path.join('BAND', f))
+        #self.plot_bands()
+
+    def scf_calculation(self, atoms, ismear=-5, sigma=0.1, istart=1):
         """
         scf calculation
         """
+        self.atoms=atoms
         self.set(
             nsw=0, ibrion=1, ismear=ismear, nedos=501, sigma=sigma, nelmdl=-10, istart=istart)
 
-        self.calculate(self.atoms)
+        self.calculate(atoms)
 
         if not os.path.exists('SCF'):
             os.mkdir('SCF')
         for f in ['POSCAR', 'OUTCAR', 'EIGENVAL', 'DOSCAR', 'INCAR', 'log']:
-            copyfile(f, os.path.join('SCF', f))
+            if os.path.exists(f):
+                copyfile(f, os.path.join('SCF', f))
         myfile = open('SCF/result.txt', 'w')
 
         try:
@@ -364,7 +382,7 @@ class myvasp(Vasp):
         myfile.write(" energy=%s\n eg=%s\n efermi=%s\n" % (e_zero, eg, efermi))
         myfile.close()
 
-    def dos_calculation(self, ismear=-5, sigma=0.05):
+    def dos_calculation(self, atoms, ismear=-5, sigma=0.05):
         """
         calculate the total density of state.
         """
@@ -377,7 +395,7 @@ class myvasp(Vasp):
             sigma=sigma,
             nelmdl=1)
 
-        self.calculate(self.atoms)
+        self.calculate(atoms)
 
         if not os.path.exists('DOS'):
             os.mkdir('DOS')
@@ -385,10 +403,11 @@ class myvasp(Vasp):
                 'POSCAR', 'OUTCAR', 'EIGENVAL', 'PROCAR', 'DOSCAR', 'INCAR',
                 'log'
         ]:
-            copyfile(f, os.path.join('DOS', f))
+            if os.path.exists(f):
+                copyfile(f, os.path.join('DOS', f))
         plot_dos(output='DOS/DOS.png')
 
-    def ldos_calculation(self, ismear=-5, sigma=0.05):
+    def ldos_calculation(self, atoms, ismear=-5, sigma=0.05):
         """
         calculate the local density of state of all the ions.
         """
@@ -400,16 +419,17 @@ class myvasp(Vasp):
             lorbit=10,
             sigma=sigma)
 
-        self.calculate(self.atoms)
+        self.calculate(atoms)
         if not os.path.exists('LDOS'):
             os.mkdir('LDOS')
         for f in [
                 'POSCAR', 'OUTCAR', 'EIGENVAL', 'PROCAR', 'DOSCAR', 'INCAR',
                 'log'
         ]:
-            copyfile(f, os.path.join('LDOS', f))
+            if os.path.exists(f):
+                copyfile(f, os.path.join('LDOS', f))
 
-    def pdos_calculation(self, ismear=-5, sigma=0.05):
+    def pdos_calculation(self, atoms, ismear=-5, sigma=0.05):
         """
         calculate the local density of state of all the ions.
         """
@@ -420,7 +440,7 @@ class myvasp(Vasp):
             nedos=501,
             lorbit=11,
             sigma=sigma)
-        self.calculate(self.atoms)
+        self.calculate(atoms)
 
         if not os.path.exists('PDOS'):
             os.mkdir('PDOS')
@@ -428,12 +448,13 @@ class myvasp(Vasp):
                 'POSCAR', 'OUTCAR', 'EIGENVAL', 'PROCAR', 'DOSCAR', 'INCAR',
                 'log'
         ]:
-            copyfile(f, os.path.join('PDOS', f))
+            if os.path.exists(f):
+                copyfile(f, os.path.join('PDOS', f))
 
-    def static_calculation(self, ismear=-5, sigma=0.05):
-        self.scf_calculation(ismear=ismear, sigma=sigma)
-        self.ldos_calculation(ismear=ismear, sigma=sigma)
-        self.pdos_calculation(ismear=ismear, sigma=sigma)
+    def static_calculation(self, atoms, ismear=-5, sigma=0.05):
+        self.scf_calculation(atoms, ismear=ismear, sigma=sigma)
+        self.ldos_calculation(atoms, ismear=ismear, sigma=sigma)
+        self.pdos_calculation(atoms, ismear=ismear, sigma=sigma)
 
     def set_wannier_input(self, filename='wannier90.win'):
         """
@@ -444,6 +465,7 @@ class myvasp(Vasp):
             #TODO implement wannier input
 
     def wannier_calculation(self,
+            atoms,
                             lwrite_unk=True,
                             projection=None,
                             frozen_window=None,
@@ -471,7 +493,7 @@ class myvasp(Vasp):
             lwrite_mmn_amn=True,
             npar=None)
         self.set(icharg=11, nsw=0, nedos=501, lorbit=10)
-        self.calculate(self.atoms)
+        self.calculate(atoms)
 
         self.set(lwannier90=False, npar=npar)
 
@@ -481,26 +503,27 @@ class myvasp(Vasp):
                 'POSCAR', 'OUTCAR', 'EIGENVAL', 'PROCAR', 'DOSCAR', 'INCAR',
                 'log'
         ]:
-            copyfile(f, os.path.join('Wannier', f))
+            if os.path.exists(f):
+                copyfile(f, os.path.join('Wannier', f))
             os.system('cp ./wannier* Wannier')
 
-    def get_eig_array(self):
-        nbands = self.get_number_of_bands()
+    #def get_eig_array(self):
+    #    nbands = self.get_number_of_bands()
 
-        kpts = self.get_ibz_k_points()
-        nkpts = len(kpts)
+    #    kpts = self.get_ibz_k_points()
+    #    nkpts = len(kpts)
 
-        if self.get_number_of_spins() == 1:
-            eigs = np.empty((nbands, nkpts), float)
-            for k in range(nkpts):
-                eigs[:, k] = self.get_eigenvalues(kpt=k)
-        else:
-            eigs = np.empty((nbands, nkpts, 2), float)
-            for spin in [0, 1]:
-                for k in range(nkpts):
-                    eigs[:, k, spin] = self.get_eigenvalues(kpt=k, spin=spin)
+    #    if self.get_number_of_spins() == 1:
+    #        eigs = np.empty((nbands, nkpts), float)
+    #        for k in range(nkpts):
+    #            eigs[:, k] = self.get_eigenvalues(kpt=k)
+    #    else:
+    #        eigs = np.empty((nbands, nkpts, 2), float)
+    #        for spin in [0, 1]:
+    #            for k in range(nkpts):
+    #                eigs[:, k, spin] = self.get_eigenvalues(kpt=k, spin=spin)
 
-        return eigs
+    #    return eigs
 
     def read_charges(self, orbital=None):
         charges = np.zeros(len(atoms))
@@ -607,13 +630,14 @@ class myvasp(Vasp):
         if show:
             plt.show()
 
-    def read_contcar(self, filename='CONTCAR'):
+    def read_contcar(self, atoms, filename='CONTCAR'):
         """
         read from contcar and set the positions and cellpars. Note that in vasp, "sort" is True. so read and !!!!unsort!!!!.
         """
         symbols, positions, cell = read_poscar_and_unsort(filename=filename)
-        self.atoms.set_cell(cell)
-        self.atoms.set_positions(positions)
+        atoms.set_cell(cell)
+        atoms.set_positions(positions)
+        return self.atoms
 
     def set_force_no_calc(self, nocalc=True):
         """
@@ -621,75 +645,75 @@ class myvasp(Vasp):
         """
         self.force_no_calc = True
 
-    def calculate(self, atoms):
-        """Generate necessary files in the working directory and run VASP.
+    #def calculate(self, atoms):
+    #    """Generate necessary files in the working directory and run VASP.
 
-        The method first write VASP input files, then calls the method
-        which executes VASP. When the VASP run is finished energy, forces,
-        etc. are read from the VASP output.
-        """
+    #    The method first write VASP input files, then calls the method
+    #    which executes VASP. When the VASP run is finished energy, forces,
+    #    etc. are read from the VASP output.
+    #    """
 
-        cwd = os.getcwd()
-        if os.path.exists('/data') and self.tempdir is None:
-            self.tempdir = tempfile.mkdtemp(prefix='vasptmp_', dir='/data')
-            with open('./syncpath.txt', 'w') as myfile:
-                myfile.write('%s:%s\n' % (socket.gethostname(), self.tempdir))
+    #    cwd = os.getcwd()
+    #    if os.path.exists('/data') and self.tempdir is None:
+    #        self.tempdir = tempfile.mkdtemp(prefix='vasptmp_', dir='/data')
+    #        with open('./syncpath.txt', 'w') as myfile:
+    #            myfile.write('%s:%s\n' % (socket.gethostname(), self.tempdir))
 
-        if self.tempdir is not None:
-            print(('rsync -a ./* %s' % self.tempdir))
-            os.system('rsync -a ./* %s' % self.tempdir)
-            os.chdir(self.tempdir)
-            print(("Changing path to %s" % self.tempdir))
+    #    if self.tempdir is not None:
+    #        print(('rsync -a ./* %s' % self.tempdir))
+    #        os.system('rsync -a ./* %s' % self.tempdir)
+    #        os.chdir(self.tempdir)
+    #        print(("Changing path to %s" % self.tempdir))
 
-        # Initialize calculations
-        self.initialize(atoms)
+    #    # Initialize calculations
+    #    self.initialize(atoms)
 
-        # Write input
-        from ase.io.vasp import write_vasp
-        write_vasp('POSCAR', self.atoms_sorted, symbol_count=self.symbol_count)
-        self.write_incar(atoms)
-        self.write_potcar()
-        self.write_kpoints()
-        self.write_sort_file()
+    #    # Write input
+    #    from ase.io.vasp import write_vasp
+    #    write_vasp('POSCAR', self.atoms_sorted, symbol_count=self.symbol_count)
+    #    self.write_incar(atoms)
+    #    self.write_potcar()
+    #    self.write_kpoints()
+    #    self.write_sort_file()
 
-        # Execute VASP
-        if not self.force_no_calc:
-            self.run()
-        # Read output
-        atoms_sorted = ase.io.read('CONTCAR', format='vasp')
+    #    # Execute VASP
+    #    if not self.force_no_calc:
+    #        self.run()
+    #    # Read output
+    #    atoms_sorted = ase.io.read('CONTCAR', format='vasp')
 
-        if (not (self.int_params['ibrion'] is None or self.int_params['nsw'] is None)) and (self.int_params['ibrion'] > -1 and self.int_params['nsw'] > 0):
-            # Update atomic positions and unit cell with the ones read
-            # from CONTCAR.
-            atoms.positions = atoms_sorted[self.resort].positions
-            atoms.cell = atoms_sorted.cell
-        self.converged = self.read_convergence()
-        self.set_results(atoms)
-        if self.tempdir is not None:
-            print("Sync back")
-            print(('rsync -a %s/* %s' % (self.tempdir, cwd)))
-            os.system('rsync -a %s/* %s' % (self.tempdir, cwd))
-            os.chdir(cwd)
+    #    if (not (self.int_params['ibrion'] is None or self.int_params['nsw'] is None)) and (self.int_params['ibrion'] > -1 and self.int_params['nsw'] > 0):
+    #        # Update atomic positions and unit cell with the ones read
+    #        # from CONTCAR.
+    #        atoms.positions = atoms_sorted[self.resort].positions
+    #        atoms.cell = atoms_sorted.cell
+    #    self.converged = self.read_convergence()
+    #    #self.set_results(atoms)
+    #    if self.tempdir is not None:
+    #        print("Sync back")
+    #        print(('rsync -a %s/* %s' % (self.tempdir, cwd)))
+    #        os.system('rsync -a %s/* %s' % (self.tempdir, cwd))
+    #        os.chdir(cwd)
 
-    def read_ibz_kpoints(self):
-        ibz_kpts = []
-        n = 0
-        i = 0
-        lines = open('OUTCAR', 'r').readlines()
-        for line in lines:
-            if line.rfind('k-points in units of 2pi/SCALE and weight:') > -1:
-                m = n + 1
-                while i == 0:
-                    ibz_kpts.append(
-                        [float(lines[m].split()[p]) for p in range(3)])
-                    m += 1
-                    if lines[m] == ' \n':
-                        i = 1
-            if i == 1:
-                continue
-            n += 1
-        ibz_kpts = np.array(ibz_kpts)
-        return np.array(ibz_kpts)
+    #def read_ibz_kpoints(self):
+    #    ibz_kpts = []
+    #    n = 0
+    #    i = 0
+    #    lines = open('OUTCAR', 'r').readlines()
+    #    for line in lines:
+    #        if line.rfind('k-points in units of 2pi/SCALE and weight:') > -1:
+    #            m = n + 1
+    #            while i == 0:
+    #                ibz_kpts.append(
+    #                    [float(lines[m].split()[p]) for p in range(3)])
+    #                m += 1
+    #                if lines[m] == ' \n':
+    #                    i = 1
+    #        if i == 1:
+    #            continue
+    #        n += 1
+    #    ibz_kpts = np.array(ibz_kpts)
+    #    return np.array(ibz_kpts)
 
     def get_homo_and_lumo(self):
         nspin = self.get_number_of_spins()
@@ -716,43 +740,43 @@ class myvasp(Vasp):
         else:
             return 0.0
 
-    def read_convergence(self):
-        """
-        A workout for a bug in vasp5.2.2 that b in outcar might be wrong.
-        Method that checks whether a calculation has converged."""
-        converged = None
-        # First check electronic convergence
-        for line in open('OUTCAR', 'r'):
-            if line.rfind('EDIFF  ') > -1:
-                ediff = float(line.split()[2])
-            if line.rfind('total energy-change') > -1:
-                # I saw this in an atomic oxygen calculation. it
-                # breaks this code, so I am checking for it here.
-                if 'MIXING' in line:
-                    continue
-                split = line.split(':')
-                a = float(split[1].split('(')[0])
-                try:
-                    b = float(split[1].split('(')[1][0:-2])
-                except ValueError:
-                    b = a
-                if [abs(a), abs(b)] < [ediff, ediff]:
-                    converged = True
-                else:
-                    converged = False
-                    continue
-        # Then if ibrion in [1,2,3] check whether ionic relaxation
-        # condition been fulfilled
-        if (self.int_params['ibrion'] in [1, 2, 3] and
-                self.int_params['nsw'] not in [0]):
-            if not self.read_relaxed():
-                converged = False
-            else:
-                converged = True
-        return converged
+    #def read_convergence(self):
+    #    """
+    #    A workout for a bug in vasp5.2.2 that b in outcar might be wrong.
+    #    Method that checks whether a calculation has converged."""
+    #    converged = None
+    #    # First check electronic convergence
+    #    for line in open('OUTCAR', 'r'):
+    #        if line.rfind('EDIFF  ') > -1:
+    #            ediff = float(line.split()[2])
+    #        if line.rfind('total energy-change') > -1:
+    #            # I saw this in an atomic oxygen calculation. it
+    #            # breaks this code, so I am checking for it here.
+    #            if 'MIXING' in line:
+    #                continue
+    #            split = line.split(':')
+    #            a = float(split[1].split('(')[0])
+    #            try:
+    #                b = float(split[1].split('(')[1][0:-2])
+    #            except ValueError:
+    #                b = a
+    #            if [abs(a), abs(b)] < [ediff, ediff]:
+    #                converged = True
+    #            else:
+    #                converged = False
+    #                continue
+    #    # Then if ibrion in [1,2,3] check whether ionic relaxation
+    #    # condition been fulfilled
+    #    if (self.int_params['ibrion'] in [1, 2, 3] and
+    #            self.int_params['nsw'] not in [0]):
+    #        if not self.read_relaxed():
+    #            converged = False
+    #        else:
+    #            converged = True
+    #    return converged
 
     def write_incar(self, atoms, directory='./', **kwargs):
-        Vasp.write_incar(self, atoms,directory=directory,  **kwargs)
+        Vasp2.write_incar(self, atoms,directory=directory,  **kwargs)
         incar = open(join(directory, 'INCAR'), 'a')
         vca_written=False
         if self.vca is not None and not vca_written:
@@ -776,40 +800,40 @@ class myvasp(Vasp):
 
         incar.close()
 
-    def restart_load(self):
-        """Method which is called upon restart."""
-        import ase.io
-        # Try to read sorting file
-        if os.path.isfile('ase-sort.dat'):
-            self.sort = []
-            self.resort = []
-            file = open('ase-sort.dat', 'r')
-            lines = file.readlines()
-            file.close()
-            for line in lines:
-                data = line.split()
-                self.sort.append(int(data[0]))
-                self.resort.append(int(data[1]))
-            atoms = ase.io.read('CONTCAR', format='vasp')[self.resort]
-        else:
-            atoms = ase.io.read('CONTCAR', format='vasp')
-            self.sort = list(range(len(atoms)))
-            self.resort = list(range(len(atoms)))
-        self.atoms = atoms.copy()
-        self.read_incar()
-        self.read_outcar()
-        self.set_results(atoms)
-        try:
-            self.read_kpoints()
-        except NotImplementedError:
-            print(
-                "*****\n  WARING :Only Monkhorst-Pack and gamma centered grid supported for restart. Thus set Kpoints as gamma only. "
-            )
-            self.set(kpts=[1, 1, 1])
-        self.read_potcar()
-        #        self.old_incar_params = self.incar_params.copy()
-        self.old_input_params = self.input_params.copy()
-        self.converged = self.read_convergence()
+    #def restart_load(self):
+    #    """Method which is called upon restart."""
+    #    import ase.io
+    #    # Try to read sorting file
+    #    if os.path.isfile('ase-sort.dat'):
+    #        self.sort = []
+    #        self.resort = []
+    #        file = open('ase-sort.dat', 'r')
+    #        lines = file.readlines()
+    #        file.close()
+    #        for line in lines:
+    #            data = line.split()
+    #            self.sort.append(int(data[0]))
+    #            self.resort.append(int(data[1]))
+    #        atoms = ase.io.read('CONTCAR', format='vasp')[self.resort]
+    #    else:
+    #        atoms = ase.io.read('CONTCAR', format='vasp')
+    #        self.sort = list(range(len(atoms)))
+    #        self.resort = list(range(len(atoms)))
+    #    self.atoms = atoms.copy()
+    #    self.read_incar()
+    #    self.read_outcar()
+    #    #self.set_results(atoms)
+    #    try:
+    #        self.read_kpoints()
+    #    except NotImplementedError:
+    #        print(
+    #            "*****\n  WARING :Only Monkhorst-Pack and gamma centered grid supported for restart. Thus set Kpoints as gamma only. "
+    #        )
+    #        self.set(kpts=[1, 1, 1])
+    #    self.read_potcar()
+    #    #        self.old_incar_params = self.incar_params.copy()
+    #    self.old_input_params = self.input_params.copy()
+    #    self.converged = self.read_convergence()
 
 
 def read_OUTCAR_energy(outcar='./OUTCAR'):

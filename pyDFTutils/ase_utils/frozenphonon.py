@@ -101,7 +101,7 @@ def calculate_phonon(atoms,
             if not os.path.exists(dir_name):
                 os.mkdir(dir_name)
             os.chdir(dir_name)
-            mcalc.scf_calculation()
+            mcalc.scf_calculation(cell)
             os.chdir(cur_dir)
 
         def calc_force(iscell):
@@ -171,4 +171,5 @@ def calculate_phonon(atoms,
     #    print(("[Phonopy] %3d: %10.5f cm-1" % (i + 1, freq * 33.35)))  #cm-1
     with open('phonon.pickle', 'wb') as myfile:
         pickle.dump(phonon, myfile)
+    phonon.save(settings={'force_constants': True})
     return phonon
