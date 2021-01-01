@@ -11,6 +11,7 @@ def view_cellpars(filename='POSCAR'):
 def view_spacegroup(filename='POSCAR',symprec=1e-3):
     atoms=read(filename)
     print("SPACEGROUP: %s"%spglib.get_spacegroup(atoms,symprec=symprec))
+    #print(spglib.get_symmetry_dataset(atoms, symprec=1e-2))
 
 def viewall(filename='POSCAR',symprec=1e-3):
     view_cellpars(filename=filename)

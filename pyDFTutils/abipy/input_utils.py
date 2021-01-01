@@ -62,9 +62,10 @@ def find_pp(symbol, xc, family, label='',pp_path=pp_path):
         name = os.path.join('JTH-%s*' % xc,
                             '%s.%s-JTH%s.xml' % (symbol, xcdict[xc], label))
     elif family.lower() == 'gbrv':
-        xcdict = {'LDA': 'lda', 'PBE': 'pbe'}
+        xcdict = {'LDA': 'lda', 'PBE': 'pbe', 'PBEsol':'pbe'}
+        axc=xcdict[xc]
         name = os.path.join(pp_path, 'GBRV-%s/%s_%s%s*' %
-                            (xc, symbol.lower(), xc.lower(), label))
+                            (axc.upper(), symbol.lower(), axc.lower(), label))
     elif family.lower() == 'dojo':
         xcdict = {'LDA': 'PW', 'PBE': 'PBE', 'PBEsol': 'PBEsol'}
         if label == '':
