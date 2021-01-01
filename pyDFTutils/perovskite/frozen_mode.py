@@ -614,7 +614,7 @@ def test():
 
         #R4_m_A1=0.5,  # R4-[Nd1:a:dsp]T1u(a), A , Antipolar mode in Pnma  
         #R4_m_A2=0.5,  # R4-[Nd1:a:dsp]T1u(b), A,  Antipolar mode in Pnma
-        R4_m_A3=0.0,  # R4-[Nd1:a:dsp]T1u(c), A, Unusual 
+        #R4_m_A3=0.0,  # R4-[Nd1:a:dsp]T1u(c), A, Unusual 
         #R4_m_A3=0.0,  # R4-[Nd1:a:dsp]T1u(c), A, Unusual 
         #R4_m_O1=0.0,  # R4-[O1:c:dsp]Eu(a), O, Unusual
         #R4_m_O2=0.0,  # R4-[O1:c:dsp]Eu(b), O, Unusual

@@ -1,8 +1,17 @@
 import numpy as np
 import spglib
+from ase.cell import Cell
 from ase.dft.kpoints import special_paths,  parse_path_string, bandpath
 import numpy as np
 from collections import Counter
+
+def kpath(cell, path=None, npoints=None, supercell_matrix=np.eye(3)):
+    mycell=Cell(cell)
+    bpath=mycell.bandpath(path=path, npoints=npoints, )
+    kpts=bpath.kpts
+    kpts=[np.dot(kpt, supercell_matrix) for kpt in kpts]
+    x,X, knames= bpath.get_linear_kpoint_axis()
+    return kpts, x, X, knames
 
 
 def cubic_kpath(npoints=500,name=True):

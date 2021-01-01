@@ -1,3 +1,4 @@
+import os
 from ase.calculators.siesta import *
 from ase.calculators.calculator import FileIOCalculator, ReadError
 from ase.calculators.siesta.parameters import format_fdf
@@ -67,7 +68,7 @@ class MySiesta(Siesta):
         })
         self.set_fdf_arguments(fdf)
         self.calculate(atoms)
-        self.read(self.label+'.XV')
+        self.read(self.prefix+'.XV')
         self.atoms.set_pbc(pbc)
         self.atoms.set_initial_magnetic_moments(initial_magnetic_moments)
         atoms=self.atoms

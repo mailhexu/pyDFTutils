@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import copy
 from ase import Atoms
+from ase.io import read, write
 import numpy as np
 import os
 import pickle
@@ -67,7 +68,7 @@ def calculate_phonon(atoms,
         print(("[phonopy] %d %s" % (d[0], d[1:])))
     supercell0 = phonon.get_supercell()
     supercells = phonon.get_supercells_with_displacements()
-    write_supercells_with_displacements(supercell0, supercells)
+    #write_supercells_with_displacements(supercell0, supercells)
     write_disp_yaml(disps, supercell0)
 
     # 2. calculated forces.
@@ -91,6 +92,7 @@ def calculate_phonon(atoms,
             if is_mag:
                 cell.set_initial_magnetic_moments(
                     sc_mag)
+            write('Supercell.cif', cell)
             mcalc = copy.deepcopy(calc)
             mcalc.set(lwave=True, lcharg=True)
             cell.set_calculator(mcalc)
@@ -155,11 +157,11 @@ def calculate_phonon(atoms,
 
         #phonon.set_displacement_dataset(set_of_forces)
         phonon.produce_force_constants(forces=np.array(set_of_forces))
-    # Phonopy post-process
-    print('==============')
-    print(phonon._displacement_dataset['first_atoms'])
+    #Phonopy post-process
+    #print('==============')
+    #print(phonon._displacement_dataset['first_atoms'])
     #phonon.produce_force_constants(forces=np.array(set_of_forces))
-    #phonon.produce_force_constants()
+    #honon.produce_force_constants()
     force_constants = phonon.get_force_constants()
     #print(force_constants)
     write_FORCE_CONSTANTS(force_constants, filename='FORCE_CONSTANTS')
