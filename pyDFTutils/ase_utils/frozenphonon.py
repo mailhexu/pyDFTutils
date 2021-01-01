@@ -67,7 +67,7 @@ def calculate_phonon(atoms,
         print(("[phonopy] %d %s" % (d[0], d[1:])))
     supercell0 = phonon.get_supercell()
     supercells = phonon.get_supercells_with_displacements()
-    write_supercells_with_displacements(supercell0, supercells)
+    #write_supercells_with_displacements(supercell0, supercells)
     write_disp_yaml(disps, supercell0)
 
     # 2. calculated forces.
@@ -169,4 +169,5 @@ def calculate_phonon(atoms,
     #    print(("[Phonopy] %3d: %10.5f cm-1" % (i + 1, freq * 33.35)))  #cm-1
     with open('phonon.pickle', 'wb') as myfile:
         pickle.dump(phonon, myfile)
+    phonon.save(settings={'force_constants': True})
     return phonon

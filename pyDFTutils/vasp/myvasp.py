@@ -112,12 +112,13 @@ class myvasp(Vasp):
                  restart=None,
                  output_template='vasp',
                  track_output=False,
+		 tempdir=None,
                  **kwargs):
 
         self.force_no_calc = False
         self.vca=None
 
-        self.tempdir = None
+        self.tempdir = tempdir
 
         Vasp.__init__(
             self,
@@ -309,7 +310,8 @@ class myvasp(Vasp):
         if not os.path.exists('RELAX'):
             os.mkdir('RELAX')
         for f in ['POSCAR', 'OUTCAR', 'EIGENVAL', 'CONTCAR', 'INCAR', 'log']:
-            copyfile(f, os.path.join('RELAX', f))
+            if os.path.exists(f):
+                copyfile(f, os.path.join('RELAX', f))
         return self.atoms
 
     def band_calculation(self, special_kpoints, names, npoints=60):
@@ -345,7 +347,8 @@ class myvasp(Vasp):
         if not os.path.exists('SCF'):
             os.mkdir('SCF')
         for f in ['POSCAR', 'OUTCAR', 'EIGENVAL', 'DOSCAR', 'INCAR', 'log']:
-            copyfile(f, os.path.join('SCF', f))
+            if os.path.exists(f):
+                copyfile(f, os.path.join('SCF', f))
         myfile = open('SCF/result.txt', 'w')
 
         try:
@@ -385,7 +388,8 @@ class myvasp(Vasp):
                 'POSCAR', 'OUTCAR', 'EIGENVAL', 'PROCAR', 'DOSCAR', 'INCAR',
                 'log'
         ]:
-            copyfile(f, os.path.join('DOS', f))
+            if os.path.exists(f):
+                copyfile(f, os.path.join('DOS', f))
         plot_dos(output='DOS/DOS.png')
 
     def ldos_calculation(self, ismear=-5, sigma=0.05):
@@ -407,7 +411,8 @@ class myvasp(Vasp):
                 'POSCAR', 'OUTCAR', 'EIGENVAL', 'PROCAR', 'DOSCAR', 'INCAR',
                 'log'
         ]:
-            copyfile(f, os.path.join('LDOS', f))
+            if os.path.exists(f):
+                copyfile(f, os.path.join('LDOS', f))
 
     def pdos_calculation(self, ismear=-5, sigma=0.05):
         """
@@ -428,7 +433,8 @@ class myvasp(Vasp):
                 'POSCAR', 'OUTCAR', 'EIGENVAL', 'PROCAR', 'DOSCAR', 'INCAR',
                 'log'
         ]:
-            copyfile(f, os.path.join('PDOS', f))
+            if os.path.exists(f):
+                copyfile(f, os.path.join('PDOS', f))
 
     def static_calculation(self, ismear=-5, sigma=0.05):
         self.scf_calculation(ismear=ismear, sigma=sigma)
@@ -481,7 +487,8 @@ class myvasp(Vasp):
                 'POSCAR', 'OUTCAR', 'EIGENVAL', 'PROCAR', 'DOSCAR', 'INCAR',
                 'log'
         ]:
-            copyfile(f, os.path.join('Wannier', f))
+            if os.path.exists(f):
+                copyfile(f, os.path.join('Wannier', f))
             os.system('cp ./wannier* Wannier')
 
     def get_eig_array(self):
@@ -630,7 +637,7 @@ class myvasp(Vasp):
         """
 
         cwd = os.getcwd()
-        if os.path.exists('/data') and self.tempdir is None:
+        if os.path.exists('/tmpdir') and self.tempdir is None:
             self.tempdir = tempfile.mkdtemp(prefix='vasptmp_', dir='/data')
             with open('./syncpath.txt', 'w') as myfile:
                 myfile.write('%s:%s\n' % (socket.gethostname(), self.tempdir))
