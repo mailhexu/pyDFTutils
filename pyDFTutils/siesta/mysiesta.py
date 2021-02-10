@@ -25,22 +25,26 @@ class MySiesta(Siesta):
         """
         Udict: {'Fe': {'n':n, 'l':l, 'U':U, 'J', J, 'rc':rc, 'Fermi_cut':Fermi_cut }}
         """
-        self.Udict=Udict
+        Ublock=[]
+        for key, val in Udict.items():
+            Ublock.append( '  %s %s '%(key, 1))
+            if val['n'] is not None:
+                Ublock.append('  n=%s %s'%(val['n'], val['l']))
+            else:
+                Ublock.append('%s'%(val['l']))
+            Ublock.append('  %s  %s'%(val['U'], val['J']))
+            if 'rc' in val:
+                Ublock.append('  %s  %s'%(val['rc'], val['Fermi_cut']))
+ 
 
-
+        fdf=self['fdf_arguments']
+        fdf.update({
+            'LDAU.Proj':  Ublock})
+        self.set_fdf_arguments(fdf)
+ 
 
     def write_Hubbard_block(self, f):
-        text="%block LDAU.Proj\n" 
-        for key, val in self.Udict.items():
-            text += '  %s %s \n'%(key, 1)
-            if val['n'] is None:
-                text += '  n=%s %s\n'%(n, l)
-            else:
-                text += '%s\n'%(l)
-            text += '  %s  %s\n'%(val['U'], val['J'])
-            text += '  %s  %s\n'%(val['rc'], val['Fermi_cut'])
-        text="%endblock LDAU.Proj\n" 
-        f.write(text)
+        pass
 
 
     def relax(
