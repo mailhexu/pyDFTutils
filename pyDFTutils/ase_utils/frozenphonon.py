@@ -30,6 +30,7 @@ def calculate_phonon(atoms,
                      func=None,
                      prepare_initial_wavecar=False,
                      skip=None,
+                     restart=True,
                      parallel=True,
                      sc_mag=None,
                      **func_args):
@@ -71,6 +72,7 @@ def calculate_phonon(atoms,
     #write_supercells_with_displacements(supercell0, supercells)
     write_disp_yaml(disps, supercell0)
 
+
     # 2. calculated forces.
     if forces_set_file is not None:
         symmetry = phonon.get_symmetry()
@@ -80,7 +82,18 @@ def calculate_phonon(atoms,
         phonon.set_displacement_dataset(set_of_forces)
         phonon.produce_force_constants()
     else:
-        set_of_forces = []
+        # initialize set of forces
+        if restart and os.path.exists('forces_set.pickle'):
+            try:
+                with open("forces_set.pickle", 'rb') as myfile:
+                    set_of_forces=pickle.load(myfile)
+                iskip=len(set_of_forces)-1
+            except:
+                set_of_forces = [] 
+                iskip=-1
+        else:
+            set_of_forces = []
+            iskip=-1
 
         if prepare_initial_wavecar and skip is None:
             scell = supercell0
@@ -139,31 +152,19 @@ def calculate_phonon(atoms,
                 force -= drift_force / forces.shape[0]
             return forces
 
-        #with ProcessPoolExecutor() as executor:
-        #    if skip is not None:
-        #        skip=0
-        #    set_of_forces=executor.map(calc_force,list(range(skip,len(supercells))))
-        if skip is None:
-            iskip=0
-        else:
-            iskip=skip
         if parallel:
             p=Pool()
             set_of_forces=p.map(calc_force,list(range(iskip,len(supercells))))
         else:
-            set_of_forces=[]
-            for iscell, scell in enumerate(supercells[iskip:]):
-                set_of_forces.append(calc_force(iscell))
+            for iscell, scell in enumerate(supercells):
+                if iscell>iskip:
+                    fs=calc_force(iscell)
+                    set_of_forces.append(fs)
+                    with open("forces_set.pickle", 'wb') as myfile:
+                        pickle.dump(set_of_forces, myfile )
 
-        #phonon.set_displacement_dataset(set_of_forces)
         phonon.produce_force_constants(forces=np.array(set_of_forces))
-    #Phonopy post-process
-    #print('==============')
-    #print(phonon._displacement_dataset['first_atoms'])
-    #phonon.produce_force_constants(forces=np.array(set_of_forces))
-    #honon.produce_force_constants()
     force_constants = phonon.get_force_constants()
-    #print(force_constants)
     write_FORCE_CONSTANTS(force_constants, filename='FORCE_CONSTANTS')
     #print("[Phonopy] Phonon frequencies at Gamma:")
     #for i, freq in enumerate(phonon.get_frequencies((0, 0, 0))):
