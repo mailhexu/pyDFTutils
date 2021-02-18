@@ -69,6 +69,7 @@ class MySiesta(Siesta):
             'rc': rc,
             'Fermi_cut': Fermi_cut
         }
+        self.set_Hubbard_U(Udict)
 
     def set_Hubbard_U(self, Udict):
         """
