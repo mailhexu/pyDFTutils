@@ -48,6 +48,10 @@ class MySiesta(Siesta):
                         species=species,
                         **kwargs)
 
+    def set_fdf_arguments(self, fdf_arguments):
+        self['fdf_arguments'].update(fdf_arguments)
+
+
     def set_mixer(self,
                   method='pulay',
                   weight=0.05,
