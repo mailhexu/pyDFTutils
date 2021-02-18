@@ -1,5 +1,5 @@
 import os
-from ase.calculators.siesta import *
+from ase.calculators.siesta import Siesta
 from ase.calculators.calculator import FileIOCalculator, ReadError
 from ase.calculators.siesta.parameters import format_fdf
 from ase.calculators.siesta.parameters import Species
@@ -20,8 +20,34 @@ def get_species(atoms, xc, rel='sr'):
     return pseudo_path, species
 
 
-
 class MySiesta(Siesta):
+    def __init__(self,
+                 command=None,
+                 xc='LDA',
+                 spin='UNPOLARIZED',
+                 atoms=None,
+                 **kwargs):
+        finder = DojoFinder()
+        elems = list(dict.fromkeys(atoms.get_chemical_symbols()).keys())
+        elem_dict = dict(zip(elems, range(1, len(elems) + 1)))
+        pseudo_path = finder.get_pp_path(xc=xc)
+        if spin == 'spin-orbit':
+            rel = 'fr'
+        else:
+            rel = 'sr'
+        species = [
+            Species(symbol=elem,
+                    pseudopotential=finder.get_pp_fname(elem, xc=xc, rel=rel),
+                    ghost=False) for elem in elem_dict.keys()
+        ]
+        Siesta.__init__(self,
+                        pseudo_path=pseudo_path,
+                        xc=xc,
+                        spin=spin,
+                        atoms=atoms,
+                        species=species,
+                        **kwargs)
+
     def set_mixer(self,
                   method='pulay',
                   weight=0.05,
@@ -48,23 +74,20 @@ class MySiesta(Siesta):
         """
         Udict: {'Fe': {'n':n, 'l':l, 'U':U, 'J', J, 'rc':rc, 'Fermi_cut':Fermi_cut }}
         """
-        Ublock=[]
+        Ublock = []
         for key, val in Udict.items():
-            Ublock.append( '  %s %s '%(key, 1))
+            Ublock.append('  %s %s ' % (key, 1))
             if val['n'] is not None:
-                Ublock.append('  n=%s %s'%(val['n'], val['l']))
+                Ublock.append('  n=%s %s' % (val['n'], val['l']))
             else:
-                Ublock.append('%s'%(val['l']))
-            Ublock.append('  %s  %s'%(val['U'], val['J']))
+                Ublock.append('%s' % (val['l']))
+            Ublock.append('  %s  %s' % (val['U'], val['J']))
             if 'rc' in val:
-                Ublock.append('  %s  %s'%(val['rc'], val['Fermi_cut']))
- 
+                Ublock.append('  %s  %s' % (val['rc'], val['Fermi_cut']))
 
-        fdf=self['fdf_arguments']
-        fdf.update({
-            'LDAU.Proj':  Ublock})
+        fdf = self['fdf_arguments']
+        fdf.update({'LDAU.Proj': Ublock})
         self.set_fdf_arguments(fdf)
- 
 
     def write_Hubbard_block(self, f):
         pass
