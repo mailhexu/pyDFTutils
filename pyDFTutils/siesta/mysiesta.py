@@ -62,7 +62,11 @@ class MySiesta(Siesta):
                   linear_after_weight=0.1):
         pass
 
-    def add_Hubbard_U(self, specy, n=3, l=2, U=0, J=0, rc=0.0, Fermi_cut=0.0):
+    def update_fdf_arguments(self, fdf_arguments):
+        fdf=self['fdf_arguments'].update(fdf_arguments)
+ 
+
+    def add_Hubbard_U(self, specy, n=3, l=2, U=0, J=0, rc=0.0, Fermi_cut=0.0, scale_factor='0.95'):
         if not 'Udict' in self.__dict__:
             self.Udict = dict()
         self.Udict[specy] = {
@@ -71,8 +75,10 @@ class MySiesta(Siesta):
             'U': U,
             'J': J,
             'rc': rc,
-            'Fermi_cut': Fermi_cut
+            'Fermi_cut': Fermi_cut,
+            'scale_factor': scale_factor
         }
+        self.set_Hubbard_U(self.Udict)
 
     def set_Hubbard_U(self, Udict):
         """
@@ -87,11 +93,13 @@ class MySiesta(Siesta):
                 Ublock.append('%s' % (val['l']))
             Ublock.append('  %s  %s' % (val['U'], val['J']))
             if 'rc' in val:
-                Ublock.append('  %s  %s' % (val['rc'], val['Fermi_cut']))
+                Ublock.append('  %s  %s'%(val['rc'], val['Fermi_cut']))
+            Ublock.append('    %s'%val['scale_factor'])
+ 
 
-        fdf = self['fdf_arguments']
-        fdf.update({'LDAU.Proj': Ublock})
-        self.set_fdf_arguments(fdf)
+        self.update_fdf_arguments({
+            'LDAU.Proj':  Ublock})
+ 
 
     def write_Hubbard_block(self, f):
         pass
@@ -109,8 +117,7 @@ class MySiesta(Siesta):
     ):
         pbc = atoms.get_pbc()
         initial_magnetic_moments = atoms.get_initial_magnetic_moments()
-        fdf = self['fdf_arguments']
-        fdf.update({
+        self.update_fdf_arguments({
             'MD.TypeOfRun': TypeOfRun,
             'MD.VariableCell': VariableCell,
             'MD.ConstantVolume': ConstantVolume,
@@ -119,13 +126,12 @@ class MySiesta(Siesta):
             'MD.MaxStressTol': "%s GPa" % MaxStressTol,
             'MD.NumCGSteps': NumCGSteps,
         })
-        self.set_fdf_arguments(fdf)
         self.calculate(atoms)
         self.read(self.prefix + '.XV')
         self.atoms.set_pbc(pbc)
         self.atoms.set_initial_magnetic_moments(initial_magnetic_moments)
         atoms = self.atoms
-        self.set_fdf_arguments({
+        self.update_fdf_arguments({
             'MD.NumCGSteps': 0,
         })
         return self.atoms
