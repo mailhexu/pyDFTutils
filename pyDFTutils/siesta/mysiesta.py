@@ -24,12 +24,21 @@ class MySiesta(Siesta):
     def __init__(self,
                  command=None,
                  xc='LDA',
-                 spin='UNPOLARIZED',
+                 spin='non-polarized',
                  atoms=None,
+                 ghosts=[],
                  **kwargs):
         finder = DojoFinder()
         elems = list(dict.fromkeys(atoms.get_chemical_symbols()).keys())
         elem_dict = dict(zip(elems, range(1, len(elems) + 1)))
+        symbols = atoms.get_chemical_symbols()
+
+        ghost_symbols = [symbols[i] for i in ghosts]
+        ghost_elems = list(dict.fromkeys(ghost_symbols).keys())
+        tags = [1 if i in ghosts else 0 for i in range(len(atoms))]
+        print(tags)
+        atoms.set_tags(tags)
+
         pseudo_path = finder.get_pp_path(xc=xc)
         if spin == 'spin-orbit':
             rel = 'fr'
@@ -40,6 +49,16 @@ class MySiesta(Siesta):
                     pseudopotential=finder.get_pp_fname(elem, xc=xc, rel=rel),
                     ghost=False) for elem in elem_dict.keys()
         ]
+        for elem in ghost_elems:
+            species.append(
+                Species(symbol=elem,
+                        pseudopotential=finder.get_pp_fname(
+                            elem, xc=xc, rel=rel),
+                        tag=1,
+                        ghost=True))
+        print(species)
+
+
         Siesta.__init__(self,
                         pseudo_path=pseudo_path,
                         xc=xc,
@@ -50,7 +69,6 @@ class MySiesta(Siesta):
 
     def set_fdf_arguments(self, fdf_arguments):
         self['fdf_arguments'].update(fdf_arguments)
-
 
     def set_mixer(self,
                   method='pulay',
@@ -63,10 +81,17 @@ class MySiesta(Siesta):
         pass
 
     def update_fdf_arguments(self, fdf_arguments):
-        fdf=self['fdf_arguments'].update(fdf_arguments)
- 
+        fdf = self['fdf_arguments'].update(fdf_arguments)
 
-    def add_Hubbard_U(self, specy, n=3, l=2, U=0, J=0, rc=0.0, Fermi_cut=0.0, scale_factor='0.95'):
+    def add_Hubbard_U(self,
+                      specy,
+                      n=3,
+                      l=2,
+                      U=0,
+                      J=0,
+                      rc=0.0,
+                      Fermi_cut=0.0,
+                      scale_factor='0.95'):
         if not 'Udict' in self.__dict__:
             self.Udict = dict()
         self.Udict[specy] = {
@@ -93,13 +118,10 @@ class MySiesta(Siesta):
                 Ublock.append('%s' % (val['l']))
             Ublock.append('  %s  %s' % (val['U'], val['J']))
             if 'rc' in val:
-                Ublock.append('  %s  %s'%(val['rc'], val['Fermi_cut']))
-            Ublock.append('    %s'%val['scale_factor'])
- 
+                Ublock.append('  %s  %s' % (val['rc'], val['Fermi_cut']))
+            Ublock.append('    %s' % val['scale_factor'])
 
-        self.update_fdf_arguments({
-            'LDAU.Proj':  Ublock})
- 
+        self.update_fdf_arguments({'LDAU.Proj': Ublock})
 
     def write_Hubbard_block(self, f):
         pass
