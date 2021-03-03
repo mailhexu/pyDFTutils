@@ -22,48 +22,48 @@ def get_species(atoms, xc, rel='sr'):
 
 class MySiesta(Siesta):
     def __init__(self,
+                 atoms=None,
                  command=None,
                  xc='LDA',
                  spin='non-polarized',
-                 atoms=None,
                  ghosts=[],
                  **kwargs):
-        finder = DojoFinder()
-        elems = list(dict.fromkeys(atoms.get_chemical_symbols()).keys())
-        elem_dict = dict(zip(elems, range(1, len(elems) + 1)))
-        symbols = atoms.get_chemical_symbols()
+        if atoms is not None:
+            finder = DojoFinder()
+            elems = list(dict.fromkeys(atoms.get_chemical_symbols()).keys())
+            elem_dict = dict(zip(elems, range(1, len(elems) + 1)))
+            symbols = atoms.get_chemical_symbols()
 
-        ghost_symbols = [symbols[i] for i in ghosts]
-        ghost_elems = list(dict.fromkeys(ghost_symbols).keys())
-        tags = [1 if i in ghosts else 0 for i in range(len(atoms))]
-        print(tags)
-        atoms.set_tags(tags)
+            # ghosts
+            ghost_symbols = [symbols[i] for i in ghosts]
+            ghost_elems = list(dict.fromkeys(ghost_symbols).keys())
+            tags = [1 if i in ghosts else 0 for i in range(len(atoms))]
+            atoms.set_tags(tags)
 
-        pseudo_path = finder.get_pp_path(xc=xc)
-        if spin == 'spin-orbit':
-            rel = 'fr'
-        else:
-            rel = 'sr'
-        species = [
-            Species(symbol=elem,
-                    pseudopotential=finder.get_pp_fname(elem, xc=xc, rel=rel),
-                    ghost=False) for elem in elem_dict.keys()
-        ]
-        for elem in ghost_elems:
-            species.append(
+            pseudo_path = finder.get_pp_path(xc=xc)
+            if spin == 'spin-orbit':
+                rel = 'fr'
+            else:
+                rel = 'sr'
+            species = [
                 Species(symbol=elem,
-                        pseudopotential=finder.get_pp_fname(
-                            elem, xc=xc, rel=rel),
-                        tag=1,
-                        ghost=True))
-        print(species)
+                        pseudopotential=finder.get_pp_fname(elem, xc=xc, rel=rel),
+                        ghost=False) for elem in elem_dict.keys()
+            ]
+            for elem in ghost_elems:
+                species.append(
+                    Species(symbol=elem,
+                            pseudopotential=finder.get_pp_fname(
+                                elem, xc=xc, rel=rel),
+                            tag=1,
+                            ghost=True))
 
 
         Siesta.__init__(self,
-                        pseudo_path=pseudo_path,
                         xc=xc,
                         spin=spin,
                         atoms=atoms,
+                        pseudo_path=pseudo_path,
                         species=species,
                         **kwargs)
 
