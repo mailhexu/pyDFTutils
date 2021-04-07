@@ -157,3 +157,29 @@ class MySiesta(Siesta):
             'MD.NumCGSteps': 0,
         })
         return self.atoms
+
+    def read_results(self):
+        """Read the results.
+        """
+        self.read_number_of_grid_points()
+        self.read_energy()
+        self.read_forces_stress()
+        #self.read_eigenvalues()
+        self.read_kpoints()
+        self.read_dipole()
+        self.read_pseudo_density()
+        #self.read_hsx()
+        self.read_dim()
+        #if self.results['hsx'] is not None:
+        #    self.read_pld(self.results['hsx'].norbitals,
+        #                  len(self.atoms))
+        #    self.atoms.cell = self.results['pld'].cell * Bohr
+        #else:
+        #    self.results['pld'] = None
+
+        #self.read_wfsx()
+        self.read_ion(self.atoms)
+
+        self.read_bands()
+
+
