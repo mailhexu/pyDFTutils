@@ -1,4 +1,6 @@
 import os
+import math
+import numpy as np
 from ase.calculators.siesta import Siesta
 from ase.calculators.calculator import FileIOCalculator, ReadError
 from ase.calculators.siesta.parameters import format_fdf
@@ -19,6 +21,17 @@ def get_species(atoms, xc, rel='sr'):
     ]
     return pseudo_path, species
 
+
+def cart2sph(vec):
+    x, y, z = vec
+    r = np.linalg.norm(vec)               # r
+    if r< 1e-10:
+        theta,phi=0.0,0.0
+    else:
+        # note that there are many conventions, here is the ISO convention.
+        phi = math.atan2(y,x) *180/math.pi                          # phi
+        theta = math.acos(z/r) *180/math.pi                        # theta
+    return r, theta, phi
 
 class MySiesta(Siesta):
     def __init__(self,
@@ -157,3 +170,56 @@ class MySiesta(Siesta):
             'MD.NumCGSteps': 0,
         })
         return self.atoms
+
+    def _write_structure(self, f, atoms):
+        """Translate the Atoms object to fdf-format.
+
+        Parameters:
+            - f:     An open file object.
+            - atoms: An atoms object.
+        """
+        cell = atoms.cell
+        f.write('\n')
+
+        if cell.rank in [1, 2]:
+            raise ValueError('Expected 3D unit cell or no unit cell.  You may '
+                             'wish to add vacuum along some directions.')
+
+        # Write lattice vectors
+        if np.any(cell):
+            f.write(format_fdf('LatticeConstant', '1.0 Ang'))
+            f.write('%block LatticeVectors\n')
+            for i in range(3):
+                for j in range(3):
+                    s = ('    %.15f' % cell[i, j]).rjust(16) + ' '
+                    f.write(s)
+                f.write('\n')
+            f.write('%endblock LatticeVectors\n')
+            f.write('\n')
+
+        self._write_atomic_coordinates(f, atoms)
+
+        # Write magnetic moments.
+        magmoms = atoms.get_initial_magnetic_moments()
+
+        # The DM.InitSpin block must be written to initialize to
+        # no spin. SIESTA default is FM initialization, if the
+        # block is not written, but  we must conform to the
+        # atoms object.
+        if magmoms is not None:
+            if len(magmoms) == 0:
+                f.write('#Empty block forces ASE initialization.\n')
+
+            f.write('%block DM.InitSpin\n')
+            if len(magmoms) != 0 and isinstance(magmoms[0], np.ndarray):
+                for n, Mcart in enumerate(magmoms):
+                    M=cart2sph(Mcart)
+                    if M[0] != 0:
+                        f.write('    %d %.14f %.14f %.14f \n' % (n + 1, M[0], M[1], M[2]))
+            elif len(magmoms) != 0 and isinstance(magmoms[0], float):
+                for n, M in enumerate(magmoms):
+                    if M != 0:
+                        f.write('    %d %.14f \n' % (n + 1, M))
+            f.write('%endblock DM.InitSpin\n')
+            f.write('\n')
+
