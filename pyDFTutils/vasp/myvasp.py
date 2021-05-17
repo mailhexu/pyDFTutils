@@ -323,7 +323,6 @@ class myvasp(Vasp2):
                 copyfile(f, os.path.join('BAND', f))
         #self.plot_bands()
 
->>>>>>> 2c47c688109a700f6d8f5ddc9434130b8425a4df
 
 
     def band_calculation(self, atoms, special_kpoints, names, npoints=60):

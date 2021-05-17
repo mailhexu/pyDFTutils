@@ -101,7 +101,7 @@ reversed_w90_orb_dict = dict(
     list(zip(w90_orb_dict.values(), w90_orb_dict.keys())))
 
 
-class wannier_input(object):
+class WannierInput(object):
     def __init__(self,
                  atoms,
                  seed=None,
