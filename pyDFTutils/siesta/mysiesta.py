@@ -171,55 +171,28 @@ class MySiesta(Siesta):
         })
         return self.atoms
 
-    def _write_structure(self, f, atoms):
-        """Translate the Atoms object to fdf-format.
-
-        Parameters:
-            - f:     An open file object.
-            - atoms: An atoms object.
+    def read_results(self):
+        """Read the results.
         """
-        cell = atoms.cell
-        f.write('\n')
+        self.read_number_of_grid_points()
+        self.read_energy()
+        self.read_forces_stress()
+        #self.read_eigenvalues()
+        self.read_kpoints()
+        self.read_dipole()
+        self.read_pseudo_density()
+        #self.read_hsx()
+        self.read_dim()
+        #if self.results['hsx'] is not None:
+        #    self.read_pld(self.results['hsx'].norbitals,
+        #                  len(self.atoms))
+        #    self.atoms.cell = self.results['pld'].cell * Bohr
+        #else:
+        #    self.results['pld'] = None
 
-        if cell.rank in [1, 2]:
-            raise ValueError('Expected 3D unit cell or no unit cell.  You may '
-                             'wish to add vacuum along some directions.')
+        #self.read_wfsx()
+        self.read_ion(self.atoms)
 
-        # Write lattice vectors
-        if np.any(cell):
-            f.write(format_fdf('LatticeConstant', '1.0 Ang'))
-            f.write('%block LatticeVectors\n')
-            for i in range(3):
-                for j in range(3):
-                    s = ('    %.15f' % cell[i, j]).rjust(16) + ' '
-                    f.write(s)
-                f.write('\n')
-            f.write('%endblock LatticeVectors\n')
-            f.write('\n')
+        self.read_bands()
 
-        self._write_atomic_coordinates(f, atoms)
-
-        # Write magnetic moments.
-        magmoms = atoms.get_initial_magnetic_moments()
-
-        # The DM.InitSpin block must be written to initialize to
-        # no spin. SIESTA default is FM initialization, if the
-        # block is not written, but  we must conform to the
-        # atoms object.
-        if magmoms is not None:
-            if len(magmoms) == 0:
-                f.write('#Empty block forces ASE initialization.\n')
-
-            f.write('%block DM.InitSpin\n')
-            if len(magmoms) != 0 and isinstance(magmoms[0], np.ndarray):
-                for n, Mcart in enumerate(magmoms):
-                    M=cart2sph(Mcart)
-                    if M[0] != 0:
-                        f.write('    %d %.14f %.14f %.14f \n' % (n + 1, M[0], M[1], M[2]))
-            elif len(magmoms) != 0 and isinstance(magmoms[0], float):
-                for n, M in enumerate(magmoms):
-                    if M != 0:
-                        f.write('    %d %.14f \n' % (n + 1, M))
-            f.write('%endblock DM.InitSpin\n')
-            f.write('\n')
 
