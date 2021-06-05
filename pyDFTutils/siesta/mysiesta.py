@@ -73,7 +73,7 @@ class MySiesta(Siesta):
             'rc': rc,
             'Fermi_cut': Fermi_cut
         }
-        self.set_Hubbard_U(Udict)
+        self.set_Hubbard_U(self.Udict)
 
     def set_Hubbard_U(self, Udict):
         """
@@ -91,7 +91,7 @@ class MySiesta(Siesta):
                 Ublock.append('  %s  %s' % (val['rc'], val['Fermi_cut']))
 
         fdf = self['fdf_arguments']
-        fdf.update({'LDAU.Proj': Ublock})
+        fdf.update({'LDAU.Proj': Ublock, 'LDAU.ProjectorGenerationMethod':2})
         self.set_fdf_arguments(fdf)
 
     def write_Hubbard_block(self, f):
@@ -100,11 +100,11 @@ class MySiesta(Siesta):
     def relax(
         self,
         atoms,
-        TypeOfRun='cg',
+        TypeOfRun='Broyden',
         VariableCell=True,
         ConstantVolume=False,
         RelaxCellOnly=False,
-        MaxForceTol=0.04,
+        MaxForceTol=0.001,
         MaxStressTol=1,
         NumCGSteps=40,
     ):
