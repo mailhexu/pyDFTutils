@@ -23,8 +23,7 @@ orb_p_label=['$p_x$+','$p_y$+','$p_z$+','$p_x$-','$p_y$-','$p_z$-']
 
 orb_all_local=['s+','p+','d+','s-','p-','d-']
 orb_all_local_label=['s+','p+','d+','s-','p-','d-']
-
-
+ 
 
 def getline(file,line_num):
     num_l=0
@@ -279,7 +278,6 @@ class MyVaspDos(VaspDos):
         if efermi=='auto':
             self.auto_set_fermi()
 
-
         dos_text=open(doscar,'r').readlines()
         line7=dos_text[7]
         nn7=len([fstr for fstr in line7.split()])
@@ -372,6 +370,13 @@ class MyVaspDos(VaspDos):
                     'd+':5, 'd-up':5, 'd-':6, 'd-down':6,
                     'f+':7, 'f-up':7, 'f-':8, 'f-down':8
                     }
+        elif n == 16:
+            norb = {'s+':1, 's-up':1, 's-':2, 's-down':2,
+                    'p+':3, 'p-up':3, 'p-':4, 'p-down':4,
+                    'd+':5, 'd-up':5, 'd-':6, 'd-down':6,
+                    'f+':7, 'f-up':7, 'f-':8, 'f-down':8
+                    }
+
         elif n == 10:
             norb = {'s':1, 'py':2, 'pz':3, 'px':4,
                     'dxy':5, 'dyz':6, 'dz2':7, 'dxz':8,
@@ -449,7 +454,10 @@ class MyVaspDos(VaspDos):
         """
         Return the efermi
         """
-        return self._get_efermi()
+        line6 = open(self.doscar,'r').readlines()[5]
+        emax,emin,nbands,efermi,x= [float(fstr) for fstr in line6.split()]
+        #return self._get_efermi()
+        return efermi
 
     def get_energy(self):
         """
@@ -544,7 +552,7 @@ class MyVaspDos(VaspDos):
         return self.dos
 
 
-def getldos(iatom,sites,location='./',doscar='DOSCAR',efermi='auto',is_up_major=False):
+def getldos(iatom,sites,location='./',doscar='DOSCAR',efermi='auto',is_up_major=False ,return_efermi=False):
     """
     read DOSCAR in location . return PDOS of iatom ,site is a list of 's+','s-',etc.
     iatom can be also sym_num, in this case there should be a POSCAR in the specified location.
@@ -559,6 +567,7 @@ def getldos(iatom,sites,location='./',doscar='DOSCAR',efermi='auto',is_up_major=
 
     mydos=MyVaspDos(doscar=join(location,doscar),efermi=efermi)
     energy=mydos.get_energy()
+    efermi=mydos.get_efermi()
     dos=[]
     for s in sites:
         if s.endswith('-'):
@@ -571,7 +580,10 @@ def getldos(iatom,sites,location='./',doscar='DOSCAR',efermi='auto',is_up_major=
                 dos.append(mydos.get_site_dos_major_up(iatom,s))
             else:
                 dos.append(mydos.site_dos(iatom,s))
-    return energy,dos
+    if return_efermi:
+        return energy, dos, efermi
+    else:
+        return energy,dos
 
 def read_sumdos(filename='sum_dos.csv'):
     """
@@ -631,7 +643,7 @@ def plot_group(xs,yss,labels,ymin=0,ymax=2,xmin=-15,xmax=5):
     plt.legend()
     plt.show()
 
-def plot_all_ldos(filename='DOSCAR',ispin=2,ymin=-2.0,ymax=2.0,xmin=-15.0,xmax=5.0,element_types=None):
+def plot_all_ldos(filename='DOSCAR',ispin=2,ymin=-2.0,ymax=2.0,xmin=-15.0,xmax=5.0,element_types=None, has_f=False):
     """
     plot the local dos of all atoms.
     """
@@ -643,9 +655,15 @@ def plot_all_ldos(filename='DOSCAR',ispin=2,ymin=-2.0,ymax=2.0,xmin=-15.0,xmax=5
         atom_nums=list(symdict.keys())
 
     if ispin==2:
-        sites=['s+','p+','d+','s-','p-','d-']
+        if has_f:
+            sites=['s+','p+','d+','s-','p-','d-', 'f+', 'f-']
+        else:
+            sites=['s+','p+','d+','s-','p-','d-']
     else:
-        sites=['s','p','d']
+        if has_f:
+            sites=['s','p','d','f']
+        else:
+            sites=['s','p','d']
 
     if not os.path.exists('LDOS'):
         os.mkdir('LDOS')
@@ -712,6 +730,12 @@ def plot_all_pdos_eg(element_types=None,filename='DOSCAR',ispin=2,ymin=-2.0,ymax
     for atom_num in atom_nums:
         copyfile(filename,'PDOS/DOSCAR')
         plotldos_group([atom_num],sites,ymin=ymin,ymax=ymax,xmin=xmin,xmax=xmax,special_location=None,output='PDOS/%s_eg_dos.png'%atom_num)
+
+def get_xld_d(iatom):
+    inplane=['dxy+', 'dx2+', 'dxy-', 'dx2-']
+    outplane=['dyz+', 'dxz+', 'dz2+', 'dyz-', 'dxz-', 'dz2-']
+
+
 
 
 
@@ -907,6 +931,7 @@ def plotldos_group(atom_num,sites,ymin=0.0,ymax=2.0,xmin=-15.0,xmax=5.0,special_
     plt.close()
 
 
+
 def plotldos(iatom,sites,xmin=-15.0,xmax=5.0,ymin=None,ymax=None):
     mydos=MyVaspDos()
     mydos.auto_set_fermi()
@@ -937,4 +962,5 @@ if __name__=='__main__':
     #plotldos_group(['Fe1','Fe2','Fe3','Fe4'],['s-','p-','d-'],ymin=-12,ymax=0)
     # plotldos_group(['Ti1','Ti2','Ti3','Ti4'],['s-','p-','d-'],ymin=-12,ymax=0)
     names=['Bi1','Fe1','O1','O3']
-    plotldos_group(names,['s+','p+','d+','s-','p-','d-'],ymin=[-0.7,-6,-0.7,-0.7],ymax=[0.7,6,0.7,0.7])
+    #plotldos_group(names,['s+','p+','d+','s-','p-','d-'],ymin=[-0.7,-6,-0.7,-0.7],ymax=[0.7,6,0.7,0.7])
+    plotldos_group(names,['s+','p+','d+','f+', 's-','p-','d-', 'f-'],ymin=[-0.7,-6,-0.7,-0.7],ymax=[0.7,6,0.7,0.7])

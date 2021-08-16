@@ -31,9 +31,6 @@ def econf_str_parse(s):
 
 
 
-def test_s():
-    print(econf_str_parse('[He]2s'))
-
 class element(object):
     def __init__(self,name):
         self.name=name

@@ -15,5 +15,11 @@ setup(
         ],
     classifiers=[
         'Development Status :: 3 - Alpha',
-        'License :: OSI Approved :: GPLv3 license',
+        'Programming Language :: Python :: 3',
+        'Operating System :: OS Independent',
+        'Intended Audience :: Science/Research',
+        'Topic :: Scientific/Engineering :: Chemistry',
+        'Topic :: Scientific/Engineering :: Physics',
+        #'License :: OSI Approved :: BSD License',
+        'License :: OSI Approved :: GPLv3 License',
     ])
