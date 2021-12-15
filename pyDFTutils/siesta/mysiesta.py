@@ -4,7 +4,7 @@ import numpy as np
 from ase.calculators.siesta import Siesta
 from ase.calculators.calculator import FileIOCalculator, ReadError
 from ase.calculators.siesta.parameters import format_fdf
-from ase.calculators.siesta.parameters import Species
+from ase.calculators.siesta.parameters import Species, PAOBasisBlock
 from pyDFTutils.pseudopotential import DojoFinder
 import copy
 
@@ -25,13 +25,14 @@ def get_species(atoms, xc, rel='sr'):
 def cart2sph(vec):
     x, y, z = vec
     r = np.linalg.norm(vec)               # r
-    if r< 1e-10:
-        theta,phi=0.0,0.0
+    if r < 1e-10:
+        theta, phi = 0.0, 0.0
     else:
         # note that there are many conventions, here is the ISO convention.
-        phi = math.atan2(y,x) *180/math.pi                          # phi
-        theta = math.acos(z/r) *180/math.pi                        # theta
+        phi = math.atan2(y, x) * 180/math.pi                          # phi
+        theta = math.acos(z/r) * 180/math.pi                        # theta
     return r, theta, phi
+
 
 class MySiesta(Siesta):
     def __init__(self,
@@ -40,6 +41,7 @@ class MySiesta(Siesta):
                  xc='LDA',
                  spin='non-polarized',
                  ghosts=[],
+                 input_basis_set={},
                  **kwargs):
         if atoms is not None:
             finder = DojoFinder()
@@ -58,11 +60,17 @@ class MySiesta(Siesta):
                 rel = 'fr'
             else:
                 rel = 'sr'
-            species = [
-                Species(symbol=elem,
-                        pseudopotential=finder.get_pp_fname(elem, xc=xc, rel=rel),
-                        ghost=False) for elem in elem_dict.keys()
-            ]
+            species = []
+            for elem in elem_dict.keys():
+                if elem not in input_basis_set:
+                    bselem = 'DZP'
+                else:
+                    bselem = PAOBasisBlock(input_basis_set[elem])
+                species.append(Species(symbol=elem,
+                                       pseudopotential=finder.get_pp_fname(
+                                           elem, xc=xc, rel=rel),
+                                       basis_set=bselem,
+                                       ghost=False))
             for elem in ghost_elems:
                 species.append(
                     Species(symbol=elem,
@@ -70,7 +78,6 @@ class MySiesta(Siesta):
                                 elem, xc=xc, rel=rel),
                             tag=1,
                             ghost=True))
-
 
         Siesta.__init__(self,
                         xc=xc,
@@ -134,7 +141,8 @@ class MySiesta(Siesta):
                 Ublock.append('  %s  %s' % (val['rc'], val['Fermi_cut']))
             Ublock.append('    %s' % val['scale_factor'])
 
-        self.update_fdf_arguments({'LDAU.Proj': Ublock, 'LDAU.ProjectorGenerationMethod':2})
+        self.update_fdf_arguments(
+            {'LDAU.Proj': Ublock, 'LDAU.ProjectorGenerationMethod': 2})
 
     def write_Hubbard_block(self, f):
         pass
@@ -213,9 +221,10 @@ class MySiesta(Siesta):
             f.write('%block DM.InitSpin\n')
             if len(magmoms) != 0 and isinstance(magmoms[0], np.ndarray):
                 for n, Mcart in enumerate(magmoms):
-                    M=cart2sph(Mcart)
+                    M = cart2sph(Mcart)
                     if M[0] != 0:
-                        f.write('    %d %.14f %.14f %.14f \n' % (n + 1, M[0], M[1], M[2]))
+                        f.write('    %d %.14f %.14f %.14f \n' %
+                                (n + 1, M[0], M[1], M[2]))
             elif len(magmoms) != 0 and isinstance(magmoms[0], float):
                 for n, M in enumerate(magmoms):
                     if M != 0:
@@ -229,23 +238,20 @@ class MySiesta(Siesta):
         self.read_number_of_grid_points()
         self.read_energy()
         self.read_forces_stress()
-        #self.read_eigenvalues()
+        # self.read_eigenvalues()
         self.read_kpoints()
         self.read_dipole()
         self.read_pseudo_density()
-        #self.read_hsx()
+        # self.read_hsx()
         self.read_dim()
-        #if self.results['hsx'] is not None:
+        # if self.results['hsx'] is not None:
         #    self.read_pld(self.results['hsx'].norbitals,
         #                  len(self.atoms))
         #    self.atoms.cell = self.results['pld'].cell * Bohr
-        #else:
+        # else:
         #    self.results['pld'] = None
 
-        #self.read_wfsx()
+        # self.read_wfsx()
         self.read_ion(self.atoms)
 
         self.read_bands()
-
-
-

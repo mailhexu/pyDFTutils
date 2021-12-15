@@ -63,11 +63,11 @@ class distorted_cell():
             u.append(eigvec[eig_index:eig_index + 3] * coef)
 
         #u = np.array(u) / np.sqrt(len(m))
-        u = np.array(u) / np.linalg.norm(u)  #/np.sqrt(self._N)
+        u = np.array(u) / np.linalg.norm(u)  # /np.sqrt(self._N)
         phase_factor = self._get_phase_factor(u, argument)
 
         if use_isotropy_amplitue:
-            amplitude = amplitude  #*self._N
+            amplitude = amplitude  # *self._N
         u *= phase_factor * amplitude
 
         return u
@@ -109,9 +109,9 @@ def trim_cell(relative_axes, cell, symprec):
         trimed_masses = None
     else:
         trimed_masses = []
-    #if magmoms is None:
+    # if magmoms is None:
     #    trimed_magmoms = None
-    #else:
+    # else:
     #    trimed_magmoms = []
     extracted_atoms = []
 
@@ -143,14 +143,14 @@ def trim_cell(relative_axes, cell, symprec):
             trimed_numbers.append(numbers[i])
             if masses is not None:
                 trimed_masses.append(masses[i])
-            #if magmoms is not None:
+            # if magmoms is not None:
             #    trimed_magmoms.append(magmoms[i])
             extracted_atoms.append(i)
 
     trimed_cell = Atoms(
         numbers=trimed_numbers,
         masses=trimed_masses,
-        #magmoms=trimed_magmoms,
+        # magmoms=trimed_magmoms,
         scaled_positions=trimed_positions[:num_atom],
         cell=trimed_lattice, )
 
@@ -247,10 +247,10 @@ class Supercell(Atoms):
                 self,
                 numbers=supercell.get_atomic_numbers(),
                 masses=supercell.get_masses(),
-                #magmoms=supercell.get_magnetic_moments(),
+                # magmoms=supercell.get_magnetic_moments(),
                 scaled_positions=supercell.get_scaled_positions(),
                 cell=supercell.get_cell(),
-                #pbc=True)
+                # pbc=True)
             )
             self._u2s_map = np.arange(unitcell.get_number_of_atoms()) * multi
             self._u2u_map = dict([(j, i) for i, j in enumerate(self._u2s_map)])
@@ -285,9 +285,9 @@ class Supercell(Atoms):
             masses_multi = None
         else:
             masses_multi = []
-        #if magmoms is None:
+        # if magmoms is None:
         #    magmoms_multi = None
-        #else:
+        # else:
         #    magmoms_multi = []
         for l, pos in enumerate(positions):
             for i in range(multi[2]):
@@ -300,16 +300,16 @@ class Supercell(Atoms):
                         if masses is not None:
                             masses_multi.append(masses[l])
                         atom_map.append(l)
-                        #if magmoms is not None:
+                        # if magmoms is not None:
                         #    magmoms_multi.append(magmoms[l])
 
         simple_supercell = Atoms(
             numbers=numbers_multi,
             masses=masses_multi,
-            #magmoms=magmoms_multi,
+            # magmoms=magmoms_multi,
             scaled_positions=positions_multi,
             cell=np.dot(np.diag(multi), lattice),
-            #pbc=True
+            # pbc=True
         )
 
         return simple_supercell, atom_map
@@ -350,7 +350,7 @@ class Primitive(Atoms):
             self,
             numbers=trimed_cell.get_atomic_numbers(),
             masses=trimed_cell.get_masses(),
-            #magmoms=trimed_cell.get_magnetic_moments(),
+            # magmoms=trimed_cell.get_magnetic_moments(),
             scaled_positions=trimed_cell.get_scaled_positions(),
             cell=trimed_cell.get_cell(),
             pbc=True)
@@ -391,8 +391,10 @@ def gen_P21c_perovskite(
         supercell_matrix=[[1, -1, 0], [1, 1, 0], [0, 0, 2]],
         modes=dict(
         R2_m_O1=0.0,  # R2-[O1:c:dsp]A2u(a), O, breathing
-        R3_m_O1=0.0,  # R3-[O1:c:dsp]A2u(a), O JT inplane-stagger, out-of-plane antiphase
-        R3_m_O2=0.0,  # R3-[O1:c:dsp]A2u(b), O, out-of-plane-stagger, inplane antiphase, Unusual.
+        # R3-[O1:c:dsp]A2u(a), O JT inplane-stagger, out-of-plane antiphase
+        R3_m_O1=0.0,
+        # R3-[O1:c:dsp]A2u(b), O, out-of-plane-stagger, inplane antiphase, Unusual.
+        R3_m_O2=0.0,
         R4_m_A1=0.0,  # R4-[Nd1:a:dsp]T1u(a), A , Unusual
         R4_m_A2=0.0,  # R4-[Nd1:a:dsp]T1u(b), A, Unusual
         R4_m_A3=0.0,  # R4-[Nd1:a:dsp]T1u(c), A, Unusual
@@ -405,11 +407,11 @@ def gen_P21c_perovskite(
         X3_m_A1=0.0,  # X3-[Nd1:a:dsp]T1u(a), What's this..
         X3_m_O1=0.0,  # X3-[O1:c:dsp]A2u(a)
 
-        #X5_m_A1=0.0,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
-        #X5_m_A2=0.0,  # [Nd1:a:dsp]T1u(b), A , save as above
-        #X5_m_O1=0.0,  # [Nd1:a:dsp]T1u(a), O , Antiferro mode
-        #X5_m_O2=0.0,  # [Nd1:a:dsp]T1u(b), O , same as above
-        #M2_p_O1=0.0,  # M2+[O1:c:dsp]Eu(a), O, In phase rotation c+
+        # X5_m_A1=0.0,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
+        # X5_m_A2=0.0,  # [Nd1:a:dsp]T1u(b), A , save as above
+        # X5_m_O1=0.0,  # [Nd1:a:dsp]T1u(a), O , Antiferro mode
+        # X5_m_O2=0.0,  # [Nd1:a:dsp]T1u(b), O , same as above
+        # M2_p_O1=0.0,  # M2+[O1:c:dsp]Eu(a), O, In phase rotation c+
 
         Z5_m_A1=0.0,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
         Z5_m_A2=0.0,  # [Nd1:a:dsp]T1u(b), A , save as above
@@ -420,7 +422,8 @@ def gen_P21c_perovskite(
         M3_p_O1=0.0,  # M3+[O1:c:dsp]A2u(a), O, D-type JT inplane stagger
         M5_p_O1=0.0,  # M5+[O1:c:dsp]Eu(a), O, Out of phase tilting
         M5_p_O2=0.0,  # M5+[O1:c:dsp]Eu(a), O, Out of phase tilting
-        M4_p_O1=0.0 , # M4+[O1:c:dsp]A2u(a), O, in-plane-breathing (not in P21/c)
+        # M4+[O1:c:dsp]A2u(a), O, in-plane-breathing (not in P21/c)
+        M4_p_O1=0.0,
 
         G_Ax=0.0,
         G_Ay=0.0,
@@ -437,7 +440,7 @@ def gen_P21c_perovskite(
         G_G4x=0.0,
         G_G4y=0.0,
         G_G4z=0.0,
-            )
+        )
 ):
     atoms = gen_primitive(name=name, mag_order='PM', latticeconstant=cell[0])
     spos = atoms.get_scaled_positions()
@@ -448,20 +451,24 @@ def gen_P21c_perovskite(
 
     mode_dict = {
         'R2_m_O1': perovskite_mode.R2p,
-        'R3_m_O1': perovskite_mode.R12p_1,  # R3-[O1:c:dsp]A2u(a), O JT inplane-stagger, out-of-plane antiphase
-        'R3_m_O2': perovskite_mode.R12p_2,  # R3-[O1:c:dsp]A2u(b), O, out-of-plane-stagger, inplane antiphase
+        # R3-[O1:c:dsp]A2u(a), O JT inplane-stagger, out-of-plane antiphase
+        'R3_m_O1': perovskite_mode.R12p_1,
+        # R3-[O1:c:dsp]A2u(b), O, out-of-plane-stagger, inplane antiphase
+        'R3_m_O2': perovskite_mode.R12p_2,
         'R4_m_A1': perovskite_mode.R15_1,  # R4-[Nd1:a:dsp]T1u(a), A
         'R4_m_A2': perovskite_mode.R15_2,  # R4-[Nd1:a:dsp]T1u(b), A
         'R4_m_A3': perovskite_mode.R15_3,  # R4-[Nd1:a:dsp]T1u(c), A
         'R4_m_O1': perovskite_mode.R15_4,  # R4-[O1:c:dsp]Eu(a), O
         'R4_m_O2': perovskite_mode.R15_5,  # R4-[O1:c:dsp]Eu(b), O
         'R4_m_O3': perovskite_mode.R15_6,  # R4-[O1:c:dsp]Eu(c), O
-        'R5_m_O1': perovskite_mode.R25_1,  # R5-[O1:c:dsp]Eu(a), O, out-of-phase rotation a-
+        # R5-[O1:c:dsp]Eu(a), O, out-of-phase rotation a-
+        'R5_m_O1': perovskite_mode.R25_1,
         'R5_m_O2': perovskite_mode.R25_2,  # R5-[O1:c:dsp]Eu(b), O, b-
-        'R5_m_O3': perovskite_mode.R25_3,  # R5-[O1:c:dsp]Eu(c), O, c-. For Pnma. Do not use.
+        # R5-[O1:c:dsp]Eu(c), O, c-. For Pnma. Do not use.
+        'R5_m_O3': perovskite_mode.R25_3,
 
-        #'X3_m_A1':perovskite_mode., # X3-[Nd1:a:dsp]T1u(a), What's this..
-        #'X3_m_O1':perovskite_mode., # X3-[O1:c:dsp]A2u(a)
+        # 'X3_m_A1':perovskite_mode., # X3-[Nd1:a:dsp]T1u(a), What's this..
+        # 'X3_m_O1':perovskite_mode., # X3-[O1:c:dsp]A2u(a)
         'Z5_m_A1':
         perovskite_mode.Z5p_1,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
         'Z5_m_A2':
@@ -473,39 +480,43 @@ def gen_P21c_perovskite(
 
         'M2_p_O1':
         perovskite_mode.M3,  # M2+[O1:c:dsp]Eu(a), O, In phase rotation
-        'M3_p_O1': perovskite_mode.M2,  # M3+[O1:c:dsp]A2u(a), O, D-type JT inplane stagger
-        'M5_p_O1':perovskite_mode.M5_1,  # M5+[O1:c:dsp]Eu(a), O, Out of phase tilting
-        'M5_p_O2':perovskite_mode.M5_2,  # M5+[O1:c:dsp]Eu(b), O, Out of phase tilting, -above
-        'M4_p_O1': perovskite_mode.M4,  # M4+[O1:c:dsp]A2u(a), O, in-plane-breathing (not in P21/c)
+        # M3+[O1:c:dsp]A2u(a), O, D-type JT inplane stagger
+        'M3_p_O1': perovskite_mode.M2,
+        # M5+[O1:c:dsp]Eu(a), O, Out of phase tilting
+        'M5_p_O1': perovskite_mode.M5_1,
+        # M5+[O1:c:dsp]Eu(b), O, Out of phase tilting, -above
+        'M5_p_O2': perovskite_mode.M5_2,
+        # M4+[O1:c:dsp]A2u(a), O, in-plane-breathing (not in P21/c)
+        'M4_p_O1': perovskite_mode.M4,
     }
 
     # add Gamma modes to mode_dict
-    Gamma_mode_dict=Gamma_modes(atoms.get_chemical_symbols())
+    Gamma_mode_dict = Gamma_modes(atoms.get_chemical_symbols())
     mode_dict.update(Gamma_mode_dict)
 
-
-    mode_disps={}
-    qdict={'G':[0,0,0],
-           #'X':[0,0.0,0.5],
-           'M':[0.5,0.5,0],
-           'R':[0.5,0.5,0.5],
-           'Z':[0.0,0.0,0.5]
-    }
-    disps=0.0 #np.zeros(3,dtype='complex128')
+    mode_disps = {}
+    qdict = {'G': [0, 0, 0],
+             # 'X':[0,0.0,0.5],
+             'M': [0.5, 0.5, 0],
+             'R': [0.5, 0.5, 0.5],
+             'Z': [0.0, 0.0, 0.5]
+             }
+    disps = 0.0  # np.zeros(3,dtype='complex128')
     for name, amp in modes.items():
-        eigvec=np.array(mode_dict[name])
+        eigvec = np.array(mode_dict[name])
         disp = dcell._get_displacements(
             eigvec=eigvec,
             q=qdict[name[0]],
             amplitude=amp,
             argument=0)
-        disps+=disp
+        disps += disp
 
     newcell = dcell._get_cell_with_modulation(disps)
     newcell = Atoms(newcell)
     print(spglib.get_spacegroup(newcell))
-    #vesta_view(newcell)
+    # vesta_view(newcell)
     return newcell
+
 
 def gen_distorted_perovskite(
         name,
@@ -519,11 +530,11 @@ def gen_distorted_perovskite(
         JT_a=0.0):
     atoms = gen_primitive(name=name, mag_order='PM', latticeconstant=3.9)
     spos = atoms.get_scaled_positions()
-    #atoms.set_cell([3.5,3.5,3.9,90,90,90])
+    # atoms.set_cell([3.5,3.5,3.9,90,90,90])
     atoms.set_cell(cell)
     atoms.set_scaled_positions(spos)
     #from ase.io import write
-    #write('cubic_LaMnO3.cif',atoms)
+    # write('cubic_LaMnO3.cif',atoms)
     dcell = distorted_cell(atoms, supercell_matrix=supercell_matrix)
     eigvec = np.zeros(15)
 
@@ -543,7 +554,7 @@ def gen_distorted_perovskite(
         q=[0.5, 0.5, 0.5],
         amplitude=breathing,
         argument=0)
-    #disp2=dcell._get_displacements(eigvec=out_of_phase_rotation,q=[0.5,0.5,0.5],amplitude=0.55,argument=0)
+    # disp2=dcell._get_displacements(eigvec=out_of_phase_rotation,q=[0.5,0.5,0.5],amplitude=0.55,argument=0)
     disp_jt = dcell._get_displacements(
         eigvec=eig_JT_d, q=[0.5, 0.5, 0.0], amplitude=JT_d, argument=0)
 
@@ -569,16 +580,16 @@ def gen_distorted_perovskite(
         amplitude=in_phase_rotation,
         argument=0)
 
-    #print(out_of_phase_rotation)
-    #print(disp_rotx)
-    #print(disp_jt)
+    # print(out_of_phase_rotation)
+    # print(disp_rotx)
+    # print(disp_jt)
 
-    #print disp.shape
+    # print disp.shape
     newcell = dcell._get_cell_with_modulation(
         disp_jt + disp_rotx + disp_roty + disp_rotz + disp_br + disp_tilting)
     newcell = Atoms(newcell)
     print(spglib.get_spacegroup(newcell))
-    #vesta_view(newcell)
+    # vesta_view(newcell)
     return newcell
 
 
@@ -597,37 +608,39 @@ def isotropy_normfactor(scell, sc_mat, disps):
     norm_factor = 1.0 / np.sqrt(sum)
     return norm_factor
 
+
 def test():
-    atoms=gen_P21c_perovskite(name='YNiO3', cell=[3.7,3.7,3.7],
+    atoms = gen_P21c_perovskite(name='YNiO3', cell=[3.7, 3.7, 3.7],
 
-    supercell_matrix=[[1, -1, 0], [1, 1, 0], [0, 0, 2]],
-    modes=dict(
-        #R2_m_O1=0.8, #breathing
-        #R3_m_O1=1.0,
-        #R3_m_O2=1.0,  # R3-[O1:c:dsp]A2u(b), O, out-of-plane-stagger, inplane antiphase
-        
-        #R5_m_O1=1.2,  # R5-[O1:c:dsp]Eu(a), O a-
-        #R5_m_O2=1.2,  # R5-[O1:c:dsp]Eu(a), O b-
-        #R5_m_O3=1.0,  # R5-[O1:c:dsp]Eu(c), O  c-
-        #X5_m_A1=1.0,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
+                                supercell_matrix=[
+                                    [1, -1, 0], [1, 1, 0], [0, 0, 2]],
+                                modes=dict(
+        # R2_m_O1=0.8, #breathing
+        # R3_m_O1=1.0,
+        # R3_m_O2=1.0,  # R3-[O1:c:dsp]A2u(b), O, out-of-plane-stagger, inplane antiphase
 
-
-        #R4_m_A1=0.5,  # R4-[Nd1:a:dsp]T1u(a), A , Antipolar mode in Pnma  
-        #R4_m_A2=0.5,  # R4-[Nd1:a:dsp]T1u(b), A,  Antipolar mode in Pnma
-        #R4_m_A3=0.0,  # R4-[Nd1:a:dsp]T1u(c), A, Unusual 
-        #R4_m_A3=0.0,  # R4-[Nd1:a:dsp]T1u(c), A, Unusual 
-        #R4_m_O1=0.0,  # R4-[O1:c:dsp]Eu(a), O, Unusual
-        #R4_m_O2=0.0,  # R4-[O1:c:dsp]Eu(b), O, Unusual
-        #R4_m_O3=0.0,  # R4-[O1:c:dsp]Eu(c), O, Unusual
+        # R5_m_O1=1.2,  # R5-[O1:c:dsp]Eu(a), O a-
+        # R5_m_O2=1.2,  # R5-[O1:c:dsp]Eu(a), O b-
+        # R5_m_O3=1.0,  # R5-[O1:c:dsp]Eu(c), O  c-
+        # X5_m_A1=1.0,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
 
 
-        #M2_p_O1=1.2,  # M2+[O1:c:dsp]Eu(a), O, In phase rotation c+
+        # R4_m_A1=0.5,  # R4-[Nd1:a:dsp]T1u(a), A , Antipolar mode in Pnma
+        # R4_m_A2=0.5,  # R4-[Nd1:a:dsp]T1u(b), A,  Antipolar mode in Pnma
+        # R4_m_A3=0.0,  # R4-[Nd1:a:dsp]T1u(c), A, Unusual
+        # R4_m_A3=0.0,  # R4-[Nd1:a:dsp]T1u(c), A, Unusual
+        # R4_m_O1=0.0,  # R4-[O1:c:dsp]Eu(a), O, Unusual
+        # R4_m_O2=0.0,  # R4-[O1:c:dsp]Eu(b), O, Unusual
+        # R4_m_O3=0.0,  # R4-[O1:c:dsp]Eu(c), O, Unusual
 
-        #M3_p_O1=0.1,  # M3+[O1:c:dsp]A2u(a), O, D-type JT inplane stagger
 
-        #M5_p_O1=1.0,  # M5+[O1:c:dsp]Eu(a), O, Out of phase tilting
+        # M2_p_O1=1.2,  # M2+[O1:c:dsp]Eu(a), O, In phase rotation c+
 
-        #M4_p_O1=1.0 , # M4+[O1:c:dsp]A2u(a), O, in-plane-breathing (not in P21/c)
+        # M3_p_O1=0.1,  # M3+[O1:c:dsp]A2u(a), O, D-type JT inplane stagger
+
+        # M5_p_O1=1.0,  # M5+[O1:c:dsp]Eu(a), O, Out of phase tilting
+
+        # M4_p_O1=1.0 , # M4+[O1:c:dsp]A2u(a), O, in-plane-breathing (not in P21/c)
         G_Ax=0.0,
         G_Ay=0.0,
         G_Az=0.0,
@@ -640,16 +653,13 @@ def test():
         G_Lx=0.0,
         G_Ly=0.0,
         G_Lz=0.0,
-        #G_G4x=0.1,
-        #G_G4y=0.1,
-        #G_G4z=0.1,
+        # G_G4x=0.1,
+        # G_G4y=0.1,
+        # G_G4z=0.1,
     )
     )
-    #write('P4mm.vasp', atoms, vasp5=True)
     vesta_view(atoms)
-
 
 
 if __name__ == '__main__':
     test()
-

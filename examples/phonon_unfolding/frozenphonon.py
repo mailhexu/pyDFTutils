@@ -52,7 +52,7 @@ def calculate_phonon(atoms,
         print("[phonopy] %d %s" % (d[0], d[1:]))
     supercell0 = phonon.get_supercell()
     supercells = phonon.get_supercells_with_displacements()
-    write_supercells_with_displacements(supercell0, supercells)
+    #write_supercells_with_displacements(supercell0, supercells)
     write_disp_yaml(disps, supercell0)
 
     # 2. calculated forces.
@@ -73,14 +73,14 @@ def calculate_phonon(atoms,
             os.mkdir(dir_name)
         os.chdir(dir_name)
         forces = cell.get_forces()
-        #print "[Phonopy] Forces: %s" % forces
+        # print "[Phonopy] Forces: %s" % forces
         # Do something other than calculating the forces with func.
         # func: func(atoms, calc, func_args)
         if func is not None:
             func(cell, calc, **func_args)
         os.chdir(cur_dir)
         drift_force = forces.sum(axis=0)
-        #print "[Phonopy] Drift force:", "%11.5f" * 3 % tuple(drift_force)
+        # print "[Phonopy] Drift force:", "%11.5f" * 3 % tuple(drift_force)
         # Simple translational invariance
         for force in forces:
             force -= drift_force / forces.shape[0]
@@ -94,5 +94,5 @@ def calculate_phonon(atoms,
     print("[Phonopy] Phonon frequencies at Gamma:")
     for i, freq in enumerate(phonon.get_frequencies((0, 0, 0))):
         print("[Phonopy] %3d: %10.5f THz" % (i + 1, freq))  # THz
-        print("[Phonopy] %3d: %10.5f cm-1" % (i + 1, freq * 33.35))  #cm-1
+        print("[Phonopy] %3d: %10.5f cm-1" % (i + 1, freq * 33.35))  # cm-1
     return phonon

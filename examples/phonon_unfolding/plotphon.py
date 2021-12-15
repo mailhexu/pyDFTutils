@@ -7,7 +7,7 @@ from matplotlib.collections import LineCollection
 from matplotlib.colors import colorConverter
 from ase.units import Bohr
 import os.path
-from ase_utils.kpoints import cubic_kpath
+from pyDFTutils.ase_utils.kpoints import cubic_kpath
 from collections import namedtuple
 
 
@@ -17,9 +17,9 @@ def plot_phon_from_nc(fname, title='BaT', output_filename='phonon.png'):
     """
     ds = Dataset(fname, mode='r')
 
-    #ds.variables[u'space_group'][:]
-    #print ds.variables[u'primitive_vectors'][:]
-    #print ds.variables.keys()
+    # ds.variables[u'space_group'][:]
+    # print ds.variables[u'primitive_vectors'][:]
+    # print ds.variables.keys()
     qpoints = ds.variables[u'qpoints'][:]
     phfreqs = ds.variables[u'phfreqs'][:] * 8065.6
     phdisps = ds.variables[u'phdispl_cart'][:]
@@ -27,7 +27,7 @@ def plot_phon_from_nc(fname, title='BaT', output_filename='phonon.png'):
     masses = list(masses) + [masses[-1]] * 2
 
     IR_modes = label_all(qpoints, phfreqs, phdisps, masses)
-    #return
+    # return
 
     phfreqs = fix_gamma(qpoints, phfreqs)
 
@@ -42,11 +42,11 @@ def plot_phon_from_nc(fname, title='BaT', output_filename='phonon.png'):
             weights_A[i, j], weights_B[i, j], weights_C[i, j] = get_weight(
                 phdisps[i, j, :, :], masses)
 
-    #for i in range(1):
+    # for i in range(1):
     # plt.plot(weights_B[:, i], linewidth=0.1, color='gray')
     #plt.plot(weights_A[:, i], linewidth=0.1, color='gray')
-    #plt.show()
-    #return
+    # plt.show()
+    # return
     axis = None
     kpath = cubic_kpath()
     kslist = [kpath[1]] * 15
@@ -79,22 +79,22 @@ def plot_phon_from_nc(fname, title='BaT', output_filename='phonon.png'):
         xticks=xticks,
         title=title)
 
-    tick_mode = {'R': -2, 'X': -1, 'M': 2,'Gamma':0}
+    tick_mode = {'R': -2, 'X': -1, 'M': 2, 'Gamma': 0}
     for qname in IR_modes:
         for mode in IR_modes[qname]:
-            shiftx = lambda x: x-0.2 if x>0.2 else x+0.01
+            def shiftx(x): return x-0.2 if x > 0.2 else x+0.01
             axis.annotate(
-                mode[1], (shiftx(xticks[1][tick_mode[qname]]) , mode[0] + 5),
+                mode[1], (shiftx(xticks[1][tick_mode[qname]]), mode[0] + 5),
                 fontsize='x-small',
-                color='black',wrap=True)
-    plt.savefig(output_filename,dpi=300)
+                color='black', wrap=True)
+    plt.savefig(output_filename, dpi=300)
     plt.show()
     return qpoints, phfreqs, phdisps, masses
 
-    #print ds.variables[u'phfreqs'][:]
-    #print ds.variables[u'phdispl_cart'][:]
+    # print ds.variables[u'phfreqs'][:]
+    # print ds.variables[u'phdispl_cart'][:]
 
-    #for k in ds.variables:
+    # for k in ds.variables:
     #    print "--------------\n"
     #    print k
     #    print ds.variables[k][:]
@@ -102,7 +102,7 @@ def plot_phon_from_nc(fname, title='BaT', output_filename='phonon.png'):
 
 def label_all(qpoints, phfreqs, phdisps, masses):
     special_qpoints = {
-        #'Gamma': [0, 0.013333, 0],
+        # 'Gamma': [0, 0.013333, 0],
         'X': [0, 0.5, 0],
         'M': [0.5, 0.5, 0],
         'R': [0.5, 0.5, 0.5]
@@ -133,41 +133,41 @@ def label(qname, phdisp, masses, notation='IR'):
     ])
     IR_dict = {}
 
-    IR_translation={}
+    IR_translation = {}
 
-    IR_translation['Gamma']={
-        '$\Delta_1$':r'$\Gamma_4^-$',
-        '$\Delta_2$':r'',
-        '$\Delta_5$':r'',
-    }
- 
-    IR_translation['R']={
-        r'$\Gamma_2\prime$':'$R_2^-$',
-        r'$\Gamma_{12}\prime$':'$R_3^-$',
-        r'$\Gamma_{25}$':'$R_5^-$',
-        r'$\Gamma_{25}\prime$':'$R_5^+$',
-        r'$\Gamma_{15}$':'$R_4^-$',
-    }
-    
-    IR_translation['X']={
-        '$M_1$':'$X_1^+$',
-        '$M_2\prime$':'$X_3^-$',
-        '$M_3$':'$X_2^+$',
-        '$M_5$':'$X_5^+$',
-        '$M_5\prime$':'$X_5^-$',
+    IR_translation['Gamma'] = {
+        '$\Delta_1$': r'$\Gamma_4^-$',
+        '$\Delta_2$': r'',
+        '$\Delta_5$': r'',
     }
 
-    IR_translation['M']={
-        '$M_1$':'$M_1^+$',
-        '$M_2$':'$M_3^+$',
-        '$M_3$':'$M_2^+$',
-        '$M_4$':'$M_4^+$',
-        '$M_2\prime$':'$M_3^-$',
-        '$M_3\prime$':'$M_2^-$',
-        '$M_5$':'$M_5^+$',
-        '$M_5\prime$':'$M_5^-$',
-        }
-    #with open('names.txt','w') as myfile:
+    IR_translation['R'] = {
+        r'$\Gamma_2\prime$': '$R_2^-$',
+        r'$\Gamma_{12}\prime$': '$R_3^-$',
+        r'$\Gamma_{25}$': '$R_5^-$',
+        r'$\Gamma_{25}\prime$': '$R_5^+$',
+        r'$\Gamma_{15}$': '$R_4^-$',
+    }
+
+    IR_translation['X'] = {
+        '$M_1$': '$X_1^+$',
+        '$M_2\prime$': '$X_3^-$',
+        '$M_3$': '$X_2^+$',
+        '$M_5$': '$X_5^+$',
+        '$M_5\prime$': '$X_5^-$',
+    }
+
+    IR_translation['M'] = {
+        '$M_1$': '$M_1^+$',
+        '$M_2$': '$M_3^+$',
+        '$M_3$': '$M_2^+$',
+        '$M_4$': '$M_4^+$',
+        '$M_2\prime$': '$M_3^-$',
+        '$M_3\prime$': '$M_2^-$',
+        '$M_5$': '$M_5^+$',
+        '$M_5\prime$': '$M_5^-$',
+    }
+    # with open('names.txt','w') as myfile:
     #    for q in IR_translation:
     #        myfile.write('## %s\n\n'%q)
     #        myfile.write('|Cowley | ? |\n|------|-----|\n')
@@ -175,27 +175,27 @@ def label(qname, phdisp, masses, notation='IR'):
     #            myfile.write('| '+cname+' | '+IR_translation[q][cname]+' |\n')
     #        myfile.write("\n")
 
-    zvec=nmode._make([0.0] * 15)
-    
+    zvec = nmode._make([0.0] * 15)
+
     # Gamma point
-    D1_1=zvec._replace(Ay=1)
-    D1_2=zvec._replace(By=1)
-    D1_3=zvec._replace(O3y=1)
-    D1_4=zvec._replace(O1y=1, O2y=1)
+    D1_1 = zvec._replace(Ay=1)
+    D1_2 = zvec._replace(By=1)
+    D1_3 = zvec._replace(O3y=1)
+    D1_4 = zvec._replace(O1y=1, O2y=1)
 
-    D2 =zvec._replace(O1y=1, O2y=-1)
+    D2 = zvec._replace(O1y=1, O2y=-1)
 
-    D5_1=zvec._replace(Ax=1)
-    D5_2=zvec._replace(Bx=1)
-    D5_3=zvec._replace(O1x=1)
-    D5_4=zvec._replace(O2x=1)
-    D5_5=zvec._replace(O3x=1)
+    D5_1 = zvec._replace(Ax=1)
+    D5_2 = zvec._replace(Bx=1)
+    D5_3 = zvec._replace(O1x=1)
+    D5_4 = zvec._replace(O2x=1)
+    D5_5 = zvec._replace(O3x=1)
 
-    D5_6=zvec._replace(Az=1)
-    D5_7=zvec._replace(Bz=1)
-    D5_8=zvec._replace(O1z=1)
-    D5_9=zvec._replace(O2z=1)
-    D5_10=zvec._replace(O3z=1)
+    D5_6 = zvec._replace(Az=1)
+    D5_7 = zvec._replace(Bz=1)
+    D5_8 = zvec._replace(O1z=1)
+    D5_9 = zvec._replace(O2z=1)
+    D5_10 = zvec._replace(O3z=1)
 
     IR_dict['Gamma'] = {
         D1_1: '$\Delta_1$',
@@ -212,9 +212,8 @@ def label(qname, phdisp, masses, notation='IR'):
         D5_7: '$\Delta_5$',
         D5_8: '$\Delta_5$',
         D5_9: '$\Delta_5$',
-        D5_10:'$\Delta_5$',
+        D5_10: '$\Delta_5$',
     }
-
 
     # X point
     X1_1 = nmode._make([0.0] * 15)
@@ -410,29 +409,29 @@ def label(qname, phdisp, masses, notation='IR'):
 
     mode = None
     for m in IR_dict[qname]:
-        #print m
+        # print m
         mvec = np.real(m)
         mvec = mvec / np.linalg.norm(mvec)
         p = np.abs(np.dot(np.real(evec), mvec))
-        if p > 0.5:  #1.0 / np.sqrt(2):
+        if p > 0.5:  # 1.0 / np.sqrt(2):
             if notation == 'Cowley':
                 mode = IR_dict[qname][m]
             else:
                 print(IR_translation[qname])
                 mode = IR_translation[qname][IR_dict[qname][m]]
-            print "mode: ", mode, m
-        #return IR_dict[m]
+            print("mode: ", mode, m)
+        # return IR_dict[m]
     if mode is None:
-        print "=============="
-        print "eigen vector: ", nmode._make(evec)
-    #return None
+        print("==============")
+        print("eigen vector: ", nmode._make(evec))
+    # return None
     return mode
 
 
 def fix_gamma(qpoints, phfreqs):
     for i, qpt in enumerate(qpoints):
         if np.isclose(qpt, [0.0, 0.0, 0.0], rtol=1e-5, atol=1e-3).all():
-            print "Fix"
+            print("Fix")
             if i == 0:
                 phfreqs[i] = phfreqs[i + 1]
             else:
@@ -490,7 +489,7 @@ def plot_band_weight(kslist,
             x = kslist[i]
             y = ekslist[i]
             lwidths = np.array(wkslist[i]) * width
-            #lwidths=np.ones(len(x))
+            # lwidths=np.ones(len(x))
             points = np.array([x, y]).T.reshape(-1, 1, 2)
             segments = np.concatenate([points[:-1], points[1:]], axis=1)
             if style == 'width':
@@ -521,7 +520,7 @@ def plot_band_weight(kslist,
     return a
 
 
-#plot_phon_from_nc(
+# plot_phon_from_nc(
 #    'BaTiO3/abinit_ifc.out_PHBST.nc',
 #    title='BaTiO3',
 #    output_filename='phonon.png')
