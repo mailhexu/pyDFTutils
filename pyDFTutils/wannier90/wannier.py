@@ -122,11 +122,11 @@ class WannierInput(object):
         self.bands = bands
         self.spin = spin
         self.spinor = spinor
-        self.write_info=write_info
+        self.write_info = write_info
         if self.spinor:
-            self.nspinor=2
+            self.nspinor = 2
         else:
-            self.nspinor=1
+            self.nspinor = 1
 
         self.projection_dict = None
         self.kpoints = kpoints
@@ -155,9 +155,8 @@ class WannierInput(object):
         self.initial_basis = []
         self.axis = {}
 
-
     def set_kpoints(self, kpoints):
-        self.kpoints=kpoints
+        self.kpoints = kpoints
 
     def set_atoms(self, atoms):
         self.atoms = atoms
@@ -240,7 +239,7 @@ class WannierInput(object):
             confs = conf_dict[(s, atom_map[s])]
             min_r = min([o[2] for o in confs])
             for conf in confs:
-                if isinstance(conf[0], int) or conf[0] is None:  #(m, l ,...)
+                if isinstance(conf[0], int) or conf[0] is None:  # (m, l ,...)
                     if len(conf) == 4:
                         m, l, r, occ = conf
                         spin = None
@@ -309,11 +308,11 @@ class WannierInput(object):
 
     def set_energy_window(self, win, froz_win, shift_efermi=0):
         """
-		set the energy window for entanglement.
+                set the energy window for entanglement.
 
         :param win: the disentangle window. [min,max]
         :param froz_win: the frozen window. [min,max]
-		:param shift_efermi: shift the energies. eg. if shift_efermi =3, the energies will be added by 3.
+                :param shift_efermi: shift the energies. eg. if shift_efermi =3, the energies will be added by 3.
         """
         assert froz_win[0] >= win[0]
         assert froz_win[1] <= win[1]
@@ -395,13 +394,13 @@ class WannierInput(object):
         input_text += 'end projections\n\n'
 
         if self.write_info:
-            #unit cell block
+            # unit cell block
             if self.unit_cell is not None:
                 input_text += 'begin unit_cell_cart\n'
                 for vec in self.unit_cell:
                     input_text += '\t' + '\t'.join(map(str, vec)) + '\n'
                 input_text += 'end unit_cell_cart\n\n'
-    
+
             # atom cordinates
             if self.atoms is not None:
                 input_text += '\nbegin atoms_cart\n'
@@ -411,9 +410,9 @@ class WannierInput(object):
                     input_text += '{0}\t{1}\n'.format(sym,
                                                       '\t'.join(map(str, pos)))
                 input_text += 'end atoms_cart\n\n'
-    
+
             # kpoints
-    
+
             if 'mp_grid' in self.list_params:
                 input_text += 'mp_grid = \t{0}\n'.format(
                     '\t'.join(map(str, self.list_params['mp_grid'])))
@@ -422,7 +421,7 @@ class WannierInput(object):
                 for kpt in self.kpoints:
                     input_text += '\t' + '\t'.join(map(str, kpt)) + '\n'
                 input_text += 'end kpoints\n\n'
-    
+
         # k path
         if self.kpath is not None:
             input_text += 'begin kpoint_path\n'
@@ -440,15 +439,23 @@ class WannierInput(object):
                     basis_fname='basis.txt',
                     save_dict=True,
                     spin=False,
+                    dft_code="vasp",
                     ):
         """
         write wannier input file.
         """
-        #if not self.input_text:
+        # if not self.input_text:
         self.gen_input()
         if spin:
-            fname_up=prefix+'o_w90_up.win'
-            fname_dn=prefix+'o_w90_down.win'
+            if dft_code.lower() == 'vasp':
+                fname_up = "wannier90_up.win"
+                fname_dn = "wannier90_dn.win"
+            elif dft_code.lower() == "abinit":
+                fname_up = prefix+'o_w90_up.win'
+                fname_dn = prefix+'o_w90_down.win'
+            with open("wannier90.win", 'w') as infile:
+                infile.write(self.input_text)
+                self.write_basis(fname=basis_fname)
             with open(fname_up, 'w') as infile:
                 infile.write(self.input_text)
                 self.write_basis(fname=basis_fname)
@@ -456,14 +463,12 @@ class WannierInput(object):
                 infile.write(self.input_text)
                 self.write_basis(fname=basis_fname)
         else:
-            #fname=os.path.join(workdir, 'wannier90.win')
-            fname=prefix+'.win'
+            fname = prefix+'.win'
             with open(fname, 'w') as infile:
                 infile.write(self.input_text)
                 self.write_basis(fname=basis_fname)
         if save_dict:
-            #fname_pickle=os.path.join(workdir, '%s.pickle'%fname)
-            fname_pickle=prefix+'_wannier'
+            fname_pickle = prefix+'_wannier'
             with open('%s.pickle' % fname_pickle, 'wb') as pfile:
                 pickle.dump(self, pfile)
 
@@ -561,7 +566,6 @@ def run_wannier(command=None, spin=None, copy_win=True, zenobe=False):
         with open("%s.win" % name, 'w') as myfile:
             myfile.write(spinline)
             str = open('wannier90.win').read()
-            #str=str.replace('hr_plot','write_hr')
             myfile.write(str)
         #os.system('cp wannier90.win %s.win' % name)
     if not zenobe:
@@ -585,18 +589,18 @@ def test():
     wa.add_basis('O', orb='s', spin='up')
     wa.add_basis('O', orb='p', r=2, spin='up')
     print(wa.gen_input())
-    #wa.atoms=atoms
-    #wa.unit_cell=np.eye(3)
-    #wa.set_kpath([(-1,0,0),[0,0,0.5],[0,0.5,0.5]],['G','L','X'],40)
-    #print(wa.gen_input())
-    #wa.write_input()
+    # wa.atoms=atoms
+    # wa.unit_cell=np.eye(3)
+    # wa.set_kpath([(-1,0,0),[0,0,0.5],[0,0.5,0.5]],['G','L','X'],40)
+    # print(wa.gen_input())
+    # wa.write_input()
 
 
 def wannier_default(name='BaTiO3'):
     from ase_utils.cubic_perovskite import gen_primitive
     z_db = {'Ba': 10, 'Ti': 12, 'O': 6}
-    #orb_db is (symbol, label), label can be valence, but also others,like 'high_spin'
-    orb_db = { # (symbol, valence): [(m, l, r, occ),... ]
+    # orb_db is (symbol, label), label can be valence, but also others,like 'high_spin'
+    orb_db = {  # (symbol, valence): [(m, l, r, occ),... ]
         ('Ba', 2): [(None, 0, 5, 2), (None, 1, 5, 6), (None, 0, 6, 0)],
         ('Ti', 4):
         [(None, 0, 3, 2), (None, 1, 3, 6), (None, 2, 3, 0), (None, 0, 4, 0)],
@@ -638,7 +642,7 @@ def wannier_closeshell(atoms, val_dict=None, band='v+c'):
     wa.add_basis_from_dict(atom_map=vals, conf_dict=econf, band=band)
     syms = atoms.get_chemical_symbols()
     print(wa.gen_input())
-    #print wa.get_nwann()
+    # print wa.get_nwann()
     return wa
 
 
@@ -683,7 +687,7 @@ def replace_value_file(fname, valdict, position='start', rewrite=True):
     """
     with open(fname) as myfile:
         text = myfile.read()
-    new_text=replace_value(text, valdict, position=position)
+    new_text = replace_value(text, valdict, position=position)
     if rewrite:
         with open(fname, 'w') as myfile:
             myfile.write(new_text)
@@ -692,7 +696,7 @@ def replace_value_file(fname, valdict, position='start', rewrite=True):
 
 def occupation(fname, efermi):
     data = np.loadtxt(fname)
-    #plt.plot(data[:,0]-efermi,data[:,1])
+    # plt.plot(data[:,0]-efermi,data[:,1])
     return trapz(data[:, 1][data[:, 0] - efermi < 0],
                  data[:, 0][data[:, 0] - efermi < 0]) / 2
 
@@ -705,7 +709,7 @@ def read_basis(fname):
     if fname.endswith('.win'):
         with open(fname) as myfile:
             inside = False
-            iline=0
+            iline = 0
             for line in myfile.readlines():
                 if line.strip().startswith('end projections'):
                     inside = False
@@ -726,7 +730,7 @@ def read_basis(fname):
     return bdict
 
 
-#wannier_default()
-#wannier_closeshell()
+# wannier_default()
+# wannier_closeshell()
 if __name__ == '__main__':
     wannier_closeshell()
