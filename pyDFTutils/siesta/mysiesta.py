@@ -40,8 +40,11 @@ class MySiesta(Siesta):
                  command=None,
                  xc='LDA',
                  spin='non-polarized',
+                 basis_set='DZP',
                  ghosts=[],
                  input_basis_set={},
+                 pseudo_path=None,
+                 input_pp={},
                  **kwargs):
         if atoms is not None:
             finder = DojoFinder()
@@ -55,7 +58,9 @@ class MySiesta(Siesta):
             tags = [1 if i in ghosts else 0 for i in range(len(atoms))]
             atoms.set_tags(tags)
 
-            pseudo_path = finder.get_pp_path(xc=xc)
+            if pseudo_path is None:
+                pseudo_path = finder.get_pp_path(xc=xc)
+
             if spin == 'spin-orbit':
                 rel = 'fr'
             else:
@@ -63,12 +68,17 @@ class MySiesta(Siesta):
             species = []
             for elem in elem_dict.keys():
                 if elem not in input_basis_set:
-                    bselem = 'DZP'
+                    bselem = basis_set
                 else:
                     bselem = PAOBasisBlock(input_basis_set[elem])
+                if elem not in input_pp:
+                    pseudopotential = finder.get_pp_fname(
+                        elem, xc=xc, rel=rel)
+                else:
+                    pseudopotential = os.path.join(
+                        pseudo_path, input_pp['elem'])
                 species.append(Species(symbol=elem,
-                                       pseudopotential=finder.get_pp_fname(
-                                           elem, xc=xc, rel=rel),
+                                       pseudopotential=pseudopotential,
                                        basis_set=bselem,
                                        ghost=False))
             for elem in ghost_elems:

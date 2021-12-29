@@ -1,5 +1,6 @@
 /build/lib/pyDFTutils/__init__.py
 /build/*
+/dist/*
 /pyDFTutils.egg-info/PKG-INFO
 *.pyc
 /pyDFTutils.egg-info/SOURCES.txt
