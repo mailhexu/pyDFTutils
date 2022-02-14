@@ -1,10 +1,11 @@
-#/usr/bin/env python
+# /usr/bin/env python
 from __future__ import print_function
 import string
 import os
 import time
 import subprocess
 import os.path
+from pyDFTutils.queue.template import slurm_template
 
 
 def nic4script(command='abinit', **kwargs):
@@ -17,7 +18,7 @@ def nic4script(command='abinit', **kwargs):
     if command == 'abinit':
         defaults['command'] = 'mpirun abinit < abinit.files > abinit.log;'
     elif command == 'vasp':
-        defaults['command'] = 'mpirun vasp_std > log;'
+        defaults['command'] = 'mpirun vasp_std > vasp.out;'
     else:
         defaults['command'] = command
     for key in kwargs:
@@ -33,7 +34,7 @@ def zenobescript(
         infile='abinit.files',
         outfile='abinit.txt',
         workdir='./',
-        #queue_type='pbspro',
+        # queue_type='pbspro',
         jobname='unamed',
         queue='large',
         group='spinphon',
@@ -63,22 +64,22 @@ def zenobescript(
         ompthreads=ompthreads,
         mpirun=mpirun)
     if command == 'abinit':
-        infile=os.path.abspath(os.path.join(workdir, 'abinit.files'))
-        outfile=os.path.abspath(os.path.join(workdir, 'abinit.log'))
+        infile = os.path.abspath(os.path.join(workdir, 'abinit.files'))
+        outfile = os.path.abspath(os.path.join(workdir, 'abinit.log'))
         defaults[
-            'command'] = r'/home/acad/ulg-phythema/hexu/.local/abinit/abinit_8.6.1/bin/abinit' # + infile + ' >' + outfile
+            'command'] = r'/home/acad/ulg-phythema/hexu/.local/abinit/abinit_8.6.1/bin/abinit'  # + infile + ' >' + outfile
         defaults[
-            'fullcommand'] = r'mpirun /home/acad/ulg-phythema/hexu/.local/abinit/abinit_8.6.1/bin/abinit <%s >%s'%(infile, outfile) 
+            'fullcommand'] = r'mpirun /home/acad/ulg-phythema/hexu/.local/abinit/abinit_8.6.1/bin/abinit <%s >%s' % (infile, outfile)
 
-        defaults['infile']=infile
-        defaults['outfile']=outfile
+        defaults['infile'] = infile
+        defaults['outfile'] = outfile
     elif command == 'vasp':
         defaults[
             'command'] = r'/home/acad/ulg-phythema/hexu/.local/bin/vasp_hexu544 >log'
         defaults[
-                'fullcommand'] = r'mpirun /home/acad/ulg-phythema/hexu/.local/bin/vasp_hexu544>log'
-        defaults['infile']=''
-        defaults['outfile']=''
+            'fullcommand'] = r'mpirun /home/acad/ulg-phythema/hexu/.local/bin/vasp_hexu544>log'
+        defaults['infile'] = ''
+        defaults['outfile'] = ''
     else:
         defaults['command'] = command
         defaults['fullcommand'] = command
@@ -88,10 +89,50 @@ def zenobescript(
     return text
 
 
+class SlurmCommander():
+    def __init__(self, job_fname='job.sh', wait=True,
+                 jobname='unames', time="10:00:00",
+                 ntask=32, ntask_per_node=32, modules='', command='mpirun vasp_std > vasp.log 2> vasp.err'):
+        self.job_fname = job_fname
+        self.wait = wait
+        self.jobname = jobname
+        self.time = time
+        self.ntask = ntask
+        self.ntask_per_node = ntask_per_node
+        self.modules = modules
+        self.command = command
+        self.jobfile_text = slurm_template.format(jobname=jobname,
+                                                  time=time,
+                                                  ntask=ntask,
+                                                  ntask_per_node=ntask_per_node,
+                                                  modules=modules,
+                                                  command=command
+                                                  )
+
+    def run(self):
+        fname = self.job_fname
+        with open(fname, 'w') as myfile:
+            myfile.write(self.jobfile_text)
+        os.system('chmod +x %s' % fname)
+
+        if self.wait:
+            p = subprocess.Popen(
+                ['sbatch', '--wait', self.job_fname],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
+        else:
+            p = subprocess.Popen(
+                ['sbatch', self.job_fname],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
+        out, err = p.communicate()
+        pass
+
+
 class commander(object):
     def __init__(self, job_fname='job.sh', workdir='./', jobname='unamed', **kwargs):
         self.workdir = workdir
-        self.jobname=jobname
+        self.jobname = jobname
         self.job_fname = os.path.join(workdir, job_fname)
         self.queue_type = None
         self.set_parameter(**kwargs)
@@ -114,7 +155,8 @@ class commander(object):
         if queue_type == 'slurm':
             self.jobfile_text = nic4script(command, **kwargs)
         elif queue_type == 'pbspro':
-            self.jobfile_text = zenobescript(command, jobname=self.jobname, workdir=self.workdir, **kwargs)
+            self.jobfile_text = zenobescript(
+                command, jobname=self.jobname, workdir=self.workdir, **kwargs)
         self.max_time = max_time
         self.wait = wait
 
@@ -137,6 +179,9 @@ class commander(object):
             exitcode = 0
 
         return exitcode
+
+    def run_slurm(self):
+        fname = self.jobname
 
     def run(self):
         if self.queue_type == 'pbspro':
@@ -360,13 +405,13 @@ class remote_commander(commander):
         exist = False
         while (not exist) and wait_time < self.max_time:
             exist = self.rr.exists(fname)
-            #print self.rr.exec_command('cat %s'%fname)
+            # print self.rr.exec_command('cat %s'%fname)
             time.sleep(step)
             wait_time += step
         print("End waiting.")
         self.rr.sync_back()
         if self.rr.exists(fname):
-            #print('Succeeded')
+            # print('Succeeded')
             if self.delete_remote_dir:
                 self.rr.delete_remote_dir()
 
@@ -394,10 +439,10 @@ def wait_job_success(job_id, maxtime=20 * 60 * 60):
 
 if __name__ == '__main__':
     zenobe_run_wannier90(ompthreads=12)
-    #test_paramiko_nic4()
-    #print(nic4run(jobname='name'))
+    # test_paramiko_nic4()
+    # print(nic4run(jobname='name'))
 
-    #mycommander = commander(
+    # mycommander = commander(
     #    command='abinit',
     #    queue_type='pbspro',
     #    #local_dir='./tmpz',
@@ -407,4 +452,4 @@ if __name__ == '__main__':
     #    ngroup=1,
     #    mpiprocs=1,
     #    mem_per_cpu=400)
-    #mycommander.run()
+    # mycommander.run()

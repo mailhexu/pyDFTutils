@@ -53,17 +53,17 @@ def set_spinat(abi_inp, magmoms):
 pp_path = os.path.expanduser('~/.local/pp/abinit')
 
 
-def find_pp(symbol, xc, family, label='',pp_path=pp_path):
+def find_pp(symbol, xc, family, label='', pp_path=pp_path):
     """
     find pseudo potential.
     """
     if family.lower() == 'jth':
-        xcdict = {'LDA': 'LDA_PW', 'PBE': 'GGA_PBE', 'PBEsol':'GGA-PBESOL'}
+        xcdict = {'LDA': 'LDA_PW', 'PBE': 'GGA_PBE', 'PBEsol': 'GGA-PBESOL'}
         name = os.path.join('JTH-%s*' % xc,
                             '%s.%s-JTH%s.xml' % (symbol, xcdict[xc], label))
     elif family.lower() == 'gbrv':
-        xcdict = {'LDA': 'lda', 'PBE': 'pbe', 'PBEsol':'pbe'}
-        axc=xcdict[xc]
+        xcdict = {'LDA': 'lda', 'PBE': 'pbe', 'PBEsol': 'pbe'}
+        axc = xcdict[xc]
         name = os.path.join(pp_path, 'GBRV-%s/%s_%s%s*' %
                             (axc.upper(), symbol.lower(), axc.lower(), label))
     elif family.lower() == 'dojo':
@@ -71,11 +71,11 @@ def find_pp(symbol, xc, family, label='',pp_path=pp_path):
         if label == '':
             label = 'standard'
         pp_dir = os.path.join(pp_path, 'ONCVPSP-%s-PD*' % (xcdict[xc]))
-        fname = glob(os.path.join(pp_dir, '%s.djson'%label))
-        if len(fname)>0:
-            pp_dict=json.load(open(fname[0]))['pseudos_metadata']
-        name=os.path.join(pp_dir,symbol,pp_dict[symbol]['basename'])
-        #if len(fname) > 0:
+        fname = glob(os.path.join(pp_dir, '%s.djson' % label))
+        if len(fname) > 0:
+            pp_dict = json.load(open(fname[0]))['pseudos_metadata']
+        name = os.path.join(pp_dir, symbol, pp_dict[symbol]['basename'])
+        # if len(fname) > 0:
         #    print(fname)
         #    ppdict = {}
         #    with open(fname[0]) as myfile:
@@ -89,7 +89,7 @@ def find_pp(symbol, xc, family, label='',pp_path=pp_path):
         #        ppdict[elem] = os.path.join(pp_dir,
         #                                    '%s/*f-in-core*.psp8' % elem)
         #name = ppdict[symbol]
-        #print(name)
+        # print(name)
 
     pp = os.path.join(pp_path, name)
     names = glob(pp)
@@ -101,45 +101,45 @@ def find_pp(symbol, xc, family, label='',pp_path=pp_path):
                          (name, pp_path))
 
 
-def to_abi_structure(obj,magmoms=False):
-    ms=None
+def to_abi_structure(obj, magmoms=False):
+    ms = None
     if isinstance(obj, str) and os.path.isfile(obj):
         structure = Structure.as_structure(obj)
     elif isinstance(obj, Structure):
         structure = obj
     elif isinstance(obj, Atoms):
-        #cell=obj.get_cell()
-        #acell0=np.linalg.norm(cell[0])
-        #acell1=np.linalg.norm(cell[1])
-        #acell2=np.linalg.norm(cell[2])
-        #cell0=cell[0]/acell0
-        #cell1=cell[1]/acell1
-        #cell2=cell[2]/acell2
+        # cell=obj.get_cell()
+        # acell0=np.linalg.norm(cell[0])
+        # acell1=np.linalg.norm(cell[1])
+        # acell2=np.linalg.norm(cell[2])
+        # cell0=cell[0]/acell0
+        # cell1=cell[1]/acell1
+        # cell2=cell[2]/acell2
         #acell=[acell0, acell1, acell2]
         #rprim=[cell0, cell1, cell2]
-        #xred=obj.get_scaled_positions()
-        #znucl=list(set(obj.get_atomic_numbers()))
-        #ntypat=len(znucl)
-        #typat=[]
-        #for z in obj.get_atomic_numbers():
+        # xred=obj.get_scaled_positions()
+        # znucl=list(set(obj.get_atomic_numbers()))
+        # ntypat=len(znucl)
+        # typat=[]
+        # for z in obj.get_atomic_numbers():
         #    for i,n in enumerate(znucl):
         #        if z==n:
         #            typat.append(i)
         #structure = Structure.from_abivars(acell=acell, rprim=rprim, typat=typat, xred=xred, ntypat=ntypat, znucl=znucl)
         structure = Structure.from_ase_atoms(obj)
         if magmoms:
-            ms=obj.get_initial_magnetic_moments()
+            ms = obj.get_initial_magnetic_moments()
     else:
         raise ValueError(
             'obj should be one of these:  abipy structure file name| abipy structure| ase atoms.'
         )
     if magmoms:
-        return structure,ms
+        return structure, ms
     else:
         return structure
 
 
-def find_all_pp(obj, xc, family, label_dict={},pp_path=pp_path):
+def find_all_pp(obj, xc, family, label_dict={}, pp_path=pp_path):
     symbols = []
     if isinstance(obj, collections.Iterable) and (
             not isinstance(obj, str)) and isinstance(obj[0], str):
@@ -164,7 +164,7 @@ def find_all_pp(obj, xc, family, label_dict={},pp_path=pp_path):
                 label = label_dict
             else:
                 label = ''
-            ppdict[elem] = find_pp(elem, xc, family, label,pp_path=pp_path)
+            ppdict[elem] = find_pp(elem, xc, family, label, pp_path=pp_path)
     return list(ppdict.values())
 
 
@@ -182,4 +182,4 @@ def test_pp_finder():
     print(find_all_pp(['Sr', 'Mn', 'O'], 'LDA', 'dojo'))
 
 
-#test_pp_finder()
+# test_pp_finder()
