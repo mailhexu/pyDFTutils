@@ -16,7 +16,8 @@ def get_species(atoms, xc, rel='sr', accuracy='standard'):
     pseudo_path = finder.get_pp_path(xc=xc)
     species = [
         Species(symbol=elem,
-                pseudopotential=finder.get_pp_fname(elem, xc=xc, rel=rel, accuracy=accuracy),
+                pseudopotential=finder.get_pp_fname(
+                    elem, xc=xc, rel=rel, accuracy=accuracy),
                 ghost=False) for elem in elem_dict.keys()
     ]
     return pseudo_path, species
@@ -75,7 +76,7 @@ class MySiesta(Siesta):
                     bselem = PAOBasisBlock(input_basis_set[elem])
                 if elem not in input_pp:
                     pseudopotential = finder.get_pp_fname(
-                        elem, xc=xc, rel=rel)
+                        elem, xc=xc, rel=rel, accuracy=pp_accuracy)
                 else:
                     pseudopotential = os.path.join(
                         pseudo_path, input_pp[elem])
@@ -87,7 +88,7 @@ class MySiesta(Siesta):
                 species.append(
                     Species(symbol=elem,
                             pseudopotential=finder.get_pp_fname(
-                                elem, xc=xc, rel=rel),
+                                elem, xc=xc, rel=rel, accuracy=pp_accuracy),
                             tag=1,
                             ghost=True))
 
