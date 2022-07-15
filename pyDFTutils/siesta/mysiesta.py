@@ -9,14 +9,14 @@ from pyDFTutils.pseudopotential import DojoFinder
 import copy
 
 
-def get_species(atoms, xc, rel='sr'):
+def get_species(atoms, xc, rel='sr', accuracy='standard'):
     finder = DojoFinder()
     elems = list(dict.fromkeys(atoms.get_chemical_symbols()).keys())
     elem_dict = dict(zip(elems, range(1, len(elems) + 1)))
     pseudo_path = finder.get_pp_path(xc=xc)
     species = [
         Species(symbol=elem,
-                pseudopotential=finder.get_pp_fname(elem, xc=xc, rel=rel),
+                pseudopotential=finder.get_pp_fname(elem, xc=xc, rel=rel, accuracy=accuracy),
                 ghost=False) for elem in elem_dict.keys()
     ]
     return pseudo_path, species
@@ -45,7 +45,9 @@ class MySiesta(Siesta):
                  input_basis_set={},
                  pseudo_path=None,
                  input_pp={},
+                 pp_accuracy='standard',
                  **kwargs):
+
         if atoms is not None:
             finder = DojoFinder()
             elems = list(dict.fromkeys(atoms.get_chemical_symbols()).keys())
@@ -59,7 +61,7 @@ class MySiesta(Siesta):
             atoms.set_tags(tags)
 
             if pseudo_path is None:
-                pseudo_path = finder.get_pp_path(xc=xc)
+                pseudo_path = finder.get_pp_path(xc=xc, accuracy=pp_accuracy)
 
             if spin == 'spin-orbit':
                 rel = 'fr'
@@ -76,7 +78,7 @@ class MySiesta(Siesta):
                         elem, xc=xc, rel=rel)
                 else:
                     pseudopotential = os.path.join(
-                        pseudo_path, input_pp['elem'])
+                        pseudo_path, input_pp[elem])
                 species.append(Species(symbol=elem,
                                        pseudopotential=pseudopotential,
                                        basis_set=bselem,
