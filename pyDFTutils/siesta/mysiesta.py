@@ -48,11 +48,13 @@ class MySiesta(Siesta):
                  input_pp={},
                  pp_accuracy='standard',
                  **kwargs):
+        # non-perturnbative polarized orbital.
+        self.npt_elems = set()
 
         if atoms is not None:
             finder = DojoFinder()
             elems = list(dict.fromkeys(atoms.get_chemical_symbols()).keys())
-            elem_dict = dict(zip(elems, range(1, len(elems) + 1)))
+            self.elem_dict = dict(zip(elems, range(1, len(elems) + 1)))
             symbols = atoms.get_chemical_symbols()
 
             # ghosts
@@ -69,9 +71,11 @@ class MySiesta(Siesta):
             else:
                 rel = 'sr'
             species = []
-            for elem in elem_dict.keys():
+            for elem, index in self.elem_dict.items():
                 if elem not in input_basis_set:
                     bselem = basis_set
+                    if elem in ['Li', 'Be', 'Na', 'Mg']:
+                        self.npt_elems.add(f"{elem}.{index}")
                 else:
                     bselem = PAOBasisBlock(input_basis_set[elem])
                 if elem not in input_pp:
@@ -80,6 +84,7 @@ class MySiesta(Siesta):
                 else:
                     pseudopotential = os.path.join(
                         pseudo_path, input_pp[elem])
+
                 species.append(Species(symbol=elem,
                                        pseudopotential=pseudopotential,
                                        basis_set=bselem,
@@ -99,6 +104,17 @@ class MySiesta(Siesta):
                         pseudo_path=pseudo_path,
                         species=species,
                         **kwargs)
+        self.set_npt_elements()
+
+    def set_npt_elements(self):
+        if len(self.npt_elems) > 0:
+            print(self.npt_elems)
+            npt_text = []
+            for name in self.npt_elems:
+                npt_text.append(
+                    f"{name} non-perturbative ")
+            # npt_text += "%endblock PAO.PolarizationScheme\n"
+            self['fdf_arguments'].update({"PAO.PolarizationScheme": npt_text})
 
     def set_fdf_arguments(self, fdf_arguments):
         self['fdf_arguments'].update(fdf_arguments)
