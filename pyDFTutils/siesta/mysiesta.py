@@ -47,6 +47,7 @@ class MySiesta(Siesta):
                  pseudo_path=None,
                  input_pp={},
                  pp_accuracy='standard',
+                 fincore=False,
                  **kwargs):
         # non-perturnbative polarized orbital.
         self.npt_elems = set()
@@ -80,7 +81,7 @@ class MySiesta(Siesta):
                     bselem = PAOBasisBlock(input_basis_set[elem])
                 if elem not in input_pp:
                     pseudopotential = finder.get_pp_fname(
-                        elem, xc=xc, rel=rel, accuracy=pp_accuracy)
+                        elem, xc=xc, rel=rel, accuracy=pp_accuracy, fincore=fincore)
                 else:
                     pseudopotential = os.path.join(
                         pseudo_path, input_pp[elem])
@@ -93,7 +94,8 @@ class MySiesta(Siesta):
                 species.append(
                     Species(symbol=elem,
                             pseudopotential=finder.get_pp_fname(
-                                elem, xc=xc, rel=rel, accuracy=pp_accuracy),
+                                elem, xc=xc, rel=rel, accuracy=pp_accuracy, 
+                                fincore=fincore),
                             tag=1,
                             ghost=True))
 

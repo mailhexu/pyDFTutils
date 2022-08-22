@@ -1,4 +1,5 @@
 import os
+from ase.data import chemical_symbols, atomic_numbers
 
 
 class PPFinder():
@@ -36,8 +37,14 @@ class DojoFinder():
                     rel='sr',
                     version='04',
                     accuracy='standard',
+                    fincore=False,
                     fmt='psml'):
-        fname = os.path.join(self.get_pp_path(xc=xc, typ=typ, rel=rel, version=version, accuracy=accuracy, fmt=fmt), f"{element}.{fmt}")
+        if fincore and 57<atomic_numbers[element]<70:
+            fname = os.path.join(self.get_pp_path(xc=xc, typ=typ, rel=rel,
+                  version=version, accuracy=accuracy, fmt=fmt), f"{element}_fincore.{fmt}")
+        else:
+            fname = os.path.join(self.get_pp_path(xc=xc, typ=typ, rel=rel,
+                  version=version, accuracy=accuracy, fmt=fmt), f"{element}.{fmt}")
         if not os.path.exists(fname):
             raise FileNotFoundError(f"File Not found: {fname}")
         return fname
