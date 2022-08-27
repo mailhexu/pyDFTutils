@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pyDFTutils',
-    version='0.1.6',
+    version='0.1.7',
     description='utils for DFT/TB calculation',
     author='Xu He',
     author_email='mailhexu@gmail.com',
