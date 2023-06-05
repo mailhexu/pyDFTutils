@@ -5,6 +5,7 @@ from ase.calculators.siesta import Siesta
 from ase.calculators.calculator import FileIOCalculator, ReadError
 from ase.calculators.siesta.parameters import format_fdf
 from ase.calculators.siesta.parameters import Species, PAOBasisBlock
+from ase.io import write
 from pyDFTutils.pseudopotential import DojoFinder
 import copy
 
@@ -42,6 +43,7 @@ class MySiesta(Siesta):
                  xc='LDA',
                  spin='non-polarized',
                  basis_set='DZP',
+                 species=None,
                  ghosts=[],
                  input_basis_set={},
                  pseudo_path=None,
@@ -188,6 +190,7 @@ class MySiesta(Siesta):
         MaxForceTol=0.001,
         MaxStressTol=1,
         NumCGSteps=40,
+        relaxed_file="relaxed.vasp"
     ):
         pbc = atoms.get_pbc()
         initial_magnetic_moments = atoms.get_initial_magnetic_moments()
@@ -208,6 +211,8 @@ class MySiesta(Siesta):
         self.update_fdf_arguments({
             'MD.NumCGSteps': 0,
         })
+        if relaxed_file is not None:
+            write(relaxed_file, atoms, vasp5=True, sort=False)
         return self.atoms
 
     def _write_structure(self, f, atoms):

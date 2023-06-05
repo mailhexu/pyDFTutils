@@ -107,7 +107,7 @@ def calculate_phonon(atoms,
                     sc_mag)
             write('Supercell.cif', cell)
             mcalc = copy.deepcopy(calc)
-            mcalc.set(lwave=True, lcharg=True)
+            #mcalc.set(lwave=True, lcharg=True)
             cell.set_calculator(mcalc)
             dir_name = "SUPERCELL0"
             cur_dir = os.getcwd()
@@ -136,6 +136,10 @@ def calculate_phonon(atoms,
                 os.system('ln -s %s %s' %
                           (os.path.abspath("SUPERCELL0/WAVECAR"),
                            os.path.join(dir_name, 'WAVECAR')))
+                os.system('cp %s %s' %
+                          (os.path.abspath("SUPERCELL0/siesta.DM"),
+                           os.path.join(dir_name, 'siesta.DM')))
+
 
             os.chdir(dir_name)
             forces = cell.get_forces()
