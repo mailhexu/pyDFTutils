@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pyDFTutils',
-    version='0.1.9',
+    version='0.1.11',
     description='utils for DFT/TB calculation',
     author='Xu He',
     author_email='mailhexu@gmail.com',
@@ -11,7 +11,7 @@ setup(
     packages=find_packages(),
     install_requires=['numpy', 'matplotlib', 'scipy',
                       'ase', 'spglib',  'phonopy', 'pathos'],
-    scripts=["scripts/view_pos_info.py", "scripts/plotldos.py", "scripts/plotpdos.py"],
+    scripts=["scripts/view_pos_info.py", "scripts/plotldos.py", "scripts/plotpdos.py", "scripts/xvtovasp.py"],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Programming Language :: Python :: 3',

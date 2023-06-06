@@ -1,6 +1,7 @@
 import os
 import math
 import numpy as np
+from ase import Atoms
 from ase.calculators.siesta import Siesta
 from ase.calculators.calculator import FileIOCalculator, ReadError
 from ase.calculators.siesta.parameters import format_fdf
@@ -14,7 +15,7 @@ from os.path import join, isfile, islink
 import numpy as np
 from ase.units import Ry, eV, Bohr
 from ase.data import atomic_numbers
-from ase.io.siesta import read_siesta_xv
+#from ase.io.siesta import read_siesta_xv
 from ase.calculators.siesta.import_functions import read_rho
 from ase.calculators.siesta.import_functions import \
     get_valence_charge, read_vca_synth_block
@@ -22,7 +23,35 @@ from ase.calculators.calculator import FileIOCalculator, ReadError
 from ase.calculators.calculator import Parameters, all_changes
 from ase.calculators.siesta.parameters import PAOBasisBlock, Species
 from ase.calculators.siesta.parameters import format_fdf
+from pyDFTutils.siesta.pdos import gen_pdos_figure, plot_layer_pdos 
 
+
+def read_siesta_xv(fd):
+    vectors = []
+    for i in range(3):
+        data = next(fd).split()
+        vectors.append([float(data[j]) * Bohr for j in range(3)])
+
+    # Read number of atoms (line 4)
+    natoms = int(next(fd).split()[0])
+
+    # Read remaining lines
+    speciesnumber, atomnumbers, xyz, V = [], [], [], []
+    for line in fd:
+        if len(line) > 5:  # Ignore blank lines
+            data = line.split()
+            speciesnumber.append(int(data[0]))
+            atomnumbers.append(int(data[1])%200)
+            xyz.append([float(data[2 + j]) * Bohr for j in range(3)])
+            V.append([float(data[5 + j]) * Bohr for j in range(3)])
+
+    vectors = np.array(vectors)
+    atomnumbers = np.array(atomnumbers)
+    xyz = np.array(xyz)
+    atoms = Atoms(numbers=atomnumbers, positions=xyz, cell=vectors,
+                  pbc=True)
+    assert natoms == len(atoms)
+    return atoms
 
 
 def get_species(atoms, xc, rel='sr', accuracy='standard'):
@@ -273,9 +302,6 @@ class MySiesta(Siesta):
                 syntext.append(
                     " ".join([str(x) for x in content[1]]))
             self['fdf_arguments'].update({"SyntheticAtoms": syntext})
-        return syntext
-
-
 
     def set_fdf_arguments(self, fdf_arguments):
         self['fdf_arguments'].update(fdf_arguments)
@@ -371,6 +397,17 @@ class MySiesta(Siesta):
         if relaxed_file is not None:
             write(relaxed_file, atoms, vasp5=True, sort=False)
         return self.atoms
+
+    def scf_calculation(self, atoms, dos=True, **kwargs):
+        if dos:
+            self.update_fdf_arguments({'WriteEigenvalues': '.true.', 
+        		'ProjectedDensityOfStates': ['-70.00 30.0 0.015 3000 eV'],
+                'PDOS.kgrid_Monkhorst_Pack': ['7 0 0 0.0',
+                                              '0 7 0 0.0',
+                                              '0 0 7 0.0']})
+    
+
+        self.calculate(atoms, **kwargs)
 
     def _write_structure(self, f, atoms):
         """Translate the Atoms object to fdf-format.
