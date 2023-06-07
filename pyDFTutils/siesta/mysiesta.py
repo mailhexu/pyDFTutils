@@ -387,7 +387,8 @@ class MySiesta(Siesta):
             'MD.NumCGSteps': NumCGSteps,
         })
         self.calculate(atoms)
-        self.read(self.prefix + '.XV')
+        #self.read(self.prefix + '.XV')
+        self.atoms=read_siesta_xv(self.prefix + '.XV')
         self.atoms.set_pbc(pbc)
         self.atoms.set_initial_magnetic_moments(initial_magnetic_moments)
         atoms = self.atoms
@@ -398,15 +399,14 @@ class MySiesta(Siesta):
             write(relaxed_file, atoms, vasp5=True, sort=False)
         return self.atoms
 
-    def scf_calculation(self, atoms, dos=True, **kwargs):
+    def scf_calculation(self, atoms, dos=True, kpts=[7,7,7], **kwargs):
         if dos:
+            k1, k2, k3 = kpts
             self.update_fdf_arguments({'WriteEigenvalues': '.true.', 
         		'ProjectedDensityOfStates': ['-70.00 30.0 0.015 3000 eV'],
-                'PDOS.kgrid_Monkhorst_Pack': ['7 0 0 0.0',
-                                              '0 7 0 0.0',
-                                              '0 0 7 0.0']})
-    
-
+                'PDOS.kgrid_Monkhorst_Pack': [f'{k1} 0 0 0.0',
+                                              f'0 {k2} 0 0.0',
+                                              f'0 0 {k3} 0.0']})
         self.calculate(atoms, **kwargs)
 
     def _write_structure(self, f, atoms):
