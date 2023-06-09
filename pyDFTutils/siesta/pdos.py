@@ -13,12 +13,36 @@ lmdict={0:{0:'s'},
         }
 
 def read_efermi(pdos_fname):
+    """
+    read efermi from pdos_fname  
+    """
     with open(pdos_fname) as myfile:
         lines=myfile.readlines()
         efermi=float(lines[3].strip()[:-15].split()[2])
     return efermi
 
-def get_pdos_data(pdos_fname, iatom, n, l, m):
+def get_pdos_data(pdos_fname, iatom, n=0, l=, m):
+    """
+    get pdos data from pdos_fname
+    Parameters:
+    -----------
+    pdos_fname: str 
+        the name of pdos file
+    iatom: int
+        the index of atom
+    n: int
+        the index of orbital, starting from 1. 0 means all orbitals.
+    l: int
+        the index of angular momentum, 
+    m: int
+        the index of magnetic quantum number
+    Returns:
+    --------
+    outfile: str
+        the name of output file
+    efermi: float
+        the value of fermi energy
+    """
     outfile=f"pdos_{iatom}_{n}{lmdict[l][m]}.dat"
     inp=f"""{pdos_fname}
 {outfile}
@@ -71,6 +95,25 @@ def plot_pdos_ax(fname, efermi, ax=None, conv_n=1, xlim=(-10,10), ylim=(None, No
     #plt.close() #plt.show() have a function of close. plt.close() means close the figure.
 
 def plot_pdos(fname, figname, efermi, xlim=(-10, 10), ylim=(None,None)):
+    """
+    plot pdos figure
+    Parameters:
+    -----------
+    fname: str
+        the name of pdos file
+    figname: str
+        the name of output figure
+    efermi: float
+        the value of fermi energy
+    xlim: tuple
+        the range of x axis
+    ylim: tuple
+        the range of y axis
+
+    Returns:
+    --------
+    None
+    """
     fig, ax=plt.subplots()
     plot_pdos_ax(fname, efermi, ax=ax, xlim=xlim, ylim=ylim)
     plt.title(figname)
