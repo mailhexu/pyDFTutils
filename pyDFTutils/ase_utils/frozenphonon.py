@@ -102,7 +102,7 @@ def calculate_phonon(atoms,
                 scaled_positions=scell.get_scaled_positions(),
                 cell=scell.get_cell(),
                 pbc=True)
-            if is_mag:
+            if is_mag and sc_mag is not None:
                 cell.set_initial_magnetic_moments(
                     sc_mag)
             write('Supercell.cif', cell)

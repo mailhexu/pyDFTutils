@@ -53,6 +53,11 @@ def read_siesta_xv(fd):
     assert natoms == len(atoms)
     return atoms
 
+def read_xv(fname):
+    with open(fname) as myfile:
+        atoms=read_siesta_xv(myfile)
+    return atoms
+
 
 def get_species(atoms, xc, rel='sr', accuracy='standard'):
     finder = DojoFinder()
@@ -388,7 +393,7 @@ class MySiesta(Siesta):
         })
         self.calculate(atoms)
         #self.read(self.prefix + '.XV')
-        self.atoms=read_siesta_xv(self.prefix + '.XV')
+        self.atoms=read_xv(self.prefix + '.XV')
         self.atoms.set_pbc(pbc)
         self.atoms.set_initial_magnetic_moments(initial_magnetic_moments)
         atoms = self.atoms
