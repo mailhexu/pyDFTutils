@@ -23,7 +23,7 @@ from ase.calculators.calculator import FileIOCalculator, ReadError
 from ase.calculators.calculator import Parameters, all_changes
 from ase.calculators.siesta.parameters import PAOBasisBlock, Species
 from ase.calculators.siesta.parameters import format_fdf
-from pyDFTutils.siesta.pdos import gen_pdos_figure, plot_layer_pdos 
+#from pyDFTutils.siesta.pdos import gen_pdos_figure, plot_layer_pdos 
 
 
 def read_siesta_xv(fd):
