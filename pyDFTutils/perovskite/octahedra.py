@@ -6,7 +6,8 @@ from ase.geometry.cell import cellpar_to_cell, cell_to_cellpar
 from pyDFTutils.ase_utils.symbol import get_symdict,symbol_number,symnum_to_sym
 from pyDFTutils.ase_utils.ase_utils import scaled_pos_to_pos,force_near_0,pos_to_scaled_pos
 import numpy as np
-from collections import OrderedDict,Iterable
+from collections import OrderedDict
+from collections.abc import Iterable
 from ase.calculators.neighborlist import NeighborList
 
 def distance(a1,a2):
@@ -180,8 +181,6 @@ class octahedra():
         cell=oatoms.get_cell()
         if do_force_near_0:
             oatoms=force_near_0(oatoms)
-
-
             cspos=pos_to_scaled_pos(center_atom.position,cell)
             cpos=[x-1 if x>0.9 else x for x in cspos]
             center_atom.position=scaled_pos_to_pos(cpos,cell)
@@ -211,8 +210,8 @@ class octahedra():
             #print("max_distance too small,tring to decrease by 0.05")
             self.get_octahedra(self.atoms,center_atom,atom_symbol,max_distance-0.05)
         else:
-            pass
-            #print("%d vertexes found,max distance is %s"%(len(self.vertexes),max_distance))
+            #pass
+            print("%d vertexes found,max distance is %s"%(len(self.vertexes),max_distance))
 
         self.number_of_vertexes=len(self.vertexes)
         self.max_distance=max_distance
@@ -386,7 +385,6 @@ class octahedra():
         target_symbol_list: the center of the octahdron to be found, should be a tuple. if None, the same as the center of the current octahedron
         eg. ('Fe','Ti')
         """
-
         if target_symbol_list is None:
             target_symbol_list=(self.center.symbol,)
         else:
@@ -412,19 +410,17 @@ class octahedra():
 
                 t_octa=octahedra()
                 t_octa.set_axis(x=self.x,y=self.y,z=self.z)
-
                 try:
                     t_octa.get_octahedra(ratoms,center_atom=ratoms[rsym_dict[sym_num]],atom_symbol=self.vertex_symbol,max_distance=self.max_distance,repeat=False,do_force_near_0=False)
-                    #print sym_num, t_octa.number_of_vertexes
                     nm=np.linalg.norm(self.__dict__[direction].position- t_octa.__dict__[pdict[direction]].position)
                     #print nm
                     if nm<0.1:
                         target= t_octa
                         break
                         #print sym_num
-                except Exception:
+                except Exception as exc:
+                    print( f'exception for atom {sym_num}:',exc)
                     pass
-                    #print( 'exception:',exc)
 
         """
         for sym_num in self.sym_dict:
