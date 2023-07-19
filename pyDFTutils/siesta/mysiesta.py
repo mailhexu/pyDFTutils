@@ -393,7 +393,7 @@ class MySiesta(Siesta):
         })
         self.calculate(atoms)
         #self.read(self.prefix + '.XV')
-        self.atoms=read_xv(self.prefix + '.XV')
+        self.atoms=read_xv(os.path.join(self.directory, self.prefix + '.XV'))
         self.atoms.set_pbc(pbc)
         self.atoms.set_initial_magnetic_moments(initial_magnetic_moments)
         atoms = self.atoms

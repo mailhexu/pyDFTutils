@@ -24,7 +24,7 @@ def read_efermi(pdos_fname):
     return efermi
 
 
-def get_pdos_data(pdos_fname, iatom=0, n=0, l=-1, m=9):
+def get_pdos_data(pdos_fname, iatom=0, n=0, l=-1, m=9, fmpdos=True):
     """
     get pdos data from pdos_fname
     Parameters:
@@ -61,11 +61,12 @@ def get_pdos_data(pdos_fname, iatom=0, n=0, l=-1, m=9):
     # 3
     # 2
     # 9
-    if os.path.exists(outfile):
-        os.remove(outfile)
     with open("pdos_tmp_input.txt", "w") as myfile:
         myfile.write(inp)
-    os.system("fmpdos < pdos_tmp_input.txt")
+    if fmpdos or (not os.path.exists(outfile)):
+        if os.path.exists(outfile):
+            os.remove(outfile)
+        os.system("fmpdos < pdos_tmp_input.txt")
     efermi = read_efermi(pdos_fname)
     return outfile, efermi
 
@@ -82,6 +83,7 @@ def plot_dos_for_species(
     conv_n=1,
     ax=None,
     figname=None,
+    fmpdos=True,
     show=False
 ):
     """
@@ -109,7 +111,7 @@ def plot_dos_for_species(
     atoms = read_xv(xvfile)
     symnum = symbol_number(atoms)
     iatom = symnum[label] + 1
-    outfile, efermi = get_pdos_data(pdos_fname, iatom=iatom, n=n, l=l, m=m)
+    outfile, efermi = get_pdos_data(pdos_fname, iatom=iatom, n=n, l=l, m=m, fmpdos=fmpdos)
     if ax is None:
         fig, ax = plt.subplots(figsize=(8, 6))
     plot_pdos_ax(outfile, efermi, xlim=xlim, ylim=ylim, ax=ax, conv_n=conv_n)
@@ -143,7 +145,7 @@ def plot_pdos_ax(fname, efermi, ax=None, conv_n=1, xlim=(-10, 10), ylim=(None, N
     ax.set_xlim(*xlim)
     ax.set_ylim(*ylim)
     # plt.ylim(0, 15 )
-    ax.axvline(color="red")
+    ax.axvline(color="red", linestyle="--")
     ax.set_xlabel("Energy (eV)")
     # ax.set_ylabel('DOS')
     # plt.title(figname)
