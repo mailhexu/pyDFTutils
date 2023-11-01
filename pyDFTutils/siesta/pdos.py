@@ -74,6 +74,7 @@ def get_pdos_data(pdos_fname, iatom=0, n=0, l=-1, m=9, fmpdos=True):
 def plot_dos_for_species(
     pdos_fname,
     xvfile="siesta.XV",
+    efermi=None,
     label=None,
     n=3,
     l=2,
@@ -111,7 +112,9 @@ def plot_dos_for_species(
     atoms = read_xv(xvfile)
     symnum = symbol_number(atoms)
     iatom = symnum[label] + 1
-    outfile, efermi = get_pdos_data(pdos_fname, iatom=iatom, n=n, l=l, m=m, fmpdos=fmpdos)
+    outfile, efermi2 = get_pdos_data(pdos_fname, iatom=iatom, n=n, l=l, m=m, fmpdos=fmpdos)
+    if efermi is None:
+        efermi=efermi2
     if ax is None:
         fig, ax = plt.subplots(figsize=(8, 6))
     plot_pdos_ax(outfile, efermi, xlim=xlim, ylim=ylim, ax=ax, conv_n=conv_n)

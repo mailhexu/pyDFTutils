@@ -74,7 +74,6 @@ def get_dos_CBM_VBM(e, d, efermi=0.0, thr=0.0001, interpolate=True):
         if e >= efermi:
             ifermi = i
             break
-    print(ifermi)
     idos = idos-idos[ifermi]
     # plt.plot(idos)
     # plt.show()
@@ -400,6 +399,11 @@ class MyVaspDos(VaspDos):
             norb = {'s': 1, 'py': 2, 'pz': 3, 'px': 4,
                     'dxy': 5, 'dyz': 6, 'dz2': 7, 'dxz': 8,
                     'dx2': 9}
+        elif n==17:
+            norb = {'s': 1, 'py': 2, 'pz': 3, 'px': 4,
+                    'dxy': 5, 'dyz': 6, 'dz2': 7, 'dxz': 8,
+                    'dx2': 9, 
+                    }
         elif n == 19:
             norb = {'s+': 1, 's-up': 1, 's-': 2, 's-down': 2,
                     'py+': 3, 'py-up': 3, 'py-': 4, 'py-down': 4,
@@ -941,7 +945,6 @@ def plotldos_group(atom_num, sites, ymin=0.0, ymax=2.0, xmin=-15.0, xmax=5.0, sp
                 symdict_sp[ss], sites, location=special_location[i][0])
             label = special_location[i][1]
         subplot_number = int(str(len(atom_num))+'1'+str(i+1))
-        print(subplot_number)
         if i == 0:
             axes.append(plt.subplot(subplot_number))
         else:

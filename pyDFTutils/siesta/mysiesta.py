@@ -232,6 +232,8 @@ class MySiesta(Siesta):
                     os.remove(pseudo_targetpath)
                 symlink_pseudos = self['symlink_pseudos']
 
+                symlink_pseudos = False
+
                 if symlink_pseudos is None:
                     symlink_pseudos = not os.name == 'nt'
 

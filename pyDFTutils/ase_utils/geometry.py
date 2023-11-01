@@ -425,7 +425,7 @@ def vesta_view(atoms):
     if not os.path.exists('/tmp/vesta_tmp'):
         os.mkdir('/tmp/vesta_tmp')
     my_write_vasp('/tmp/vesta_tmp/POSCAR', atoms)
-    os.system('vesta /tmp/vesta_tmp/POSCAR')
+    os.system('VESTA /tmp/vesta_tmp/POSCAR')
 
 
 def set_atoms_select_dynamics(atoms, selective_dynamics=None):
