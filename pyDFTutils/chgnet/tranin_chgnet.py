@@ -5,7 +5,7 @@ dataset = StructureData(
     structures=list_of_structures,
     energies=list_of_energies,
     forces=list_of_forces,
-    stresses=list_of_stresses,
+    stresses=list_of_stresses, # THe unit is GPa
     magmoms=list_of_magmoms,
 )
 train_loader, val_loader, test_loader = get_train_val_test_loader(
