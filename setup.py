@@ -25,6 +25,7 @@ setup(
         "scripts/xvtovasp.py",
         "scripts/octainfo.py",
         "scripts/predict_gap.py",
+        "scripts/mlrelax.py",
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",
