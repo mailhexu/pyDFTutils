@@ -26,6 +26,7 @@ setup(
         "scripts/octainfo.py",
         "scripts/predict_gap.py",
         "scripts/mlrelax.py",
+        "scripts/build_supercell.py",
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",
