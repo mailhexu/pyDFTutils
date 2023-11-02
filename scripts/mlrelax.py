@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 A simple script to relax a structure with matgl.
 """
