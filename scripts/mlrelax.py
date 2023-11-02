@@ -4,9 +4,6 @@ A simple script to relax a structure with matgl.
 """
 from __future__ import annotations
 import warnings
-import torch
-from pymatgen.core import Lattice, Structure
-import matgl
 from ase.io import read, write
 from pyDFTutils.mlpot.matgl_wrapper import relax_with_ml
 import argparse
