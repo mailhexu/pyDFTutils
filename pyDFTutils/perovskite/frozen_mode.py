@@ -407,13 +407,13 @@ def gen_P21c_perovskite(
         X3_m_A1=0.0,  # X3-[Nd1:a:dsp]T1u(a), What's this..
         X3_m_O1=0.0,  # X3-[O1:c:dsp]A2u(a)
 
-        # X5_m_A1=0.0,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
-        # X5_m_A2=0.0,  # [Nd1:a:dsp]T1u(b), A , save as above
+        #X5_m_A1=0.8,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
+        #X5_m_A2=0.0,  # [Nd1:a:dsp]T1u(b), A , save as above
         # X5_m_O1=0.0,  # [Nd1:a:dsp]T1u(a), O , Antiferro mode
         # X5_m_O2=0.0,  # [Nd1:a:dsp]T1u(b), O , same as above
         # M2_p_O1=0.0,  # M2+[O1:c:dsp]Eu(a), O, In phase rotation c+
 
-        Z5_m_A1=0.0,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
+        Z5_m_A1=0.8,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
         Z5_m_A2=0.0,  # [Nd1:a:dsp]T1u(b), A , save as above
         Z5_m_O1=0.0,  # [Nd1:a:dsp]T1u(a), O , Antiferro mode
         Z5_m_O2=0.0,  # [Nd1:a:dsp]T1u(b), O , same as above
@@ -469,6 +469,8 @@ def gen_P21c_perovskite(
 
         # 'X3_m_A1':perovskite_mode., # X3-[Nd1:a:dsp]T1u(a), What's this..
         # 'X3_m_O1':perovskite_mode., # X3-[O1:c:dsp]A2u(a)
+
+
         'Z5_m_A1':
         perovskite_mode.Z5p_1,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
         'Z5_m_A2':
@@ -496,7 +498,7 @@ def gen_P21c_perovskite(
 
     mode_disps = {}
     qdict = {'G': [0, 0, 0],
-             # 'X':[0,0.0,0.5],
+             'X':[0,0.0,0.5],
              'M': [0.5, 0.5, 0],
              'R': [0.5, 0.5, 0.5],
              'Z': [0.0, 0.0, 0.5]
@@ -625,16 +627,21 @@ def test():
         # X5_m_A1=1.0,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
 
 
-        # R4_m_A1=0.5,  # R4-[Nd1:a:dsp]T1u(a), A , Antipolar mode in Pnma
-        # R4_m_A2=0.5,  # R4-[Nd1:a:dsp]T1u(b), A,  Antipolar mode in Pnma
-        # R4_m_A3=0.0,  # R4-[Nd1:a:dsp]T1u(c), A, Unusual
+        R4_m_A1=0.5,  # R4-[Nd1:a:dsp]T1u(a), A , Antipolar mode in Pnma
+        R4_m_A2=0.5,  # R4-[Nd1:a:dsp]T1u(b), A,  Antipolar mode in Pnma
+        R4_m_A3=0.5,  # R4-[Nd1:a:dsp]T1u(c), A, Unusual
         # R4_m_A3=0.0,  # R4-[Nd1:a:dsp]T1u(c), A, Unusual
         # R4_m_O1=0.0,  # R4-[O1:c:dsp]Eu(a), O, Unusual
         # R4_m_O2=0.0,  # R4-[O1:c:dsp]Eu(b), O, Unusual
         # R4_m_O3=0.0,  # R4-[O1:c:dsp]Eu(c), O, Unusual
 
+        Z5_m_A1=0.0,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
+        Z5_m_A2=0.0,  # [Nd1:a:dsp]T1u(b), A , save as above
+        Z5_m_O1=0.0,  # [Nd1:a:dsp]T1u(a), O , Antiferro mode
+        Z5_m_O2=0.0,  # [Nd1:a:dsp]T1u(b), O , same as above
 
-        # M2_p_O1=1.2,  # M2+[O1:c:dsp]Eu(a), O, In phase rotation c+
+
+        #M2_p_O1=1.2,  # M2+[O1:c:dsp]Eu(a), O, In phase rotation c+
 
         # M3_p_O1=0.1,  # M3+[O1:c:dsp]A2u(a), O, D-type JT inplane stagger
 
