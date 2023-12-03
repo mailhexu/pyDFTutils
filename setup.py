@@ -27,6 +27,7 @@ setup(
         "scripts/predict_gap.py",
         "scripts/mlrelax.py",
         "scripts/build_supercell.py",
+        "scripts/plot_siesta_dos.py",
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",

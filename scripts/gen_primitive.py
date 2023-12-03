@@ -3,9 +3,9 @@ from ase.io import read
 from ase.io import write
 from pyDFTutils.ase_utils.geometry import find_primitive
 import sys
-def gen(src_file ,des_file):
+def gen(src_file ,des_file, symprec=1e-4):
     atoms=read(src_file)
-    new_atoms=find_primitive(atoms, symprec=1e-4)
+    new_atoms=find_primitive(atoms, symprec=symprec)
     write(des_file, new_atoms)
     return atoms
 

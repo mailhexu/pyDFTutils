@@ -14,9 +14,9 @@ def view_spacegroup(filename='POSCAR',symprec=1e-4):
     print("SPACEGROUP: %s"%spglib.get_spacegroup(atoms,symprec=symprec))
     #print(spglib.get_symmetry_dataset(atoms, symprec=symprec))
 
-def viewall(filename='POSCAR',symprec=1e-4):
+def viewall(filename='POSCAR',symprec=1e-4, angle_tolerance=-1.0):
     view_cellpars(filename=filename)
-    view_spacegroup(filename=filename,symprec=symprec)
+    view_spacegroup(filename=filename,symprec=symprec, angle_tolerance=angle_tolerance)
 
 if __name__=='__main__':
     if len(sys.argv)==1:
@@ -24,6 +24,6 @@ if __name__=='__main__':
     elif len(sys.argv)==2:
         view_spacegroup(filename=sys.argv[1])
     elif len(sys.argv)==3:
-        view_spacegroup(filename=sys.argv[1],symprec=float(sys.argv[2]))
+        view_spacegroup(filename=sys.argv[1],symprec=float(sys.argv[2]), angle_tolerance=)
     else:
         print("Error")

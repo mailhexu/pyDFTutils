@@ -111,12 +111,12 @@ def find_primitive_mag(atoms, symprec=1e-4):
     return new_atoms
 
 
-def get_refined_atoms(atoms):
+def get_refined_atoms(atoms, symprec=1e-4):
     """
     using spglib.refine_cell, while treat atoms with different magnetic moment as different element.
     """
     atoms_mag, sym_dict = ref_atoms_mag(atoms)
-    cell, scaled_pos, chem_nums = spglib.refine_cell(atoms_mag, symprec=1e-4)
+    cell, scaled_pos, chem_nums = spglib.refine_cell(atoms_mag, symprec=symprec)
     chem_sym = 'H%d' % (len(chem_nums))
     new_atoms = Atoms(chem_sym)
 

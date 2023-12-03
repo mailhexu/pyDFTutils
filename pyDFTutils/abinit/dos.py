@@ -5,7 +5,6 @@ import os
 import matplotlib.pyplot as plt
 
 class abinit_ldos(object):
-
     def __init__(self, fname):
         self.fname=fname
         self._parse()

@@ -85,7 +85,10 @@ def plot_dos_for_species(
     ax=None,
     figname=None,
     fmpdos=True,
-    show=False
+    show=False,
+    savedata=None,
+    color=None,
+    fill=False,
 ):
     """
     plot pdos for species
@@ -117,24 +120,30 @@ def plot_dos_for_species(
         efermi=efermi2
     if ax is None:
         fig, ax = plt.subplots(figsize=(8, 6))
-    plot_pdos_ax(outfile, efermi, xlim=xlim, ylim=ylim, ax=ax, conv_n=conv_n)
+    plot_pdos_ax(outfile, efermi, xlim=xlim, ylim=ylim, ax=ax, conv_n=conv_n, savedata=savedata, color=color, fill=fill)
     if figname is not None:
         plt.savefig(figname)
     if show:
         plt.show()
 
 
-def plot_pdos_ax(fname, efermi, ax=None, conv_n=1, xlim=(-10, 10), ylim=(None, None)):
+def plot_pdos_ax(fname, efermi, ax=None, conv_n=1, xlim=(-10, 10), ylim=(None, None), savedata=None, color=None, fill=False):
     data = np.loadtxt(fname)
     plt.rc("font", size=16)
     n = conv_n  # 为了pdos线更平滑
+    data[:, 0] -= efermi
     if data.shape[1] == 2:
         data[:, 1] = np.convolve(
             data[:, 1], np.array([1.0 / n] * n), mode="same"
         )  # convolution process
         # d=np.convolve(data[:,1], np.array([1.0/n]*n),mode='same')[:-4] #convolution process
-        ax.plot(data[:, 0] - efermi, data[:, 1], label=fname)
+        ax.plot(data[:, 0], data[:, 1], label=fname, color=color)
+        if fill:
+            ax.fill_between(data[:, 0], data[:, 1], color=color)
+        if savedata is not None:
+            np.savetxt(savedata, data, header="energy, dos")
     if data.shape[1] == 3:
+        data[:, 0] -= efermi
         data[:, 1] = np.convolve(
             data[:, 1], np.array([1.0 / n] * n), mode="same"
         )  # convolution process
@@ -142,9 +151,16 @@ def plot_pdos_ax(fname, efermi, ax=None, conv_n=1, xlim=(-10, 10), ylim=(None, N
             data[:, 2], np.array([1.0 / n] * n), mode="same"
         )  # convolution process
         # d=np.convolve(data[:,1], np.array([1.0/n]*n),mode='same')[:-4] #convolution process
-        ax.plot(data[:, 0] - efermi, data[:, 1], label=fname + "spin up")
-        ax.plot(data[:, 0] - efermi, -data[:, 2], label=fname + "spin down")
+        ax.plot(data[:, 0], data[:, 1], label=fname + "spin up", color=color)
+        if fill:
+            ax.fill_between(data[:, 0], data[:, 1], color=color)
+        ax.plot(data[:, 0], -data[:, 2], label=fname + "spin down", color=color)
+        if fill:
+            ax.fill_between(data[:, 0], -data[:, 2], color=color)
+
         ax.axhline(color="black")
+        if savedata is not None:
+            np.savetxt(savedata, data, header="energy, dos(up), dos(down)")
     ax.set_xlim(*xlim)
     ax.set_ylim(*ylim)
     # plt.ylim(0, 15 )
@@ -230,7 +246,7 @@ if __name__ == "__main__":
         n=3,
         l=2,
         m=9,
-        xlim=(-10, 10),
+        xlim=(-15, 10),
         ylim=(None, None),
         figname="pdos_Si.png",
         conv_n=5

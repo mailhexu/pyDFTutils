@@ -9,6 +9,7 @@ from phonopy.units import VaspToTHz
 from pyDFTutils.ase_utils.frozenphonon import calculate_phonon
 from ase.spacegroup.symmetrize import FixSymmetry, check_symmetry
 from pymatgen.io.ase import AseAtomsAdaptor
+import matgl
 
 
 
