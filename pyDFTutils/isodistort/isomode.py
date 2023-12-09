@@ -9,7 +9,7 @@ import os
 import spglib
 from ase import Atoms
 from ase.io import read, write
-from pyDFTutils.ase_utils.geometry import symbol_number, symnum_to_sym #, vesta_view
+from pyDFTutils.ase_utils.geometry import symbol_number, symnum_to_sym  # , vesta_view
 from collections import OrderedDict, defaultdict
 import re
 from itertools import combinations
@@ -20,16 +20,17 @@ from itertools import combinations
 import dataclasses
 import random
 
+
 def split_symnum(symnum):
     """
     symnum-> sym. eg: Fe1-> Fe
     """
     try:
-        a = re.search('[A-Za-z]+', symnum).group()
-        b = int(symnum[len(a):])
+        a = re.search("[A-Za-z]+", symnum).group()
+        b = int(symnum[len(a) :])
         return a, b
     except AttributeError:
-        raise AttributeError('%s is not a good symbol_number' % symnum)
+        raise AttributeError("%s is not a good symbol_number" % symnum)
 
 
 def parse_mode_name_line(line=None):
@@ -48,41 +49,73 @@ def parse_mode_name_line(line=None):
     fullname:  '[0,0,0]GM1+[Nb2:g:dsp]A1(a)'
     direction: a/b/c
     """
-    kpt_string = re.findall(r'\[.*\d\]', line)[0]
-    kpt = (eval(kpt_string))
-    normfactor_string = re.findall(r'normfactor\s*=\s*(.*)', line)[0]
+    kpt_string = re.findall(r"\[.*\d\]", line)[0]
+    kpt = eval(kpt_string)
+    normfactor_string = re.findall(r"normfactor\s*=\s*(.*)", line)[0]
     normfactor = float(normfactor_string)
-    label, symmetry = re.findall(r'\](.*?)\(', line)
+    label, symmetry = re.findall(r"\](.*?)\(", line)
 
-    a1 = re.findall(r'(\[.*?)\(', line)[0]
-    a2 = re.findall(r'\[.*?\)', line)[1]
+    a1 = re.findall(r"(\[.*?)\(", line)[0]
+    a2 = re.findall(r"\[.*?\)", line)[1]
     fullname = a1 + a2
     direction = fullname[-2]
 
     return {
-        'kpt': kpt,
-        'kpt_string': kpt_string,
-        'normfactor': normfactor,
-        'label': label,
-        'symmetry': symmetry,
-        'direction': direction,
-        'fullname': fullname,
+        "kpt": kpt,
+        "kpt_string": kpt_string,
+        "normfactor": normfactor,
+        "label": label,
+        "symmetry": symmetry,
+        "direction": direction,
+        "fullname": fullname,
     }
 
 
-Subgroup details
-1 P1, basis={(1,-1,0),(1,1,0),(0,0,2)}, origin=(-1.00001,-0.99999,-1.50000), s=4, i=192
+def read_supercell_line(line):
+    """
+    read supercell size from isodistort output
+    The line looks like this:
+    1 P1, basis={(1,-1,0),(1,1,0),(0,0,2)}, origin=(-1.00001,-0.99999,-1.50000), s=4, i=192
+    """
+    line = line.strip()
+    # read the basis with regex
+    basis = re.findall(r"\{(.*?)\}", line)[0]
+    basis = eval(f"({basis})")
 
+    # read the origin
+    origin = re.findall(r"origin=\((.*?)\)", line)[0]
+    origin = eval(f"({origin})")
+
+    # read the supercell size
+    s = int(re.findall(r"s=(\d+)", line)[0])
+    return basis, s, origin
+
+
+def read_supercell_size(lines):
+    """
+    read supercell size from isodistort output
+    The output looks like this:
+    Subgroup details
+    1 P1, basis={(1,-1,0),(1,1,0),(0,0,2)}, origin=(-1.00001,-0.99999,-1.50000), s=4, i=192
+    """
+    inline = False
+    for line in lines:
+        if line.strip().startswith("Subgroup details"):
+            inline = True
+            line = next(lines)
+            basis, s, origin = read_supercell_line(line)
+            return basis, s, origin
 
 
 @dataclasses.dataclass
-class SingleMode():
+class SingleMode:
     """
-    A single symmetry adapted mode. 
+    A single symmetry adapted mode.
     """
+
     # fullname: str or None
     fullname: str = None
-    displacements: np.ndarray =None
+    displacements: np.ndarray = None
     normfactor: float = None
     label: str = None
     symmetry: str = None
@@ -98,7 +131,7 @@ class SingleMode():
         """
         Get the displacements of the modes
         """
-        return self.displacements*factor
+        return self.displacements * factor
 
     @staticmethod
     def from_name_line(line):
@@ -107,22 +140,32 @@ class SingleMode():
          eg. P4/mmm[0,0,0]GM1+(a)[Nb2:g:dsp]A1(a) normfactor = 0.00825
         params:
         line: a line of mode name
- 
+
         """
-        kpt_string = re.findall(r'\[.*\d\]', line)[0]
-        kpt = (eval(kpt_string))
-        normfactor_string = re.findall(r'normfactor\s*=\s*(.*)', line)[0]
+        kpt_string = re.findall(r"\[.*\d\]", line)[0]
+        kpt = eval(kpt_string)
+        normfactor_string = re.findall(r"normfactor\s*=\s*(.*)", line)[0]
         normfactor = float(normfactor_string)
-        label, symmetry = re.findall(r'\](.*?)\(', line)
+        label, symmetry = re.findall(r"\](.*?)\(", line)
         longname = line.strip().split()[0]
-        a1 = re.findall(r'(\[.*?)\(', line)[0]
-        directions = re.findall(r'\((.*?)\)', longname)[0]
-        a2 = re.findall(r'\[.*?\)', line)[1]
+        a1 = re.findall(r"(\[.*?)\(", line)[0]
+        directions = re.findall(r"\((.*?)\)", longname)[0]
+        a2 = re.findall(r"\[.*?\)", line)[1]
         direction = longname[-2]
-        directions = re.findall(r'\((.*?)\)', longname)[0]
+        directions = re.findall(r"\((.*?)\)", longname)[0]
         fullname = f"{a1}({directions}){a2}"
         print(label)
-        return SingleMode(fullname=fullname, displacements=None, normfactor=normfactor, label=label, symmetry=symmetry, kpt=kpt, kpt_string=kpt_string, direction=direction, directions=directions)
+        return SingleMode(
+            fullname=fullname,
+            displacements=None,
+            normfactor=normfactor,
+            label=label,
+            symmetry=symmetry,
+            kpt=kpt,
+            kpt_string=kpt_string,
+            direction=direction,
+            directions=directions,
+        )
 
     def print(self):
         """
@@ -148,13 +191,13 @@ class SingleMode():
         return f"{self.kpt_string}{self.label}({self.directions})"
 
 
-
 @dataclasses.dataclass
 class SymmetryMode(dict):
     """
     A set of symmetry adapted modes with same symmetry label and q-point
     It is dirived from a dictionary of single mode objects, and the values are the amplitudes.
     """
+
     def __init__(self):
         pass
 
@@ -173,13 +216,15 @@ class SymmetryMode(dict):
         """
         displacements = 0.0
         for mode, amp in self.items():
-            displacements += mode.displacements*amp*factor
+            displacements += mode.displacements * amp * factor
         return np.array(displacements)
+
 
 class MultiModes(dict):
     """
     A set of amplitudes of symmetry adapted modes
     """
+
     def __init__(self):
         pass
 
@@ -193,11 +238,10 @@ class MultiModes(dict):
             raise ValueError("Mode already present")
 
     def __str__(self):
-        s=""
+        s = ""
         for mode, amp in self.items():
-            s+="{:s}: {:f}\n".format(mode, amp)
+            s += "{:s}: {:f}\n".format(mode, amp)
         return s
-
 
     def add_single_mode(self, mode, amplitude):
         pass
@@ -214,44 +258,58 @@ class MultiModes(dict):
         """
         displacements = 0.0
         for mode, amp in self.items():
-            displacements += mode.displacements*amp*factors
+            displacements += mode.displacements * amp * factors
         return np.array(displacements)
 
     def get_mode_symmary(self):
         """
         Get the summary of the modes
         """
-        s=""
+        s = ""
         for mode, amp in self.items():
-            s+=f"{mode:s}: {amp:f}\n"
+            s += f"{mode:s}: {amp:f}\n"
         return s
 
-        
 
-class IsodistortParser():
+class IsodistortParser:
     """
     Parser of isodistort output files
     """
+
     def __init__(self, filename):
         self.filename = filename
         with open(self.filename, "r") as f:
             self.lines = f.readlines()
         self.all_modes = MultiModes()
-
-        self.undistorted_atoms=self.read_undistorted_supercell()
-        self.distorted_atoms=self.read_distorted_supercell()
+        self.read_supercell_size()
+        self.undistorted_atoms = self.read_undistorted_supercell()
+        self.distorted_atoms = self.read_distorted_supercell()
         self.read_mode_definitions()
         self.read_all_mode_amplitude()
 
+    def read_supercell_size(self):
+        """
+        read supercell size from isodistort output
+        The output looks like this:
+        Subgroup details
+        1 P1, basis={(1,-1,0),(1,1,0),(0,0,2)}, origin=(-1.00001,-0.99999,-1.50000), s=4, i=192
+        """
+        inline = False
+        for line in self.lines:
+            if line.strip().startswith("Subgroup details"):
+                inline = True
+                line = next(self.lines)
+                self.basis, self.s, self.origin = read_supercell_line(line)
+                return self.basis, self.s, self.origin
 
     def read_supercell(self, distorted=False):
         """
         read undisorted supercell
         """
         if distorted:
-            name= "Distorted superstructure"
+            name = "Distorted superstructure"
         else:
-            name= "Undistorted superstructure"
+            name = "Undistorted superstructure"
         inside = False
         sympos = []
         iatom = 0
@@ -260,19 +318,19 @@ class IsodistortParser():
         symbols = []
         positions = []
         cellpars = []
-        posdict={}
+        posdict = {}
         for iline, line in enumerate(self.lines):
             if line.strip().startswith(name):
                 inside = True
                 continue
             if inside:
-                if line.strip().startswith('a='):
-                    segs = line.strip().split(',')
+                if line.strip().startswith("a="):
+                    segs = line.strip().split(",")
                     for seg in segs:
-                        cellpars.append(float(seg.strip().split('=')[1]))
-                elif line.strip().startswith('atom'):
+                        cellpars.append(float(seg.strip().split("=")[1]))
+                elif line.strip().startswith("atom"):
                     pass
-                elif line.strip() == '':
+                elif line.strip() == "":
                     inside = False
                 else:
                     symnum, site, x, y, z, occ, displ = line.strip().split()
@@ -284,32 +342,28 @@ class IsodistortParser():
                     displ = float(displ)
                     sympos.append([symnum, x, y, z])
                     symbols.append(sym)
-                    posdict[symnum]=np.array([x, y, z])
+                    posdict[symnum] = np.array([x, y, z])
                     positions.append(np.array([x, y, z]))
                     symdict[symnum] = iatom
                     iatom = iatom + 1
-        #symdict = symbol_number(atoms)
+        # symdict = symbol_number(atoms)
         symdict = symbol_number(symbols)
-        atoms = Atoms(
-            symbols=symbols, scaled_positions=positions, cell=cellpars)
-        natom=len(atoms)
+        atoms = Atoms(symbols=symbols, scaled_positions=positions, cell=cellpars)
+        natom = len(atoms)
         # reorder, by symbol_number
-        new_positions=np.zeros((natom,3))
-        #symdict = symbol_number(atoms)
+        new_positions = np.zeros((natom, 3))
+        # symdict = symbol_number(atoms)
         for sn, iatom in symdict.items():
             new_positions[symdict[sn]] = posdict[sn]
-            #new_positions[iatom] = positions[symdict[sn]]
-        atoms = Atoms(
-            symbols=symbols,
-            scaled_positions=new_positions,
-            cell=cellpars)
-        self.natom=natom
-        self.symdict=symdict
+            # new_positions[iatom] = positions[symdict[sn]]
+        atoms = Atoms(symbols=symbols, scaled_positions=new_positions, cell=cellpars)
+        self.natom = natom
+        self.symdict = symdict
         return atoms
 
     def read_undistorted_supercell(self):
         return self.read_supercell(distorted=False)
-    
+
     def read_distorted_supercell(self):
         return self.read_supercell(distorted=True)
 
@@ -329,28 +383,28 @@ class IsodistortParser():
             elif line.strip().startswith("Displacive mode amplitudes"):
                 inside = False
             elif inside:
-                if line.find('normfactor') != -1:  # begining of one mode
+                if line.find("normfactor") != -1:  # begining of one mode
                     nameline = line
-                    singlemode=SingleMode.from_name_line(nameline)
+                    singlemode = SingleMode.from_name_line(nameline)
                     inside_mode = True
-                    #deltas = {}
+                    # deltas = {}
                     mode = np.zeros([self.natom, 3], dtype=float)
                     continue
                 if inside_mode:
-                    if line.strip() == '':  # end of one mode.
+                    if line.strip() == "":  # end of one mode.
                         singlemode.set_displacements(mode)
                         inside_mode = False
                         mode_definitions[singlemode.fullname] = singlemode
-                    elif line.strip().startswith('atom'):
+                    elif line.strip().startswith("atom"):
                         pass
                     else:  # a line  of displacement.
                         symnum, x, y, z, dx, dy, dz = line.strip().split()
-                        #sym, num = split_symnum(symnum)
+                        # sym, num = split_symnum(symnum)
                         x, y, z, dx, dy, dz = map(float, (x, y, z, dx, dy, dz))
                         delta = (dx, dy, dz)
-                        #deltas[symnum] = delta
+                        # deltas[symnum] = delta
                         mode[self.symdict[symnum]] = delta
-        self.mode_definitions=mode_definitions
+        self.mode_definitions = mode_definitions
         return mode_definitions
 
     def read_all_mode_amplitude(self):
@@ -360,7 +414,7 @@ class IsodistortParser():
         An example of the section of the output file:
         [0,0,0]GM1+(a)[O1:i:dsp]A1(a)             -0.43243  -0.15289   0.07644
         [0,0,0]GM1+(a)  all                         0.43243   0.15289
-        
+
         [0,0,0]GM2+(a)[O1:i:dsp]A1(a)               0.00000    0.00000   0.00000
         [0,0,0]GM2+(a)  all                         0.00000   0.00000
 
@@ -378,96 +432,98 @@ class IsodistortParser():
             elif line.strip().startswith("Displacive mode definitions"):
                 inside = False
             elif inside:
-                if line.strip() == '' or line.strip().startswith('mode'):
+                if line.strip() == "" or line.strip().startswith("mode"):
                     continue
-                elif line.strip().split()[1] == 'all':
+                elif line.strip().split()[1] == "all":
                     fullname, _, _, _ = line.strip().split()
                     amp = float(line.strip().split()[2])
                     if abs(amp) > 1e-4:
                         summary[fullname] = amp
-                elif line.strip().split()[0] == 'Overall':
-                    inside=False
+                elif line.strip().split()[0] == "Overall":
+                    inside = False
                     continue
                 else:
                     print(line)
                     fullname, amp, _, _ = line.strip().split()
                     amp = float(amp)
                     if abs(amp) > 1e-4:
-                        details[fullname]=amp
-        self.summary_amplitudes=summary
-        self.details_amplitudes=details
+                        details[fullname] = amp
+        self.summary_amplitudes = summary
+        self.details_amplitudes = details
         return summary, details
 
-    def get_distorted_structure_from_amplitudes(self, amplitudes=None, factors=dict(),default_factor=1.0, summary_amps=None):
+    def get_distorted_structure_from_amplitudes(
+        self, amplitudes=None, factors=dict(), default_factor=1.0, summary_amps=None
+    ):
         """
         Get the distorted structure from the amplitudes of the modes
         """
         if amplitudes is None:
-            amplitudes=self.details_amplitudes
+            amplitudes = self.details_amplitudes
 
         if summary_amps is not None:
             for key, val in summary_amps.items():
-                factors[key] = val/self.summary_amplitudes[key]
+                factors[key] = val / self.summary_amplitudes[key]
             print(f"factors: {factors}")
-        atoms=copy.deepcopy(self.read_undistorted_supercell())
-        natom=len(atoms)
-        disps=np.zeros((natom,3))
+        atoms = copy.deepcopy(self.read_undistorted_supercell())
+        natom = len(atoms)
+        disps = np.zeros((natom, 3))
         print(self.mode_definitions.keys())
         for fullname, amp in amplitudes.items():
             print(fullname, amp)
-            mode=self.mode_definitions[fullname]
-            #print(np.linalg.norm(mode.displacements)*mode.normfactor)
+            mode = self.mode_definitions[fullname]
+            # print(np.linalg.norm(mode.displacements)*mode.normfactor)
             disp_cart = atoms.get_cell().cartesian_positions(mode.displacements)
-            #n=np.linalg.norm(disp_cart)
-            f=factors.get(mode.label , default_factor)
+            # n=np.linalg.norm(disp_cart)
+            f = factors.get(mode.label, default_factor)
             print(f"{mode.mode_name=}, {f=}")
-            disp=disp_cart * amp*f * mode.normfactor 
-            disps+=disp
-        #atoms.set_positions(atoms.get_positions()+disps)
-        #print(atoms.get_scaled_positions(wrap=False))
-        newatoms=copy.deepcopy(atoms)
-        newatoms.set_positions(atoms.get_positions()+disps)
+            disp = disp_cart * amp * f * mode.normfactor
+            disps += disp
+        # atoms.set_positions(atoms.get_positions()+disps)
+        # print(atoms.get_scaled_positions(wrap=False))
+        newatoms = copy.deepcopy(atoms)
+        newatoms.set_positions(atoms.get_positions() + disps)
         atoms.set_cell(self.read_distorted_supercell().get_cell(), scale_atoms=True)
         return newatoms
 
-            
+
 def reduce_mode(fname="pristine_isodistort.txt", mode_name="R5-", f=1.0):
     myparser = IsodistortParser(fname)
     return myparser.get_distorted_structure_from_amplitudes(factors={mode_name: f})
 
-def reduce_mode_to_amp(fname="pristine_isodistort.txt", ):
+
+def reduce_mode_to_amp(
+    fname="pristine_isodistort.txt",
+):
     myparser = IsodistortParser(fname)
     return myparser.get_distorted_structure_from_amplitudes(factors={mode_name: f})
-
 
 
 def test_isodistort_parser_read_supercell():
     """
     Test isodistort parser of reading undistorred supercell
     """
-    
-    myparser = IsodistortParser('pristine_isodistort.txt')
-    und_atoms=myparser.read_undistorted_supercell()
-    dis_atoms=myparser.read_distorted_supercell()
-    #make directory for structures
-    os.makedirs('structures', exist_ok=True)
-    #write structures
-    write('structures/undistorted.vasp', und_atoms, vasp5=True, direct=True)
-    write('structures/distorted.vasp', dis_atoms, vasp5=True, direct=True)
-    #myparser.read_distorted_structure()
-    mode_definitions=myparser.read_mode_definitions()
-    #print(mode_definitions)
+
+    myparser = IsodistortParser("pristine_isodistort.txt")
+    und_atoms = myparser.read_undistorted_supercell()
+    dis_atoms = myparser.read_distorted_supercell()
+    # make directory for structures
+    os.makedirs("structures", exist_ok=True)
+    # write structures
+    write("structures/undistorted.vasp", und_atoms, vasp5=True, direct=True)
+    write("structures/distorted.vasp", dis_atoms, vasp5=True, direct=True)
+    # myparser.read_distorted_structure()
+    mode_definitions = myparser.read_mode_definitions()
+    # print(mode_definitions)
     myparser.read_all_mode_amplitude()
     print(myparser.summary_amplitudes)
-    #atoms=myparser.get_distorted_structure_from_amplitudes(amplitudes={"[1/2,1/2,1/2]R5-(a,b,c)[O1:c:dsp]Eu(b)": -0.66608})
-    #atoms=myparser.get_distorted_structure_from_amplitudes(factors={"[1/2,1/2,1/2]R5-(a,b,c)": 0.0})
-    atoms=myparser.get_distorted_structure_from_amplitudes(factors={"R5-": 0.0})
-    #atoms=myparser.get_distorted_structure_from_amplitudes(amplitudes={"[1/2,1/2,0]M2+(a;0;0)[O1:c:dsp]Eu(a)": 1.00083})
-    #atoms=myparser.get_distorted_structure_from_amplitudes(amplitudes={"[1/2,1/2,0]M2+(a;0;0)[O1:c:dsp]Eu(a)": 0})
-    write('structures/distorted_from_amplitudes.vasp', atoms, vasp5=True, direct=True)
+    # atoms=myparser.get_distorted_structure_from_amplitudes(amplitudes={"[1/2,1/2,1/2]R5-(a,b,c)[O1:c:dsp]Eu(b)": -0.66608})
+    # atoms=myparser.get_distorted_structure_from_amplitudes(factors={"[1/2,1/2,1/2]R5-(a,b,c)": 0.0})
+    atoms = myparser.get_distorted_structure_from_amplitudes(factors={"R5-": 0.0})
+    # atoms=myparser.get_distorted_structure_from_amplitudes(amplitudes={"[1/2,1/2,0]M2+(a;0;0)[O1:c:dsp]Eu(a)": 1.00083})
+    # atoms=myparser.get_distorted_structure_from_amplitudes(amplitudes={"[1/2,1/2,0]M2+(a;0;0)[O1:c:dsp]Eu(a)": 0})
+    write("structures/distorted_from_amplitudes.vasp", atoms, vasp5=True, direct=True)
 
-
- 
 
 def test_isodistort_parser():
     """
@@ -475,12 +531,13 @@ def test_isodistort_parser():
     """
     test_isodistort_parser_read_supercell()
 
+
 def test_reduce_mode():
     """
     Test reduce mode
     """
-    atoms=reduce_mode(fname="pristine_isodistort.txt", mode_name="R5-", f=1.0)
-    write('structures/distorted_from_amplitudes.vasp', atoms, vasp5=True, direct=True)
+    atoms = reduce_mode(fname="pristine_isodistort.txt", mode_name="R5-", f=1.0)
+    write("structures/distorted_from_amplitudes.vasp", atoms, vasp5=True, direct=True)
 
 
 def run_tests():
@@ -489,7 +546,7 @@ def run_tests():
     """
     test_isodistort_parser()
 
-if __name__ == "__main__":
-    #run_tests()
-    test_reduce_mode()
 
+if __name__ == "__main__":
+    # run_tests()
+    test_reduce_mode()
