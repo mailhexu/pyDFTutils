@@ -96,7 +96,7 @@ def find_primitive(atoms, symprec=1e-4, angle_tolerance=-1.0, mag_symprec=1e-4):
     """
     # atoms_mag,sym_dict=ref_atoms_mag(atoms)
     cell, scaled_pos, chem_nums = spglib.find_primitive(
-        atoms, symprec=symprec, angle_tolerance=angle_tolerance, mag_symprec=mag_symprec
+        atoms, symprec=symprec, angle_tolerance=angle_tolerance#, mag_symprec=mag_symprec
     )
     chem_sym = "H%d" % (len(chem_nums))
     new_atoms = Atoms(chem_sym)

@@ -98,11 +98,12 @@ def read_supercell_size(lines):
     Subgroup details
     1 P1, basis={(1,-1,0),(1,1,0),(0,0,2)}, origin=(-1.00001,-0.99999,-1.50000), s=4, i=192
     """
+    inline = False
     for i, line in enumerate(lines):
         if line.strip().startswith("Subgroup details"):
+            inline = True
             line = lines[i+1]
             basis, s, origin = read_supercell_line(line)
-            self.supercell_matrix, self.supercell_size, self.supercell_origin= basis, s, origin
             return basis, s, origin
 
 
@@ -297,8 +298,8 @@ class IsodistortParser:
             if line.strip().startswith("Subgroup details"):
                 inline = True
                 line = self.lines[i+1]
-                self.supercell_matrix, self.supercell_size, self.origin = read_supercell_line(line)
-                return self.supercell_matrix, self.supercell_size, self.origin
+                self.basis, self.s, self.origin = read_supercell_line(line)
+                return self.basis, self.s, self.origin
 
     def read_supercell(self, distorted=False):
         """
@@ -450,22 +451,17 @@ class IsodistortParser:
         return summary, details
 
     def get_distorted_structure_from_amplitudes(
-        self, amplitudes=None, factors=dict(), default_factor=1.0, summary_amps_uc=None, summary_amps_sc=None
+        self, amplitudes=None, factors=dict(), default_factor=1.0, summary_amps=None
     ):
         """
         Get the distorted structure from the amplitudes of the modes
         """
         if amplitudes is None:
             amplitudes = self.details_amplitudes
-        if summary_amps_uc is not None:
-            summary_amp_sc={}
-            for key, val in summary_amps_uc.items():
-                summary_amps_sc[key] = val * self.supercell_size
 
-
-        if summary_amps_sc is not None:
-            for key, val in summary_amps_sc.items():
-                factors[key] = val / self.summary_amplitudes_sc[key]
+        if summary_amps is not None:
+            for key, val in summary_amps.items():
+                factors[key] = val / self.summary_amplitudes[key]
             print(f"factors: {factors}")
         atoms = copy.deepcopy(self.read_undistorted_supercell())
         natom = len(atoms)
@@ -525,7 +521,6 @@ def test_isodistort_parser_read_supercell():
     # atoms=myparser.get_distorted_structure_from_amplitudes(amplitudes={"[1/2,1/2,0]M2+(a;0;0)[O1:c:dsp]Eu(a)": 1.00083})
     # atoms=myparser.get_distorted_structure_from_amplitudes(amplitudes={"[1/2,1/2,0]M2+(a;0;0)[O1:c:dsp]Eu(a)": 0})
     write("structures/distorted_from_amplitudes.vasp", atoms, vasp5=True, direct=True)
-    print(myparser.supercell_size)
 
 
 def test_isodistort_parser():
@@ -551,5 +546,5 @@ def run_tests():
 
 
 if __name__ == "__main__":
-    run_tests()
-    #test_reduce_mode()
+    # run_tests()
+    test_reduce_mode()
