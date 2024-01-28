@@ -433,8 +433,8 @@ class IsodistortParser:
                 if line.strip() == "" or line.strip().startswith("mode"):
                     continue
                 elif line.strip().split()[1] == "all":
-                    fullname, _, _, _ = line.strip().split()
-                    amp = float(line.strip().split()[2])
+                    fullname, _, amp_sc, amp_uc = line.strip().split()
+                    amp = float(amp_sc)
                     if abs(amp) > 1e-4:
                         summary[fullname] = amp
                 elif line.strip().split()[0] == "Overall":
@@ -458,14 +458,17 @@ class IsodistortParser:
         if amplitudes is None:
             amplitudes = self.details_amplitudes
         if summary_amps_uc is not None:
-            summary_amp_sc={}
+            summary_amps_sc={}
             for key, val in summary_amps_uc.items():
-                summary_amps_sc[key] = val * self.supercell_size
+                summary_amps_sc[key] = val * np.sqrt(self.supercell_size)
 
 
         if summary_amps_sc is not None:
             for key, val in summary_amps_sc.items():
-                factors[key] = val / self.summary_amplitudes_sc[key]
+                for k in self.summary_amplitudes:
+                    if key in k:
+                        factors[key] = val / self.summary_amplitudes[k]
+            print(f"{summary_amps_sc=}")
             print(f"factors: {factors}")
         atoms = copy.deepcopy(self.read_undistorted_supercell())
         natom = len(atoms)
@@ -478,7 +481,7 @@ class IsodistortParser:
             disp_cart = atoms.get_cell().cartesian_positions(mode.displacements)
             # n=np.linalg.norm(disp_cart)
             f = factors.get(mode.label, default_factor)
-            #print(f"{mode.mode_name=}, {f=}")
+            print(f"{mode.mode_name=}, {f=}")
             disp = disp_cart * amp * f * mode.normfactor
             disps += disp
         # atoms.set_positions(atoms.get_positions()+disps)
@@ -496,9 +499,11 @@ def reduce_mode(fname="pristine_isodistort.txt", mode_name="R5-", f=1.0):
 
 def reduce_mode_to_amp(
     fname="pristine_isodistort.txt",
+    summary_amps_uc=None,
+    summary_amps_sc=None,
 ):
     myparser = IsodistortParser(fname)
-    return myparser.get_distorted_structure_from_amplitudes(factors={mode_name: f})
+    return myparser.get_distorted_structure_from_amplitudes(summary_amps_uc=summary_amps_uc, summary_amps_sc=summary_amps_sc)
 
 
 def test_isodistort_parser_read_supercell():

@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="pyDFTutils",
-    version="0.1.16",
+    version="0.1.18",
     description="utils for DFT/TB calculation",
     author="Xu He",
     author_email="mailhexu@gmail.com",
@@ -22,12 +22,15 @@ setup(
         "scripts/view_pos_info.py",
         "scripts/plotldos.py",
         "scripts/plotpdos.py",
+        "scripts/plotphonopy.py",
         "scripts/xvtovasp.py",
         "scripts/octainfo.py",
         "scripts/predict_gap.py",
         "scripts/mlrelax.py",
         "scripts/build_supercell.py",
         "scripts/plot_siesta_dos.py",
+        "scripts/get_siesta_bandgap.py",
+        "scripts/gen_primitive.py",
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",
