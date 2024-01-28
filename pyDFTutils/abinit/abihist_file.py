@@ -1,5 +1,5 @@
 """
-Load abinit hist netcdf file.
+Load abinit hist netcdf file. Parser of abinit hist file which is a netcdf file.
 """
 from pathlib import Path
 import numpy as np
@@ -8,6 +8,82 @@ from ase import Atoms
 from ase.units import Ang, Bohr, Hartree, eV, GPa
 from pymatgen.core import Structure
 
+class AbihistFile():
+    """ The class to read abinit hist file. 
+    """
+    def __init__(self, fname):
+        self.fname = fname
+        self.read()
+
+    def read(self):
+        self.g = nc.Dataset(self.fname, "r")
+        self.ntime = self.g.dimensions["time"].size
+        self.natom = self.g.dimensions["natom"].size
+        self.ntypat = self.g.dimensions["ntypat"].size
+        self.npsp = self.g.dimensions["npsp"].size
+        self.typat = self.g.variables["typat"][:]
+        self.znucl = self.g.variables["znucl"][:]
+        self.amu = self.g.variables["amu"][:]
+        self.xcart = self.g.variables["xcart"][:] * (Bohr / Ang)
+        self.xred = self.g.variables["xred"][:]
+        self.fcart = self.g.variables["fcart"][:] * (Hartree / Bohr) / (eV / Ang)
+        self.fred = self.g.variables["fred"][:] * (Hartree / eV)
+        self.vel = self.g.variables["vel"][:]
+        self.acell = self.g.variables["acell"][:] * (Bohr / Ang)
+        self.rprimd = self.g.variables["rprimd"][:] * (Bohr / Ang)
+        self.etotal = self.g.variables["etotal"][:] * (Hartree / eV)
+        self.numbers = [int(self.znucl[int(i) - 1]) for i in self.typat]
+        self.strten = self.g.variables["strten"][:] * (Hartree / Bohr**3) / GPa 
+
+    def get_pymatgen_structure(self, i):
+        """Return pymatgen structure at step i.
+        """
+        s = Structure(
+            lattice=self.rprimd[i],
+            species=self.numbers,
+            coords=self.xred[i],
+            coords_are_cartesian=False,
+        )
+        return s
+
+    def get_ase_atoms(self, i):
+        """Return ase atoms at step i.
+        """
+        atoms= Atoms(numbers=self.numbers, positions=self.xcart[i], cell=self.rprimd[i])
+        return atoms
+
+    def get_stress(self, i):
+        """Return stress at step i.
+        """
+        ti=self.strten[i]
+        stress=np.array([[ti[0], ti[5], ti[4]], 
+                         [ti[5], ti[1], ti[3]], 
+                         [ti[4], ti[3], ti[2]]])
+        return stress 
+
+    def get_energy(self, i):
+        """Return energy at step i.
+        """
+        return self.etotal[i]
+    
+    def get_fcart(self, i):
+        """Return force at step i.
+        """
+        return self.fcart[i]
+    
+    def get_fred(self, i):
+        """Return force at step i.
+        """
+        return self.fred[i]
+    
+    def get_vel(self, i):
+        """Return velocity at step i.
+        """
+        return self.vel[i]
+
+    def get_ntime(self):
+        return self.ntime
+    
 
 def read_structures_from_hist(fname):
     """Read from netcdf file and return list of Atoms objects, energies, forces, and stresses.
