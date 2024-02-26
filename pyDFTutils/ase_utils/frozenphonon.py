@@ -29,6 +29,7 @@ def calculate_phonon(atoms,
                      symprec=1e-5,
                      func=None,
                      prepare_initial_wavecar=False,
+                     mask_force=[1,1,1],
                      skip=None,
                      restart=True,
                      parallel=True,
@@ -143,6 +144,8 @@ def calculate_phonon(atoms,
 
             os.chdir(dir_name)
             forces = cell.get_forces()
+            if mask_force is not None:
+                forces=forces * np.array(mask_force)[None, :]
             print("[Phonopy] Forces: %s" % forces)
             # Do something other than calculating the forces with func.
             # func: func(atoms, calc, func_args)
