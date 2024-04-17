@@ -176,7 +176,6 @@ class octahedra():
         if isinstance(center_atom,str):
             center_atom=atoms[self.sym_dict[center_atom]]
 
-
         oatoms=atoms.copy()
         cell=oatoms.get_cell()
         if do_force_near_0:
@@ -241,7 +240,7 @@ class octahedra():
         self.get_octahedra(atoms,atoms[sym_dict[center_sym_number]],vertex_symbol,max_distance,var_distance=var_distance)
 
 
-    def pair(self,ang_thr=20):
+    def pair(self,ang_thr=28):
         """
         divide the atoms to pairs ,(upper,lower) (left, right)...
         """
