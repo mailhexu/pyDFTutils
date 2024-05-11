@@ -14,6 +14,68 @@ def kpath(cell, path=None, npoints=None, supercell_matrix=np.eye(3), eps=1e-3):
     return kpts, x, X, knames
 
 
+def get_path_special_points(cell, names=None):
+    """
+      get the special points for a cell following the path
+      There could be several segments in the path, the segments are in a list.
+      Parameters:
+        ----------------
+        cell: ase.Cell
+            the cell
+        names: str
+          the name of the path. e.g. "G,X,M,G"
+      Returns:
+        ----------------
+        names_grouped: list
+          list of list of special point names
+        points_grouped: list
+          list of list of special points
+    """
+    cell=Cell(cell)
+    if names is None:
+        names=cell.bandpath().path
+    special_points=cell.bandpath().special_points
+    names_grouped = [ list(n) for n in names.split(",")]
+    def get_points(namegroup):
+        return [special_points[name] for name in namegroup]
+    points_grouped = [get_points(n) for n in names.split(",")]
+    return names_grouped, points_grouped
+
+
+def test_get_path_special_points():
+    """ test get_path_special_points
+    """
+    names, points= get_path_special_points(np.eye(3))
+    print(f"names: {names}, points: {points}")
+    names, points= get_path_special_points(np.eye(3), "GXM,GR")
+    print(f"names: {names}, points: {points}")
+
+
+
+def auto_kpath(cell, knames=None, kvectors=None, npoints=31, eps=1e-3):
+    """
+    automatically find kpoints for a cell
+    """
+    if knames is None and kvectors is None:
+        # fully automatic k-path
+        bp = Cell(self.cell).bandpath(npoints=npoints, eps=eps)
+        spk = bp.special_points
+        xlist, kptlist, Xs, knames = group_band_path(bp)
+    elif knames is not None and kvectors is None:
+        # user specified kpath by name
+        bp = Cell(self.cell).bandpath(knames, npoints=npoints, eps=eps)
+        spk = bp.special_points
+        kpts = bp.kpts
+        xlist, kptlist, Xs, knames = group_band_path(bp)
+    else:
+        # user spcified kpath and kvector.
+        kpts, x, Xs = bandpath(kvectors, self.cell, npoints)
+        spk = dict(zip(knames, kvectors))
+        xlist = [x]
+        kptlist = [kpts]
+    return kpts, xlist, Xs, knames
+
+
 def cubic_kpath(npoints=500,name=True):
     """
     return the kpoint path for cubic
@@ -99,7 +161,7 @@ def ir_kpts(atoms, mp_grid, is_shift=[0, 0, 0], verbose=True, ir=True):
 
 
 if __name__ == '__main__':
-    from .ase_utils.cubic_perovskite import gen_primitive
+    from TB2J.ase_utils.cubic_perovskite import gen_primitive
     atoms = gen_primitive(mag_order='G')
     print(get_ir_kpts(atoms, [4, 4, 4]))
 """

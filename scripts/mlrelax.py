@@ -17,9 +17,10 @@ def main():
     p.add_argument("--fmax", "-f", help="The maximum force allowed on each atom. Default is 0.001", default=0.001, type=float)
     p.add_argument("--cell_factor", "-c", help="The factor by which to scale the unit cell when relaxing the cell shape. Default is 1000", default=1000, type=float)
     p.add_argument("--output_file", "-o", help="The name of the file to write the relaxed structure to. Default is POSCAR_relax.vasp", default="POSCAR_relax.vasp")
+    p.add_argument("--model_path", "-p", help="The path of the model file for deepmd", default="model.dp")
     args=p.parse_args()
     atoms=read(args.fname)
-    atoms=relax_with_ml(atoms, calc=args.model, sym=args.sym, relax_cell=args.relax_cell, fmax=args.fmax, cell_factor=args.cell_factor)
+    atoms=relax_with_ml(atoms, calc=args.model, sym=args.sym, relax_cell=args.relax_cell, fmax=args.fmax, cell_factor=args.cell_factor, model_path=args.model_path)
     write(args.output_file, atoms)
 
 if __name__=="__main__":

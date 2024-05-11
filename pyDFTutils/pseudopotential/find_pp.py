@@ -25,6 +25,8 @@ class DojoFinder():
                     fmt='psml'):
         typ=typ.lower()
         xc=xc.lower()
+        if xc=="lda":
+            xc="pw"
         dirname = os.path.join(self.path, f"{typ}-{rel}-{version}_{xc}_{accuracy}_{fmt}")
         if not os.path.exists(dirname):
             raise FileNotFoundError(f"File Not found: {dirname}")
@@ -39,9 +41,14 @@ class DojoFinder():
                     accuracy='standard',
                     fincore=False,
                     fmt='psml'):
-        if fincore and 57<atomic_numbers[element]<70:
-            fname = os.path.join(self.get_pp_path(xc=xc, typ=typ, rel=rel,
+        if 57<atomic_numbers[element]<=70:
+            if fincore:
+                fname = os.path.join(self.get_pp_path(xc=xc, typ=typ, rel=rel,
                   version=version, accuracy=accuracy, fmt=fmt), f"{element}_fincore.{fmt}")
+            else:
+                fname = os.path.join(self.get_pp_path(xc=xc, typ=typ, rel=rel,
+                  version=version, accuracy=accuracy, fmt=fmt), f"withf/{element}.{fmt}")
+
         else:
             fname = os.path.join(self.get_pp_path(xc=xc, typ=typ, rel=rel,
                   version=version, accuracy=accuracy, fmt=fmt), f"{element}.{fmt}")

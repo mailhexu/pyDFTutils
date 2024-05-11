@@ -423,7 +423,6 @@ class Abinit(FileIOCalculator):
             qpoints = qpts
         list2str = lambda l: " ".join(map(str, l))
         for q in qpoints:
-
             # phonon at Gamma
             if np.isclose(np.array(q), np.array([0, 0, 0])).all():
                 if not (efield or strain):

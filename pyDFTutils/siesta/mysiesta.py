@@ -25,6 +25,9 @@ from ase.calculators.siesta.parameters import PAOBasisBlock, Species
 from ase.calculators.siesta.parameters import format_fdf
 #from pyDFTutils.siesta.pdos import gen_pdos_figure, plot_layer_pdos 
 
+synthetic_atoms_dict_fincore={
+        "Yb":((6,5,5,5), (2,6,1,0))
+        }
 
 def read_siesta_xv(fd):
     vectors = []
@@ -67,7 +70,7 @@ def get_species(atoms, xc, rel='sr', accuracy='standard'):
     species = [
         Species(symbol=elem,
                 pseudopotential=finder.get_pp_fname(
-                    elem, xc=xc, rel=rel, accuracy=accuracy),
+                    elem, xc=xc, rel=rel, accuracy=accuracy, fincore=fincore),
                 ghost=False) for elem in elem_dict.keys()
     ]
     return pseudo_path, species
@@ -128,7 +131,7 @@ class MySiesta(Siesta):
             for elem, index in self.elem_dict.items():
                 if elem not in input_basis_set:
                     bselem = basis_set
-                    if elem in ['Li', 'Be', 'Na', 'Mg']:
+                    if elem in ['Li', 'Be', 'Na', 'Mg', "Sm"]:
                         self.npt_elems.add(f"{elem}.{index}")
                 else:
                     bselem = PAOBasisBlock(input_basis_set[elem])
@@ -297,6 +300,7 @@ class MySiesta(Siesta):
             self['fdf_arguments'].update({"PAO.PolarizationScheme": npt_text})
 
     def set_synthetic_atoms(self):
+        print("setting syn")
         nsyn=len(self.synthetic_atoms)
         if  nsyn> 0:
             syntext = []
@@ -309,6 +313,8 @@ class MySiesta(Siesta):
                 syntext.append(
                     " ".join([str(x) for x in content[1]]))
             self['fdf_arguments'].update({"SyntheticAtoms": syntext})
+
+        #print("setting syn:", syntext)
 
     def set_fdf_arguments(self, fdf_arguments):
         self['fdf_arguments'].update(fdf_arguments)
@@ -337,7 +343,9 @@ class MySiesta(Siesta):
                       scale_factor='0.95'):
         if not 'Udict' in self.__dict__:
             self.Udict = dict()
-        self.Udict[specy] = {
+        idx=self.elem_dict[specy]
+        specy_label=f"{specy}.{idx}"
+        self.Udict[specy_label] = {
             'n': n,
             'l': l,
             'U': U,
@@ -366,6 +374,18 @@ class MySiesta(Siesta):
 
         self.update_fdf_arguments(
             {'LDAU.Proj': Ublock, 'LDAU.ProjectorGenerationMethod': 2})
+
+    def set_Udict(self, Udict):
+        """
+        Udict: e.g. {"Fe":{"n":3, "l":2, "U":3.0, "J":0.0}, ...}
+        or {"Fe":{[3, 2, 3, 0]}
+
+        """
+        for specy, val in Udict.items():
+            if isinstance(val, dict):
+                self.add_Hubbard_U(specy, **val)
+            else:
+                self.add_Hubbard_U(specy, *val)
 
     def write_Hubbard_block(self, f):
         pass
