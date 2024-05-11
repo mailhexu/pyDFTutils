@@ -16,17 +16,23 @@ def view_spacegroup(
     filename="POSCAR", symprec=1e-4, angle_tolerance=-1.0, view_all=False
 ):
     atoms = read(filename)
+
+    cell = (cell_vectors, positions, numbers) = (
+        atoms.get_cell(),
+        atoms.get_positions(),
+        atoms.get_atomic_numbers(),
+    )
     if not view_all:
         print(
             "SPACEGROUP: %s"
             % spglib.get_spacegroup(
-                atoms, symprec=symprec, angle_tolerance=angle_tolerance
+                cell, symprec=symprec, angle_tolerance=angle_tolerance
             )
         )
     else:
         print(
             spglib.get_symmetry_dataset(
-                atoms, symprec=symprec, angle_tolerance=angle_tolerance
+                cell, symprec=symprec, angle_tolerance=angle_tolerance
             )
         )
 
