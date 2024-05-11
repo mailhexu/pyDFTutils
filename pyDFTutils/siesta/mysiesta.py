@@ -131,7 +131,7 @@ class MySiesta(Siesta):
             for elem, index in self.elem_dict.items():
                 if elem not in input_basis_set:
                     bselem = basis_set
-                    if elem in ['Li', 'Be', 'Na', 'Mg', "Sm"]:
+                    if elem in ['Li', 'Be', 'Na', 'Mg', 'Sm']:
                         self.npt_elems.add(f"{elem}.{index}")
                 else:
                     bselem = PAOBasisBlock(input_basis_set[elem])
@@ -141,6 +141,7 @@ class MySiesta(Siesta):
                 else:
                     pseudopotential = os.path.join(
                         pseudo_path, input_pp[elem])
+                print(pseudopotential)
 
                 if elem in self.synthetic_atoms:
                     excess_charge = 0
