@@ -6,7 +6,7 @@ import sys
 import argparse
 
 
-def view_cellpars(filename="POSCAR"):
+def view_cellpars(filename="POSCAR", magnetic_moments=None):
     atoms = read(filename)
     print("CELLPARS: %s" % cell_to_cellpar(atoms.get_cell()))
     print("Volume: %s" % atoms.get_volume())
