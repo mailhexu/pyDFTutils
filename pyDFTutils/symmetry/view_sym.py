@@ -41,7 +41,6 @@ def is_collinear_mag(atoms):
 
 def view_spacegroup(
     atoms=None,
-    mag=False,
     symprec=1e-4,
     angle_tolerance=-1.0,
     dataset=False,
@@ -52,9 +51,9 @@ def view_spacegroup(
     atoms: ASE atoms object
     symprec: symprec
     angle_tolerance: angle_tolerance
-    view_all: view all symmetry operations
+    dataset: get full dataset
     """
-    cell = atoms_to_spglib_cell(atoms, mag=mag, magmom=magmom)
+    cell = atoms_to_spglib_cell(atoms, mag=False)
     spacegroup = spglib.get_spacegroup(
         cell, symprec=symprec, angle_tolerance=angle_tolerance
     )
@@ -64,11 +63,14 @@ def view_spacegroup(
         )
 
     if printout:
-        if not view_all:
+        if not dataset:
             print(f"SPACEGROUP: {spacegroup}")
         else:
             print(symmetry_dataset)
-    return spacegroup, symmetry_dataset
+    if not dataset:
+        return spacegroup
+    else:
+        return spacegroup, symmetry_dataset
 
 
 def view_magnetic_spacegroup(
@@ -85,7 +87,7 @@ def view_magnetic_spacegroup(
     magmom: magnetic moments
     symprec: symprec
     angle_tolerance: angle_tolerance
-    view_all: view all symmetry operations
+    dataset: get full dataset
     """
     cell = atoms_to_spglib_cell(atoms, mag=mag, magmom=magmom)
     symmetry_dataset = spglib.get_magnetic_symmetry_dataset(
@@ -109,7 +111,7 @@ def viewall(filename="POSCAR", symprec=1e-4, angle_tolerance=-1.0):
     view_spacegroup(filename=filename, symprec=symprec, angle_tolerance=angle_tolerance)
 
 
-if __name__ == "__main__":
+def view_symmetry_cli():
     parser = argparse.ArgumentParser(
         description="View spacegroup and cellpars of atomic structure file"
     )
@@ -135,22 +137,29 @@ if __name__ == "__main__":
         default=-1.0,
         help="angle_tolerance, default: -1.0",
     )
-    parser.add_argument("-v", "--view_all", action="store_true", help="view all")
+    parser.add_argument("-d", "--dataset", action="store_true", help="view full dataset")
 
     args = parser.parse_args()
+
+    atoms = read(args.filename)
+
+
     if args.mag:
         magmom = parse_magfile(args.magfile)
         view_magnetic_spacegroup(
-            filename=args.filename,
+            atoms=atoms,
             magmom=magmom,
             symprec=args.symprec,
             angle_tolerance=args.angle_tolerance,
-            view_all=args.view_all,
+            dataset=args.dataset,
         )
     else:
         view_spacegroup(
-            filename=args.filename,
+            atoms=atoms,
             symprec=args.symprec,
             angle_tolerance=args.angle_tolerance,
-            view_all=args.view_all,
+            dataset=args.dataset,
         )
+
+if __name__ == "__main__":
+    view_symmetry_cli()
