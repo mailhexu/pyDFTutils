@@ -6,8 +6,9 @@ import sys
 import argparse
 
 
-def view_cellpars(filename="POSCAR", magnetic_moments=None):
-    atoms = read(filename)
+def view_cellpars(filename="POSCAR", atoms=None, magnetic_moments=None):
+    if atoms is None:
+        atoms = read(filename)
     print("CELLPARS: %s" % cell_to_cellpar(atoms.get_cell()))
     print("Volume: %s" % atoms.get_volume())
 
@@ -146,6 +147,7 @@ def view_symmetry_cli():
 
     if args.mag:
         magmom = parse_magfile(args.magfile)
+        view_cellpars(atoms=atoms)
         view_magnetic_spacegroup(
             atoms=atoms,
             magmom=magmom,
@@ -154,6 +156,7 @@ def view_symmetry_cli():
             dataset=args.dataset,
         )
     else:
+        view_cellpars(atoms=atoms)
         view_spacegroup(
             atoms=atoms,
             symprec=args.symprec,

@@ -25,6 +25,8 @@ from ase.calculators.siesta.parameters import PAOBasisBlock, Species
 from ase.calculators.siesta.parameters import format_fdf
 #from pyDFTutils.siesta.pdos import gen_pdos_figure, plot_layer_pdos 
 
+from pyDFTutils.siesta.siesta_basis 
+
 synthetic_atoms_dict_fincore={
         "Yb":((6,5,5,5), (2,6,1,0))
         }
