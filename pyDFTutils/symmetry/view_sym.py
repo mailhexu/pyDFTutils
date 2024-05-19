@@ -89,12 +89,13 @@ def view_magnetic_spacegroup(
     angle_tolerance: angle_tolerance
     dataset: get full dataset
     """
-    cell = atoms_to_spglib_cell(atoms, mag=mag, magmom=magmom)
+    cell = atoms_to_spglib_cell(atoms, mag=True, magmom=magmom)
     symmetry_dataset = spglib.get_magnetic_symmetry_dataset(
         cell, symprec=symprec, angle_tolerance=angle_tolerance
     )
     uni_number = symmetry_dataset["uni_number"]
     magnetic_type = spglib.get_magnetic_spacegroup_type(uni_number)
+    spacegroup = magnetic_type
 
     if printout:
         if not view_all:
@@ -103,7 +104,7 @@ def view_magnetic_spacegroup(
             )
         else:
             print(symmetry_dataset)
-    return uni_number, symmetry_dataset
+    return magnetic_type, symmetry_dataset
 
 
 def viewall(filename="POSCAR", symprec=1e-4, angle_tolerance=-1.0):
