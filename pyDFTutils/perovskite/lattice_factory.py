@@ -243,6 +243,7 @@ def test_r3c():
     atoms=cut_R3c_222(atoms)
     atoms=cut_R3c_22(atoms)
     print(atoms.get_chemical_symbols())
+    atoms.write('r3c.vasp')
     return atoms
 
 

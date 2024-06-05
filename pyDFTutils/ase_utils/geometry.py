@@ -12,7 +12,7 @@ from spglib import spglib
 import matplotlib.pyplot as plt
 
 # from ase.optimize import BFGS,BFGSLineSearch
-from ase.utils.geometry import cut
+from ase.build import cut
 from .ioput import my_write_vasp
 from .symbol import symbol_number, symnum_to_sym, get_symdict
 import copy
@@ -35,111 +35,6 @@ def gen_STO():
     atoms = atoms.repeat([1, 1, 2])
     # atoms.set_initial_magnetic_moments()
     return atoms
-
-
-def find_sym(atoms, symprec=1e-4, angle_tolerance=-1.0):
-    return spglib.get_spacegroup(
-        atoms, symprec=symprec, angle_tolerance=angle_tolerance
-    )
-
-
-def get_prim_atoms(atoms, symprec=1e-4, angle_tolerance=-1.0):
-    return spglib.find_primitive(
-        atoms, symprec=symprec, angle_tolerance=angle_tolerance
-    )
-
-
-def ref_atoms_mag(atoms):
-    """
-    substitute atom with magnetic moment to another atom object. Use He Ne Ar Kr Xe Rn as subsititutions. So if you have these atoms , this fucntion can be rather buggy. Do *NOT* use it in that case.
-    """
-    symbols = atoms.get_chemical_symbols()
-    magmoms = atoms.get_initial_magnetic_moments()
-    sub_syms = ["He", "Ne", "Ar", "Kr", "Xe", "Rn"]
-    sym_dict = {}
-    syms = []
-    for sym, mag in zip(symbols, magmoms):
-        if sym not in syms:
-            syms.append(sym)
-            sym_dict[(sym, mag)] = sym
-        elif (sym, mag) not in sym_dict:
-            sym_dict[(sym, mag)] = sub_syms.pop()
-        else:
-            pass
-    new_sym = ""
-    for sym, mag in zip(symbols, magmoms):
-        new_sym += sym_dict[(sym, mag)]
-    new_atoms = atoms.copy()
-    new_atoms.set_chemical_symbols(new_sym)
-
-    return new_atoms, sym_dict
-
-
-def rev_ref_atoms(atoms, sym_dict):
-    rev_dict = {}
-    for key in sym_dict:
-        rev_dict[sym_dict[key]] = key
-    old_symbols = []
-    old_magmons = []
-    for sym in atoms.get_chemical_symbols():
-        old_symbols.append(rev_dict[sym][0])
-        old_magmons.append(rev_dict[sym][1])
-    old_atoms = atoms.copy()
-    old_atoms.set_chemical_symbols(old_symbols)
-    old_atoms.set_initial_magnetic_moments(old_magmons)
-    return old_atoms
-
-
-def find_primitive(atoms, symprec=1e-4, angle_tolerance=-1.0, mag_symprec=1e-4):
-    """
-    find the primitive cell withh regard to the magnetic structure. a atoms object is returned.
-    """
-    # atoms_mag,sym_dict=ref_atoms_mag(atoms)
-    cell, scaled_pos, chem_nums = spglib.find_primitive(
-        atoms, symprec=symprec, angle_tolerance=angle_tolerance#, mag_symprec=mag_symprec
-    )
-    chem_sym = "H%d" % (len(chem_nums))
-    new_atoms = Atoms(chem_sym)
-
-    new_atoms.set_atomic_numbers(chem_nums)
-    new_atoms.set_cell(cell)
-    new_atoms.set_scaled_positions(scaled_pos)
-    # new_atoms=rev_ref_atoms(new_atoms,sym_dict)
-    return new_atoms
-
-
-def find_primitive_mag(atoms, symprec=1e-4, angle_tolerance=-1.0):
-    """
-    find the primitive cell withh regard to the magnetic structure. a atoms object is returned.
-    """
-    atoms_mag, sym_dict = ref_atoms_mag(atoms)
-    cell, scaled_pos, chem_nums = spglib.find_primitive(atoms_mag, symprec=symprec)
-    chem_sym = "H%d" % (len(chem_nums))
-    new_atoms = Atoms(chem_sym)
-
-    new_atoms.set_atomic_numbers(chem_nums)
-    new_atoms.set_cell(cell)
-    new_atoms.set_scaled_positions(scaled_pos)
-    new_atoms = rev_ref_atoms(new_atoms, sym_dict)
-    return new_atoms
-
-
-def get_refined_atoms(atoms, symprec=1e-4, angle_tolerance=-1.0):
-    """
-    using spglib.refine_cell, while treat atoms with different magnetic moment as different element.
-    """
-    atoms_mag, sym_dict = ref_atoms_mag(atoms)
-    cell, scaled_pos, chem_nums = spglib.refine_cell(
-        atoms_mag, symprec=symprec, angle_tolerance=angle_tolerance
-    )
-    chem_sym = "H%d" % (len(chem_nums))
-    new_atoms = Atoms(chem_sym)
-
-    new_atoms.set_atomic_numbers(chem_nums)
-    new_atoms.set_cell(cell)
-    new_atoms.set_scaled_positions(scaled_pos)
-    new_atoms = rev_ref_atoms(new_atoms, sym_dict)
-    return new_atoms
 
 
 def to_smallest_positive_pos(pos):
