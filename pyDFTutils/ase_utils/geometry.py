@@ -205,7 +205,7 @@ def force_near_0(atoms, max=0.93):
     positions = atoms.get_scaled_positions()
     new_positions = []
     for pos in positions:
-        new_pos = [(x if x < max else x - 1) for x in pos]
+        new_pos = [(x%1.0 if x%1.0 < max else x%1.0 - 1) for x in pos]
         new_positions.append(new_pos)
     atoms.set_scaled_positions(new_positions)
     return atoms
