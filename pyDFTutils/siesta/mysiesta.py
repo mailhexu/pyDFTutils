@@ -129,7 +129,7 @@ class MySiesta(Siesta):
             if pseudo_path is None:
                 pseudo_path = finder.get_pp_path(xc=xc, accuracy=pp_accuracy)
 
-            if spin == 'spin-orbit':
+            if spin=='spin-orbit':
                 rel = 'fr'
             else:
                 rel = 'sr'
@@ -344,8 +344,8 @@ class MySiesta(Siesta):
                       l=2,
                       U=0,
                       J=0,
-                      rc=0.0,
-                      Fermi_cut=0.0,
+                      rc=2.5,
+                      Fermi_cut=0.1,
                       scale_factor='0.95'):
         if not 'Udict' in self.__dict__:
             self.Udict = dict()
@@ -375,11 +375,14 @@ class MySiesta(Siesta):
                 Ublock.append('%s' % (val['l']))
             Ublock.append('  %s  %s' % (val['U'], val['J']))
             if 'rc' in val:
-                Ublock.append('  %s  %s' % (val['rc'], val['Fermi_cut']))
+                #Ublock.append('  %s  %s' % (val['rc'], val['Fermi_cut']))
+                Ublock.append('  %s ' % (val['rc']))
+            else:
+                Ublock.append('4.0 ')
             Ublock.append('    %s' % val['scale_factor'])
 
         self.update_fdf_arguments(
-            {'LDAU.Proj': Ublock, 'LDAU.ProjectorGenerationMethod': 2})
+            {'LDAU.Proj': Ublock, 'LDAU.ProjectorGenerationMethod': 1})
 
     def set_Udict(self, Udict):
         """
