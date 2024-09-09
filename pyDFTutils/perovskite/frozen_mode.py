@@ -515,7 +515,6 @@ def gen_P21c_perovskite(
 
     newcell = dcell._get_cell_with_modulation(disps)
     newcell = Atoms(newcell)
-    print(spglib.get_spacegroup(newcell))
     # vesta_view(newcell)
     return newcell
 

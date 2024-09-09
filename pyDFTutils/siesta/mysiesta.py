@@ -16,14 +16,15 @@ import numpy as np
 from ase.units import Ry, eV, Bohr
 from ase.data import atomic_numbers
 #from ase.io.siesta import read_siesta_xv
-from ase.calculators.siesta.import_functions import read_rho
-from ase.calculators.siesta.import_functions import \
-    get_valence_charge, read_vca_synth_block
+#from ase.calculators.siesta.import_functions import \
+#    get_valence_charge, read_vca_synth_block
 from ase.calculators.calculator import FileIOCalculator, ReadError
 from ase.calculators.calculator import Parameters, all_changes
 from ase.calculators.siesta.parameters import PAOBasisBlock, Species
 from ase.calculators.siesta.parameters import format_fdf
 #from pyDFTutils.siesta.pdos import gen_pdos_figure, plot_layer_pdos 
+
+from pyDFTutils.siesta.siesta_basis  import get_basis, fincore_basis, withf_basis
 
 synthetic_atoms_dict_fincore={
         "Yb":((6,5,5,5), (2,6,1,0))
@@ -108,6 +109,11 @@ class MySiesta(Siesta):
         self.npt_elems = set()
         self.synthetic_atoms=synthetic_atoms
 
+        if fincore:
+            input_basis_set.update(fincore_basis)
+        else:
+            input_basis_set.update(withf_basis)
+
         if atoms is not None:
             finder = DojoFinder()
             elems = list(dict.fromkeys(atoms.get_chemical_symbols()).keys())
@@ -141,7 +147,6 @@ class MySiesta(Siesta):
                 else:
                     pseudopotential = os.path.join(
                         pseudo_path, input_pp[elem])
-                print(pseudopotential)
 
                 if elem in self.synthetic_atoms:
                     excess_charge = 0
@@ -490,10 +495,10 @@ class MySiesta(Siesta):
             f.write('%endblock DM.InitSpin\n')
             f.write('\n')
 
-    def read_results(self):
+    def my_read_results(self):
         """Read the results.
         """
-        self.read_number_of_grid_points()
+        #self.read_number_of_grid_points()
         self.read_energy()
         self.read_forces_stress()
         # self.read_eigenvalues()
