@@ -10,6 +10,7 @@ lmdict = {
     0: {0: "s"},
     1: {-1: "py", 0: "pz", 1: "px", 9: "p-all"},
     2: {-2: "dxy", -1: "dyz", 0: "dz2", 1: "dxz", 2: "dx2-y2", 9: "d-all"},
+    3: {-3: "fxyz", -2: "fxz2", -1: "fy2z", 0: "fz3", 1: "fx3", 2: "fy3", 3: "f-all"},  # this has to be checked. Autogen by copilot
     -1: {9: "all"},
 }
 
@@ -54,13 +55,6 @@ def get_pdos_data(pdos_fname, iatom=0, n=0, l=-1, m=9, fmpdos=True):
 {l}
 {m}
 """
-    # For example:
-    # LaAlO3_SrTiO3_layer.PDOS
-    # LAO_STO_pdos_Ti_3d.dat
-    # Ti
-    # 3
-    # 2
-    # 9
     with open("pdos_tmp_input.txt", "w") as myfile:
         myfile.write(inp)
     if fmpdos or (not os.path.exists(outfile)):
@@ -130,48 +124,66 @@ def plot_dos_for_species(
 def plot_pdos_ax(fname, efermi, ax=None, conv_n=1, xlim=(-10, 10), ylim=(None, None), savedata=None, color=None, fill=False):
     data = np.loadtxt(fname)
     plt.rc("font", size=16)
-    n = conv_n  # 为了pdos线更平滑
+    n = conv_n  
     data[:, 0] -= efermi
+    
     if data.shape[1] == 2:
+        # Non-spin-polarized case
         data[:, 1] = np.convolve(
             data[:, 1], np.array([1.0 / n] * n), mode="same"
-        )  # convolution process
-        # d=np.convolve(data[:,1], np.array([1.0/n]*n),mode='same')[:-4] #convolution process
+        )
         ax.plot(data[:, 0], data[:, 1], label=fname, color=color)
         if fill:
             ax.fill_between(data[:, 0], data[:, 1], color=color)
         if savedata is not None:
             np.savetxt(savedata, data, header="energy, dos")
-    if data.shape[1] == 3:
-        data[:, 0] -= efermi
-        data[:, 1] = np.convolve(
-            data[:, 1], np.array([1.0 / n] * n), mode="same"
-        )  # convolution process
-        data[:, 2] = np.convolve(
-            data[:, 2], np.array([1.0 / n] * n), mode="same"
-        )  # convolution process
-        # d=np.convolve(data[:,1], np.array([1.0/n]*n),mode='same')[:-4] #convolution process
-        ax.plot(data[:, 0], data[:, 1], label=fname + "spin up", color=color)
+            
+    elif data.shape[1] == 3:
+        # Collinear spin-polarized case
+        data[:, 1:] = np.apply_along_axis(
+            lambda x: np.convolve(x, np.array([1.0 / n] * n), mode="same"),
+            0,
+            data[:, 1:],
+        )
+        ax.plot(data[:, 0], data[:, 1], label=fname + " spin up", color=color)
         if fill:
             ax.fill_between(data[:, 0], data[:, 1], color=color)
-        ax.plot(data[:, 0], -data[:, 2], label=fname + "spin down", color=color)
+        ax.plot(data[:, 0], -data[:, 2], label=fname + " spin down", color=color)
         if fill:
             ax.fill_between(data[:, 0], -data[:, 2], color=color)
-
         ax.axhline(color="black")
         if savedata is not None:
             np.savetxt(savedata, data, header="energy, dos(up), dos(down)")
+            
+    elif data.shape[1] == 5:
+        # Non-collinear spin case
+        # Columns: E, up-up, down-down, up-down, down-up
+        data[:, 1:] = np.apply_along_axis(
+            lambda x: np.convolve(x, np.array([1.0 / n] * n), mode="same"),
+            0,
+            data[:, 1:],
+        )
+        
+        # Plot diagonal terms (up-up and down-down)
+        ax.plot(data[:, 0], data[:, 1], label=fname + " up-up", color=color, linestyle='-')
+        ax.plot(data[:, 0], -data[:, 2], label=fname + " down-down", color=color, linestyle='--')
+        
+        # Plot off-diagonal terms (up-down and down-up)
+        if color is None:
+            color2 = 'r'
+        else:
+            color2 = color
+        ax.plot(data[:, 0], data[:, 3], label=fname + " up-down", color=color2, linestyle=':')
+        ax.plot(data[:, 0], data[:, 4], label=fname + " down-up", color=color2, linestyle='-.')
+        
+        ax.axhline(color="black")
+        if savedata is not None:
+            np.savetxt(savedata, data, header="energy, up-up, down-down, up-down, down-up")
+
     ax.set_xlim(*xlim)
     ax.set_ylim(*ylim)
-    # plt.ylim(0, 15 )
     ax.axvline(color="red", linestyle="--")
     ax.set_xlabel("Energy (eV)")
-    # ax.set_ylabel('DOS')
-    # plt.title(figname)
-    # plt.tight_layout()
-    # plt.savefig(figname)
-    # plt.show()
-    # plt.close() #plt.show() have a function of close. plt.close() means close the figure.
 
 
 def plot_pdos(fname, figname, efermi, xlim=(-10, 10), ylim=(None, None)):
@@ -189,7 +201,6 @@ def plot_pdos(fname, figname, efermi, xlim=(-10, 10), ylim=(None, None)):
         the range of x axis
     ylim: tuple
         the range of y axis
-
     Returns:
     --------
     None
@@ -199,7 +210,6 @@ def plot_pdos(fname, figname, efermi, xlim=(-10, 10), ylim=(None, None)):
     plt.title(figname)
     plt.tight_layout()
     plt.savefig(figname)
-    # plt.show()
     plt.close()
 
 
@@ -215,7 +225,6 @@ def plot_total_dos(fname, efermi, xlim=(-6, 6), ylime=(0, 60)):
     plt.savefig("total_dos.png")
 
 
-# core function
 def gen_pdos_figure(
     pdos_fname, iatom, n, l, m, xlim=(-10, 10), ylim=(None, None), output_path="./"
 ):
@@ -234,7 +243,6 @@ def plot_layer_pdos(
         plot_pdos_ax(outfile, efermi, ax=axes[i], conv_n=5, xlim=xlim, ylim=ylim)
     plt.subplots_adjust(hspace=0.05)
     plt.savefig(figname)
-
     plt.show()
 
 

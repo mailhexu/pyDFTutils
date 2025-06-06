@@ -24,7 +24,7 @@ from ase.calculators.siesta.parameters import PAOBasisBlock, Species
 from ase.calculators.siesta.parameters import format_fdf
 #from pyDFTutils.siesta.pdos import gen_pdos_figure, plot_layer_pdos 
 
-from pyDFTutils.siesta.siesta_basis  import get_basis, fincore_basis, withf_basis
+from pyDFTutils.siesta.siesta_basis  import get_basis, fincore_basis, withf_basis, withf_basis_f_sz
 
 synthetic_atoms_dict_fincore={
         "Yb":((6,5,5,5), (2,6,1,0))
@@ -112,7 +112,7 @@ class MySiesta(Siesta):
         if fincore:
             input_basis_set.update(fincore_basis)
         else:
-            input_basis_set.update(withf_basis)
+            input_basis_set.update(withf_basis_f_sz)
 
         if atoms is not None:
             finder = DojoFinder()
