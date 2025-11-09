@@ -8,7 +8,7 @@ from ase.lattice.triclinic import TriclinicFactory
 from ase.geometry.cell import cellpar_to_cell
 from numpy import array,sqrt
 import numpy as np
-from ase.lattice.spacegroup import crystal
+#from ase.lattice.spacegroup import crystal
 import re
 
 # Define cubic perovskite

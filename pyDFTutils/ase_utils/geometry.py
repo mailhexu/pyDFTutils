@@ -93,7 +93,7 @@ def to_same_cell(pos, ref_pos):
     return pos
 
 
-def force_near_0(atoms, max=0.93):
+def force_near_0(atoms, max=0.83):
     """
     force the atom near the "1" side (>max) to be near the 0 side
     """

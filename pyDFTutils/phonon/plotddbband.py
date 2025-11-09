@@ -20,4 +20,14 @@ def plot_phonon_band(ddb_fname, knames=None, dipdip=False, units="cm-1", show=Tr
     if show:
         plt.show()
 
-plot_phonon_band(ddb_fname="O.DDB" )
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="Plot phonon band structure")
+    parser.add_argument("ddb_fname", help="DDB file name")
+    parser.add_argument("--show", action="store_true", help="Show the plot")
+    parser.add_argument("--savefig", help="Save the plot to file", default="phonon.pdf")
+    args = parser.parse_args()
+    plot_phonon_band(args.ddb_fname, show=args.show, savefig=args.savefig)
+
+if __name__ == "__main__":
+    main()

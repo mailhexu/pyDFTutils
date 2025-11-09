@@ -10,13 +10,14 @@ from ase.atoms import Atoms
 from ase.io import write
 from spglib import spglib
 from phonopy.phonon.band_structure import get_band_qpoints_and_path_connections
+from argparse import ArgumentParser
 
-def plot_phonon(path='./',color='blue', unit="cm^-1"):
+def plot_phonon(path='./', fname='phonopy_params.yaml', color='blue', unit="cm^-1"):
     #phonon=load(force_sets_filename="FORCE_SETS", born_filename="./BORN", unitcell_filename="POSCAR-unitcell",supercell_matrix=np.eye(3)*3 )
-    phonon=load(phonopy_yaml=os.path.join(path,'phonopy_params.yaml'))
+    phonon=load(phonopy_yaml=os.path.join(path,fname))
     cell=phonon._primitive.cell
-    #kpts,xs,xs_special,names=kpath(cell,npoints=10, path='GPZQGFZL')
-    kpts,xs,xs_special,names=kpath(cell,npoints=400, path='GZ')
+    kpts,xs,xs_special,names=kpath(cell,npoints=100, path='GZXA')
+    #kpts,xs,xs_special,names=kpath(cell,npoints=400, path='GZ')
     #print(kpts)
     #phonon.symmetrize_force_constants()
     #phonon.symmetrize_force_constants_by_space_group()
@@ -55,4 +56,9 @@ def plot_phonon(path='./',color='blue', unit="cm^-1"):
     plt.show()
 
 if __name__=='__main__':
-    plot_phonon()
+    parser = ArgumentParser()
+    parser.add_argument('-p', '--path', help='Path to the phonopy files', default='./')
+    parser.add_argument('-f', '--fname', help='Phonopy file name', default='phonopy_params.yaml')
+    parser.add_argument('-c', '--color', help='Color of the plot', default='blue')
+    args = parser.parse_args()
+    plot_phonon(path=args.path, fname=args.fname, color=args.color)

@@ -8,7 +8,6 @@ from ase import Atoms
 from ase.units import Ang, Bohr, Hartree, eV, GPa
 from pymatgen.core import Structure
 from ase.data import atomic_masses
-from abipy.abilab import abiopen
 
 
 def voigt_to_tensor(voigt):
@@ -25,7 +24,7 @@ def tensor_to_voigt(tensor):
                      tensor[1, 2], tensor[0, 2], tensor[0, 1]])
 
 
-class AbihistFile():
+class AbiHistFile():
     """ The class to read abinit hist file. 
     """
     def __init__(self, fname):
@@ -70,11 +69,19 @@ class AbihistFile():
         )
         return s
 
-    def get_ase_atoms(self, i):
+    def get_ase_atoms(self, i=None):
         """Return ase atoms at step i.
         """
-        atoms= Atoms(numbers=self.numbers, positions=self.xcart[i], cell=self.rprimd[i])
+        if i is None:
+            atoms_list = []
+            for i in range(self.time):
+                atoms = Atoms(numbers=self.numbers, positions=self.xcart[i], cell=self.rprimd[i])
+                atoms_list.append(atoms)
+            return atoms_list
+        else:
+            atoms= Atoms(numbers=self.numbers, positions=self.xcart[i], cell=self.rprimd[i])
         return atoms
+
 
     def dump_atoms(self, prefix, fmt="vasp", i=None, **kwargs):
         """Write atoms to file. If i is None, write all structures,
@@ -129,7 +136,15 @@ class AbihistFile():
 
     def get_time(self):
         return self.time
+
     
+def read_ase_from_abihist(fname, i=None):
+    hist = AbiHistFile(fname)
+    hist.read()
+    return hist.get_ase_atoms(i)
+
+
+
 
 def write_ase_traj_to_abihist(fname,  traj, energies, forces, stresses):
     """
@@ -327,6 +342,8 @@ def read_DDB(fname):
         forces: list of numpy arrays (in eV/Ang)
         stresses: list of numpy arrays (in GPa)
     """
+
+    from abipy.abilab import abiopen
     ddb = abiopen(fname)
     structure = ddb.structure
     atoms=structure.to_ase_atoms()

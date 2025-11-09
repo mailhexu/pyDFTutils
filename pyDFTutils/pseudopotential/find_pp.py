@@ -26,7 +26,7 @@ class DojoFinder():
         typ=typ.lower()
         xc=xc.lower()
         if xc=="lda":
-            xc="pw"
+            xc="pbe"
         dirname = os.path.join(self.path, f"{typ}-{rel}-{version}_{xc}_{accuracy}_{fmt}")
         if not os.path.exists(dirname):
             raise FileNotFoundError(f"File Not found: {dirname}")

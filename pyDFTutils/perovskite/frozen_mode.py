@@ -413,6 +413,9 @@ def gen_P21c_perovskite(
         # X5_m_O2=0.0,  # [Nd1:a:dsp]T1u(b), O , same as above
         # M2_p_O1=0.0,  # M2+[O1:c:dsp]Eu(a), O, In phase rotation c+
 
+        X5_m_B1=0.0,  # [Nd1:a:dsp]T1u(a), B , Antiferro mode
+        X5_m_B2=0.0,  # [Nd1:a:dsp]T1u(a), B , Antiferro mode
+
         Z5_m_A1=0.8,  # [Nd1:a:dsp]T1u(a), A , Antiferro mode
         Z5_m_A2=0.0,  # [Nd1:a:dsp]T1u(b), A , save as above
         Z5_m_O1=0.0,  # [Nd1:a:dsp]T1u(a), O , Antiferro mode
@@ -424,6 +427,12 @@ def gen_P21c_perovskite(
         M5_p_O2=0.0,  # M5+[O1:c:dsp]Eu(a), O, Out of phase tilting
         # M4+[O1:c:dsp]A2u(a), O, in-plane-breathing (not in P21/c)
         M4_p_O1=0.0,
+        M3_p_B1=0.0,  #  B M3+, z
+        M5_p_B1=0.0,  #  B M5+, x
+        M5_p_B2=0.0,  #  B M5+, y
+
+        
+
 
         G_Ax=0.0,
         G_Ay=0.0,
@@ -490,6 +499,15 @@ def gen_P21c_perovskite(
         'M5_p_O2': perovskite_mode.M5_2,
         # M4+[O1:c:dsp]A2u(a), O, in-plane-breathing (not in P21/c)
         'M4_p_O1': perovskite_mode.M4,
+        'M3_p_B1': perovskite_mode.M3p_1, #  B M3+, z
+        'M5_p_B1': perovskite_mode.M5p_1, #  B M5+, x
+        'M5_p_B2': perovskite_mode.M5p_2, #  B M5+, y
+
+
+        'X5_m_B1': perovskite_mode.X5_1,  # [Nd1:a:dsp]T1u(a), B , Antiferro mode
+        'X5_m_B2': perovskite_mode.X5_2,  # [Nd1:a:dsp]T1u(a), B , Antiferro mode
+
+        'X5_p_O1': perovskite_mode.X5_3,  # [Nd1:a:dsp]T1u(a), O , Antiferro mode
     }
 
     # add Gamma modes to mode_dict
@@ -647,6 +665,11 @@ def test():
         # M5_p_O1=1.0,  # M5+[O1:c:dsp]Eu(a), O, Out of phase tilting
 
         # M4_p_O1=1.0 , # M4+[O1:c:dsp]A2u(a), O, in-plane-breathing (not in P21/c)
+
+        M3_p_B1=0.0,  #  B M3+, z perpendicular to M plane.
+        M5_p_B1=0.0,  #  B M5+, x 
+        M5_p_B2=0.0,  #  B M5+, y
+
         G_Ax=0.0,
         G_Ay=0.0,
         G_Az=0.0,

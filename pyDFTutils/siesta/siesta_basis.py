@@ -33,17 +33,39 @@ fincore_basis ={
     "Yb": "5\nn=5  0  1\n3.163 \n1.0 \nn=6  0  2\n7.312 5.36 \n1.0 1.0 \nn=5  1  1\n3.812 \n1.0 \nn=6  1  1\n7.312 \n1.0 \nn=5  2  2\n7.78 5.468 \n1.0 1.0 \n"
 }
 
-def get_basis(element, fincore=False):
+
+withf_basis_f_sz = {
+    #"La": "5\nn=5  0  1\n3.889 \n1.0 \nn=6  0  2\n9.113 6.906 \n1.0 1.0 \nn=5  1  1\n4.548 \n1.0 \nn=6  1  1\n9.113 \n1.0 \nn=5  2  2\n7.55 5.398 \n1.0 1.0 \n",
+    "Ce": "6\nn=5  0  1\n3.805 \n1.0 \nn=6  0  2\n9.041 6.837 \n1.0 1.0 \nn=5  1  1\n4.458 \n1.0 \nn=6  1  1\n9.041 \n1.0 \nn=5  2  2\n7.489 5.339 \n1.0 1.0 \nn=4  3 1\n4.1 \n1.0  \n",
+    "Pr": "6\nn=5  0  1\n3.737 \n1.0 \nn=6  0  2\n8.879 6.702 \n1.0 1.0 \nn=5  1  1\n4.387 \n1.0 \nn=6  1  1\n8.879 \n1.0 \nn=5  2  2\n7.46 5.307 \n1.0 1.0 \nn=4  3  1\n3.9 \n1.0  \n",
+    "Nd": "6\nn=5  0  1\n3.67 \n1.0 \nn=6  0  2\n8.808 6.641 \n1.0 1.0 \nn=5  1  1\n4.317 \n1.0 \nn=6  1  1\n8.808 \n1.0 \nn=5  2  2\n7.445 5.285 \n1.0 1.0 \nn=4  3  1\n3.8 \n1.0  \n",
+    "Pm": "6\nn=5  0  1\n3.611 \n1.0 \nn=6  0  2\n8.756 6.588 \n1.0 1.0 \nn=5  1  1\n4.257 \n1.0 \nn=6  1  1\n8.756 \n1.0 \nn=5  2  2\n7.43 5.269 \n1.0 1.0 \nn=4  3  1\n3.6 \n1.0  \n",
+    "Sm": "6\nn=5  0  1\n3.554 \n1.0 \nn=6  0  2\n8.668 6.516 \n1.0 1.0 \nn=5  1  1\n4.197 \n1.0 \nn=6  1  1\n8.668 \n1.0 \nn=5  2  2\n7.445 5.269 \n1.0 1.0 \nn=4  3 1\n3.5 \n1.0  \n",
+    "Eu": "6\nn=5  0  1\n3.497 \n1.0 \nn=6  0  2\n8.599 6.458 \n1.0 1.0 \nn=5  1  1\n4.139 \n1.0 \nn=6  1  1\n8.599 \n1.0 \nn=5  2  2\n7.46 5.275 \n1.0 1.0 \nn=4  3  1\n3.5 \n1.0  \n",
+    "Gd": "6\nn=5  0  1\n3.442 \n1.0 \nn=6  0  2\n8.514 6.374 \n1.0 1.0 \nn=5  1  1\n4.089 \n1.0 \nn=6  1  1\n8.514 \n1.0 \nn=5  2  2\n7.489 5.285 \n1.0 1.0 \nn=4  3 1\n3.4 \n1.0  \n",
+    "Tb": "6\nn=5  0  1\n3.394 \n1.0 \nn=6  0  2\n8.395 6.279 \n1.0 1.0 \nn=5  1  1\n4.04 \n1.0 \nn=6  1  1\n8.395 \n1.0 \nn=5  2  2\n7.52 5.301 \n1.0 1.0 \nn=4  3   1\n3.3 \n1.0  \n",
+    "Dy": "6\nn=5  0  1\n3.346 \n1.0 \nn=6  0  2\n8.295 6.186 \n1.0 1.0 \nn=5  1  1\n3.992 \n1.0 \nn=6  1  1\n8.295 \n1.0 \nn=5  2  2\n7.565 5.323 \n1.0 1.0 \nn=4  3 1\n3.3 \n1.0  \n",
+    "Ho": "6\nn=5  0  1\n3.293 \n1.0 \nn=6  0  2\n8.179 6.093 \n1.0 1.0 \nn=5  1  1\n3.944 \n1.0 \nn=6  1  1\n8.179 \n1.0 \nn=5  2  2\n7.61 5.349 \n1.0 1.0 \nn=4  3  1\n3.2 \n1.0  \n",
+    "Er": "6\nn=5  0  1\n3.247 \n1.0 \nn=6  0  2\n8.049 5.972 \n1.0 1.0 \nn=5  1  1\n3.897 \n1.0 \nn=6  1  1\n8.049 \n1.0 \nn=5  2  2\n7.656 5.387 \n1.0 1.0 \nn=4  3 1\n3.2 \n1.0  \n",
+    "Tm": "6\nn=5  0  1\n3.202 \n1.0 \nn=6  0  2\n7.921 5.872 \n1.0 1.0 \nn=5  1  1\n3.858 \n1.0 \nn=6  1  1\n7.921 \n1.0 \nn=5  2  2\n7.718 5.419 \n1.0 1.0 \nn=4  3 1\n3.1 \n1.0  \n",
+    "Yb": "6\nn=5  0  1\n3.163 \n1.0 \nn=6  0  2\n7.796 5.761 \n1.0 1.0 \nn=5  1  1\n3.812 \n1.0 \nn=6  1  1\n7.796 \n1.0 \nn=5  2  2\n7.78 5.468 \n1.0 1.0 \nn=4  3  1\n3.1 \n1.0  \n"
+}
+
+
+def get_basis(element, fincore=False, f_sz=True):
     if not fincore:
-        return withf_basis[element]
+        if f_sz:
+            return withf_basis_f_sz[element]
+        else:
+            return withf_basis[element]
     elif basis == "fincore":
         return fincore_basis[element]
     else:
         raise ValueError("Invalid basis set: {}".format(basis))
 
 if __name__ == "__main__":
-    print(get_basis("La"))
-    print(get_basis("La", fincore=True))
+    #print(get_basis("La"))
+    #print(get_basis("La", fincore=True))
     print(get_basis("Ce"))
     print(get_basis("Ce", fincore=True))
 
