@@ -26,8 +26,6 @@ setup(
         "scripts/xvtovasp.py",
         "scripts/octainfo.py",
         "scripts/predict_gap.py",
-        "scripts/mlrelax.py",
-        "scripts/mlphonon.py",
         "scripts/build_supercell.py",
         "scripts/plot_siesta_dos.py",
         "scripts/get_siesta_bandgap.py",
